@@ -6,7 +6,12 @@
     "type": "project",
     "require": {
         "php": "^7.3|^8.0",
-        "laravel/lumen-framework": "^8.3.1"
+        "anik/form-request": "^4.3",
+        "flipbox/lumen-generator": "^8.2",
+        "illuminate/session": "^8.74",
+        "jenssegers/mongodb": "*",
+        "laravel/lumen-framework": "^8.3.1",
+        "mongodb/mongodb": "^1.10"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
