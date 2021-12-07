@@ -13,6 +13,9 @@
 |
 */
 
-$router->get('/', function () use ($router) {
-    return $router->app->version();
+//TODO add Auth
+
+$router->group(['prefix' => 'api'], function () use ($router) {
+
+    require __DIR__ . '/Api/v1/api_v1.php';
 });
