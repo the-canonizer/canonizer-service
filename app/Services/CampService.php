@@ -30,9 +30,13 @@ class CampService
     const AGREEMENT_CAMP = "Agreement";
 
     /**
-     * Instantiate a new controller instance.
+     * prepare Camp tree based on algorithm.
      *
-     * @return void
+     * @param string $algorithm
+     * @param int $topicNumber
+     * @param int $startCamp
+     *
+     * @return array $tree
      */
 
 
