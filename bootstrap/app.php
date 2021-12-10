@@ -36,10 +36,10 @@ if ($app->environment() !== 'production') {
 /* Form request */
 $app->register(\Anik\Form\FormRequestServiceProvider::class);
 
-/* Custom Service Facades */
+/* Custom service facades provider */
 $app->register(App\Providers\CustomServicesFacadeProvider::class);
 
-/* Custom Repository Facades */
+/* Custom repository facades provider */
 $app->register(App\Providers\CustomRepositoryFacadeProvider::class);
 
 $app->withFacades(true, [
