@@ -1,5 +1,7 @@
 <?php
 
+use App\Providers\CustomFacadesProvider;
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 (new Laravel\Lumen\Bootstrap\LoadEnvironmentVariables(
@@ -34,7 +36,18 @@ if ($app->environment() !== 'production') {
 /* Form request */
 $app->register(\Anik\Form\FormRequestServiceProvider::class);
 
-$app->withFacades();
+/* Custom Service Facades */
+$app->register(App\Providers\CustomServicesFacadeProvider::class);
+
+/* Custom Repository Facades */
+$app->register(App\Providers\CustomRepositoryFacadeProvider::class);
+
+$app->withFacades(true, [
+    'App\Facades\Services\CampServiceFacade' => "CampService",
+    'App\Facades\Services\AlgorithmServiceFacade' => "AlgorithmService",
+    'App\Facades\Services\TreeServiceFacade' => "TreeService",
+    'App\Facades\Repositories\TreeRepositoryFacade' => "TreeRepository"
+]);
 
 $app->withEloquent();
 

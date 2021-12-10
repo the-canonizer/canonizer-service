@@ -7,7 +7,9 @@ use App\Model\v1\TopicSupport;
 use App\Model\v1\Support;
 use App\Model\v1\Camp;
 use App\Model\v1\Topic;
-use App\Model\v1\Algorithm;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Cache;
+use AlgorithmService;
 
 /**
  * Class CampService.
@@ -19,22 +21,21 @@ class CampService
     // private static $tempArray = [];
     // private static $childtempArray = [];  // uncomment when mid expert will shift
     // private static $chilcampArray = [];
-    private static $traversetempArray = [];
     // private static $campChildren = [];
     // private static $totalSupports = [];
     // private static $totalNickNameSupports = [];
+    private static $traversetempArray = [];
     private static $sessionTempArray = [];
 
     const AGREEMENT_CAMP = "Agreement";
 
     /**
-     * Get the camp tree.
-     * @param string $algorithm
-     * @param int $topicNumber
-     * @param int $startCamp
+     * Instantiate a new controller instance.
      *
-     * @return tree
+     * @return void
      */
+
+
     public function prepareCampTree(
         $algorithm,
         $topicNumber,
@@ -43,7 +44,7 @@ class CampService
 
         $as_of_time = time();
         self::$traversetempArray = [];
-        self::$sessionTempArray = [];
+
         if ((isset($_REQUEST['asof']) && $_REQUEST['asof'] == 'bydate')) {
             $as_of_time = strtotime($_REQUEST['asofdate']);
         }
@@ -114,6 +115,7 @@ class CampService
             }
         }
 
+        // return self::$sessionTempArray;
         $topic = Topic::getLiveTopic($topicNumber, ['nofilter' => false]);
 
         $topic_name = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
@@ -125,6 +127,7 @@ class CampService
         $tree[$startCamp]['link'] = $this->getTopicCampUrl($topicNumber, $startCamp);
         $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp);
         $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp);
+
 
         return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
     }
@@ -238,7 +241,7 @@ class CampService
                 $nickNameSupports = self::$sessionTempArray["topic-support-{$topicNumber}"]->filter(function ($item) use ($supported) {
                     return $item->nick_name_id == $supported->nick_name_id; /* Current camp support */
                 });
-                $supportPoint = Algorithm::{$algorithm}(
+                   $supportPoint = AlgorithmService::{$algorithm}(
                     $supported->nick_name_id,
                     $supported->topic_num,
                     $supported->camp_num
@@ -308,7 +311,7 @@ class CampService
         $score = 0;
         foreach ($delegatedSupports as $support) {
 
-            $supportPoint = Algorithm::{$algorithm}($support->nick_name_id, $support->topic_num, $support->camp_num);
+            $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id, $support->topic_num, $support->camp_num);
             //Check for campnum
             if ($campNumber == $support['camp_num']) {
                 if ($multiSupport) {
@@ -446,6 +449,122 @@ class CampService
                     ->where('topic.go_live_time', '<=', $asofdate)
                     ->latest('topic.go_live_time')->first();
             }
+        }
+    }
+
+
+     /**
+     * Get the camp tree count.
+     * @param int $topicNumber
+     * @param int $nickNameId
+     *
+     * @return int $score
+     */
+    public function campTreeCount($topicNumber, $nickNameId)
+    {
+
+        $camps = new Collection;
+        if (!isset($_REQUEST['asof']) || (isset($_REQUEST['asof']) && $_REQUEST['asof'] == "default")) {
+
+            $camps = Cache::remember("$topicNumber-default-support", 2, function () use ($topicNumber) {
+                return Camp::where('topic_num', '=', $topicNumber)
+                    ->where('objector_nick_id', '=', NULL)
+                    ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and go_live_time < "' . time() . '" group by camp_num)')
+                    ->where('go_live_time', '<', time())
+                    ->groupBy('camp_num')
+                    ->orderBy('submit_time', 'desc')
+                    ->get();
+            });
+        } else {
+
+            if (isset($_REQUEST['asof']) && $_REQUEST['asof'] == "review") {
+                $camps = Cache::remember("$topicNumber-review-support", 2, function () use ($topicNumber) {
+                    return Camp::where('topic_num', '=', $topicNumber)
+                        ->where('objector_nick_id', '=', NULL)
+                        ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                        ->orderBy('submit_time', 'desc')
+                        ->groupBy('camp_num')
+                        ->get();
+                });
+            } else if (isset($_REQUEST['asof']) && $_REQUEST['asof'] == "bydate") {
+
+                $asofdate =  strtotime(date('Y-m-d H:i:s', strtotime($_REQUEST['asofdate'])));
+                $camps = Cache::remember("$topicNumber-bydate-support-$asofdate", 2, function () use ($topicNumber, $asofdate) {
+                    return $expertCamp = Camp::where('topic_num', '=', $topicNumber)
+                        ->where('objector_nick_id', '=', NULL)
+                        ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                        ->where('go_live_time', '<', $asofdate)
+                        ->orderBy('submit_time', 'desc')
+                        ->groupBy('camp_num')
+                        ->get();
+                });
+            }
+        }
+
+         $expertCamp = $camps->filter(function ($item) use ($nickNameId) {
+            return  $item->camp_about_nick_id == $nickNameId;
+        })->last();
+
+        if (!$expertCamp) { # not an expert canonized nick.
+            return 0;
+        }
+
+        $as_of_time = time();
+        $key = '';
+        if (isset($_REQUEST['asof']) && $_REQUEST['asof'] == 'bydate') {
+            $as_of_time = strtotime($_REQUEST['asofdate']);
+            $key = $as_of_time;
+        }
+
+        # Implemented cache for existing data.
+        $supports = Cache::remember("$topicNumber-supports-$key", 2, function () use ($topicNumber, $as_of_time) {
+            return Support::where('topic_num', '=', $topicNumber)
+                ->whereRaw("(start < $as_of_time) and ((end = 0) or (end > $as_of_time))")
+                ->orderBy('start', 'DESC')
+                ->select(['support_order', 'camp_num', 'topic_num', 'nick_name_id', 'delegate_nick_name_id'])
+                ->get();
+        });
+
+        $directSupports = $supports->filter(function ($item) use ($nickNameId) {
+            return  $item->nick_name_id == $nickNameId && $item->delegate_nick_name_id == 0;
+        });
+
+        $delegatedSupports = $supports->filter(function ($item) use ($nickNameId) {
+            return $item->nick_name_id == $nickNameId && $item->delegate_nick_name_id != 0;
+        });
+
+        # start with one person one vote canonize.
+
+        $expertCampReducedTree = $this->prepareCampTree('blind_popularity', $topicNumber, $expertCamp->camp_num); # only need to canonize this branch
+
+        // Check if user supports himself
+        $num_of_camps_supported = 0;
+
+        $user_support_camps = Support::where('topic_num', '=', $topicNumber)
+            ->whereRaw("(start < $as_of_time) and ((end = 0) or (end > $as_of_time))")
+            ->where('nick_name_id', '=', $nickNameId)
+            ->get();
+
+        foreach ($user_support_camps as $scamp) {
+            $ret_camp = Camp::where('topic_num', '=', $scamp->topic_num)
+                ->where('camp_num', '=', $scamp->camp_num)
+                ->whereNotNull('camp_about_nick_id')
+                ->where('camp_about_nick_id', '<>', 0)
+                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and go_live_time < "' . time() . '" group by camp_num)')
+                ->where('go_live_time', '<', time())
+                ->groupBy('camp_num')
+                ->orderBy('submit_time', 'desc')
+                ->get();
+
+            if ($ret_camp->count()) {
+                $num_of_camps_supported++;
+            }
+        }
+
+        if (($directSupports->count() > 0 || $delegatedSupports->count() > 0) && $num_of_camps_supported > 1) {
+            return $expertCampReducedTree[$expertCamp->camp_num]['score'] * 5;
+        } else {
+            return $expertCampReducedTree[$expertCamp->camp_num]['score'] * 1;
         }
     }
 }
