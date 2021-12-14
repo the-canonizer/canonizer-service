@@ -3,56 +3,65 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Http\Requests\TreeStoreRequest;
-use App\Services\CampService;
-use App\Repository\Tree\TreeRepository;
-use App\Services\TreeService;
+use CampService;
+use TreeService;
+use TreeRepository;
+use DateTimeHelper;
 
 class TreeController extends Controller
 {
 
-    protected $campService;
-    protected $treeService;
-    protected $treeRepository;
-
     /**
-     * Instantiate a new controller instance.
+     * Store a new tree.
      *
-     * @return void
+     * @param  TreeStoreRequest  $request
+     * @return Response
      */
-    public function __construct(
-        TreeRepository $treeRepository,
-        CampService $campService,
-        TreeService $treeService
-    ) {
-        $this->treeRepository =  $treeRepository;
-        $this->campService = $campService;
-        $this->treeService =  $treeService;
+
+    public function store(TreeStoreRequest $request)
+    {
+        /* get input params from request */
+        $topicNumber = $request->input('topic_num');
+        $algorithm = $request->input('algorithm');
+        $asOf = $request->input('asof');
+        $asOfTime =  DateTimeHelper::getAsOfTime($request);
+
+        $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime);
+        $topic = CampService::getAgreementTopic($topicNumber, $request, $asOfTime);
+        $mongoArr = TreeService::prepareMongoArr($tree, $topic, $request, $asOfTime);
+        $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOf, $asOfTime);
+
+        if (TreeRepository::upsertTree($mongoArr, $conditions)) {
+            return response()->json(["code" => 200, "success" => true]);
+        }
+
+        return response()->json(["code" => 400, "success" => false], 400);
     }
 
 
     /**
      * Store a new tree.
      *
-     * @param  Request  $request
+     * @param  TreeStoreRequest  $request
      * @return Response
      */
 
-    public function store(TreeStoreRequest $request)
+    public function find(TreeStoreRequest $request)
     {
-
+        /* get input params from request */
         $topicNumber = $request->input('topic_num');
         $algorithm = $request->input('algorithm');
+        $asOf = $request->input('asof');
+        $asOfTime =  DateTimeHelper::getAsOfTime($request);
 
-        $tree = $this->campService->prepareCampTree($algorithm, $topicNumber);
-        $topic =  $this->campService->getAgreementTopic($topicNumber, $request);
-        $mongoArr = $this->treeService->prepareMongoArr($tree, $topic, $request);
+        $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOf, $asOfTime);
+        $tree =  TreeRepository::findTree($conditions);
 
-        if ($this->treeRepository->createTree($mongoArr)) {
-            return response()->json(["code" => 200, "success" => true]);
+        if (count($tree) > 0) {
+            return response()->json(["data" => $tree, "code" => 200, "success" => true]);
         }
 
-        return response()->json(["code" => 400, "success" => false], 400);
+        return response()->json(["data" => [], "code" => 404, "success" => false], 404);
     }
 }

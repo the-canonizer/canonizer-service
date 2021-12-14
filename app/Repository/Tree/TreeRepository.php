@@ -39,4 +39,44 @@ class TreeRepository implements TreeInterface
             return false;
         }
     }
+
+    /**
+     * create or update a tree.
+     *
+     * @param  array tree
+     * @param  array $conditions | assocative array
+     *
+     * @return boolean Response
+     */
+
+    public  function upsertTree($treeArr, $conditions)
+    {
+        try {
+            $record =  Tree::updateOrCreate(
+                $conditions,
+                $treeArr
+            );
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    /**
+     * find a tree.
+     *
+     * @param  array $conditions | assocative array
+     *
+     * @return array Response
+     */
+
+    public  function findTree($conditions)
+    {
+        try {
+            $record =  Tree::where($conditions)->get();
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
 }
