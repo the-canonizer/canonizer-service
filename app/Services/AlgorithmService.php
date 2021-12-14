@@ -22,12 +22,8 @@ class AlgorithmService
      * @return int $value = 1
      */
 
-    public function blind_popularity(
-        $nickNameId = null,
-        $topicNumber = 0,
-        $campNumber = 0,
-        $asOfTime = null
-    ) {
+    public function blind_popularity($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
+    {
         return 1;
     }
 
@@ -42,12 +38,8 @@ class AlgorithmService
      * @return int $score
      */
 
-    public function mind_experts(
-        $nickNameId = null,
-        $topicNumber = 0,
-        $campNumber = 0,
-        $asOfTime = null
-    ) {
+    public function mind_experts($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
+    {
         return  CampService::campTreeCount(81, $nickNameId, $asOfTime);
     }
 }

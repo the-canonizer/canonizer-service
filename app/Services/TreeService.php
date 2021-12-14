@@ -47,7 +47,7 @@ class TreeService
      * @return array $conditions
      */
 
-    public function getUpsertConditions($topicNumber, $algorithm, $asOf, $asOfTime)
+    public function getConditions($topicNumber, $algorithm, $asOf, $asOfTime)
     {
 
         if ($asOf == 'review') {
