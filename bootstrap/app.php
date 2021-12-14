@@ -42,11 +42,16 @@ $app->register(App\Providers\CustomServicesFacadeProvider::class);
 /* Custom repository facades provider */
 $app->register(App\Providers\CustomRepositoryFacadeProvider::class);
 
+/* Custom Helper facades provider */
+$app->register(App\Providers\CustomHelpersFacadeProvider::class);
+
 $app->withFacades(true, [
     'App\Facades\Services\CampServiceFacade' => "CampService",
     'App\Facades\Services\AlgorithmServiceFacade' => "AlgorithmService",
     'App\Facades\Services\TreeServiceFacade' => "TreeService",
-    'App\Facades\Repositories\TreeRepositoryFacade' => "TreeRepository"
+    'App\Facades\Services\TopicServiceFacade' => "TopicService",
+    'App\Facades\Repositories\TreeRepositoryFacade' => "TreeRepository",
+    'App\Facades\Helpers\DateTimeHelperFacade' => "DateTimeHelper"
 ]);
 
 $app->withEloquent();
