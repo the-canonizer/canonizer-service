@@ -38,7 +38,7 @@ class TreeController extends Controller
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
             $mongoArr = TreeService::prepareMongoArr($tree, $topic, $request, $asOfTime);
             $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfTime);
-        } catch (\Exception | CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException $th) {
+        } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
         }
 
