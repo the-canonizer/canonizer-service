@@ -19,11 +19,12 @@ class DateTimeHelper
 
     public function getAsOfTime($request)
     {
-        $asOfTime = time();
+        $asOfTime = date('Y-m-d');
 
-        if ((isset($request['asof']) && isset($request['asofdate']))) {
-             $asOfTime = strtotime(date('Y-m-d H:i:s', strtotime($request['asofdate'])));
+        if (isset($request['asofdate'])) {
+            $asOfTime =  $request['asofdate'];
         }
+        $asOfTime = strtotime(date('Y-m-d', $asOfTime));
 
         return $asOfTime;
     }

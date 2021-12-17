@@ -29,7 +29,6 @@ class TreeService
             "tree_structure" => $tree,
             "namespace_id" => $namespaceId,
             "topic_score" =>  $topicScore,
-            "as_of" => $request->input('asof'),
             "as_of_date" => $asOfTime
         ];
 
@@ -47,22 +46,11 @@ class TreeService
      * @return array $conditions
      */
 
-    public function getConditions($topicNumber, $algorithm, $asOf, $asOfTime)
+    public function getConditions($topicNumber, $algorithm, $asOfTime)
     {
-
-        if ($asOf == 'review') {
-
-            return [
-                'topic_id' => $topicNumber,
-                'algorithm_id' => $algorithm,
-                'as_of' => $asOf
-            ];
-        }
-
         return [
             'topic_id' => $topicNumber,
             'algorithm_id' => $algorithm,
-            'as_of' => $asOf,
             'as_of_date' => $asOfTime
         ];
     }

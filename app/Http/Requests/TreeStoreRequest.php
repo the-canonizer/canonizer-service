@@ -25,8 +25,7 @@ class TreeStoreRequest extends FormRequest
     {
         return [
             'topic_num' => 'required|integer',
-            'asof' => 'required|string',
-            'asofdate' => 'required|string',
+            'asofdate' => 'required',
             'algorithm' => 'required|string'
         ];
     }
