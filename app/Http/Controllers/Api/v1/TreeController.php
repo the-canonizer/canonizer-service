@@ -15,6 +15,7 @@ use App\Exceptions\Camp\CampURLException;
 use App\Exceptions\Camp\CampDetailsException;
 use App\Exceptions\Camp\CampSupportCountException;
 use App\Exceptions\Camp\CampTreeCountException;
+use Illuminate\Support\Facades\Log;
 
 class TreeController extends Controller
 {
@@ -31,13 +32,20 @@ class TreeController extends Controller
         /* get input params from request */
         $topicNumber = $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime =  DateTimeHelper::getAsOfTime($request);
+        $asOfTime = $request->input('asofdate');
+
+        //Log::info($asOfTime);
 
         try {
+
             $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime);
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
-            $mongoArr = TreeService::prepareMongoArr($tree, $topic, $request, $asOfTime);
-            $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfTime);
+
+            //get date string from timestamp
+            $asOfDate = DateTimeHelper::getAsOfDate($request);
+            $mongoArr = TreeService::prepareMongoArr($tree, $topic, $request, $asOfDate);
+            $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
+
         } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
         }
@@ -60,9 +68,9 @@ class TreeController extends Controller
         /* get input params from request */
         $topicNumber = $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime =  DateTimeHelper::getAsOfTime($request);
+        $asOfDate =  DateTimeHelper::getAsOfDate($request);
 
-        $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfTime);
+        $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
         $tree =  TreeRepository::findTree($conditions);
 
         return new TreeResource($tree);
