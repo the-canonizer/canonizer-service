@@ -17,7 +17,7 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $request = null, $asOfTime = null)
+    public function prepareMongoArr($tree, $topic = null, $request = null, $asOfDate = null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
@@ -29,7 +29,7 @@ class TreeService
             "tree_structure" => $tree,
             "namespace_id" => $namespaceId,
             "topic_score" =>  $topicScore,
-            "as_of_date" => $asOfTime
+            "as_of_date" => $asOfDate
         ];
 
         return $mongoArr;
@@ -46,12 +46,12 @@ class TreeService
      * @return array $conditions
      */
 
-    public function getConditions($topicNumber, $algorithm, $asOfTime)
+    public function getConditions($topicNumber, $algorithm, $asOfDate)
     {
         return [
             'topic_id' => $topicNumber,
             'algorithm_id' => $algorithm,
-            'as_of_date' => $asOfTime
+            'as_of_date' => $asOfDate
         ];
     }
 }
