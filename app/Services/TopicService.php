@@ -26,7 +26,7 @@ class TopicService
         //     ->where('objector_nick_id', '=', NULL)
         //     ->where('go_live_time', '<=', $asOfTime)
         //     ->latest('submit_time')->first();
-       return DB::select('select * from topic where topic_num = ? and objector_nick_id is null and go_live_time <= ? order by submit_time desc limit 1', [$topicNumber, $asOfTime])[0];
+       return DB::select('select * from canonizer_service.topic where topic_num = ? and objector_nick_id is null and go_live_time <= ? order by submit_time desc limit 1', [$topicNumber, $asOfTime])[0];
     }
 
 
