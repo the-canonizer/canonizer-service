@@ -34,7 +34,9 @@ class TreeController extends Controller
         $algorithm = $request->input('algorithm');
         $asOfTime = $request->input('asofdate');
 
-        //Log::info($asOfTime);
+        Log::info("###############################");
+        Log::info("Timestamp Recieved: ".$asOfTime);
+        Log::info("###############################");
 
         try {
 
