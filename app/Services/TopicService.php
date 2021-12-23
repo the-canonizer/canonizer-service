@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Model\v1\Topic;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class TopicService
 {
@@ -20,18 +21,7 @@ class TopicService
     public function getLiveTopic($topicNumber, $asOfTime, $filter = array())
     {
 
-        // if (isset($filter['nofilter']) && $filter['nofilter']) {
-        //     $asOfTime  = time();
-        // }
-
-        $sql = Topic::where('topic_num', $topicNumber)
-        ->where('objector_nick_id', '=', NULL)
-        ->where('go_live_time', '<=', $asOfTime)
-        ->latest('submit_time')->toSql();
-        Log::info("#######################");
-        Log::info("Topic Query ".$sql);
-        Log::info("#######################");
-
+        DB::reconnect('mysql');
         return Topic::where('topic_num', $topicNumber)
             ->where('objector_nick_id', '=', NULL)
             ->where('go_live_time', '<=', $asOfTime)
@@ -47,6 +37,7 @@ class TopicService
      */
     public function getReviewTopic($topicNumber)
     {
+        DB::reconnect('mysql');
         return Topic::where('topic_num', $topicNumber)
             ->where('objector_nick_id', '=', NULL)
             ->where('grace_period', '=', 0)

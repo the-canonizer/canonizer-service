@@ -86,7 +86,7 @@ class CampService
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
 
             Log::info("#######################");
-            Log::info("Topic Detais ".json_encode($topic));
+            Log::info("Topic Detais: ".json_encode($topic));
             Log::info("#######################");
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
