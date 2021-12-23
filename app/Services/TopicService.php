@@ -40,6 +40,7 @@ class TopicService
     {
         return Topic::where('topic_num', $topicNumber)
             ->where('objector_nick_id', '=', NULL)
+            ->where('grace_period', '=', 0)
             ->latest('submit_time')->first();
     }
 }

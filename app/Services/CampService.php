@@ -15,6 +15,7 @@ use App\Exceptions\Camp\CampDetailsException;
 use App\Exceptions\Camp\CampSupportCountException;
 use App\Exceptions\Camp\CampTreeCountException;
 use TopicService;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class CampService.
@@ -85,10 +86,12 @@ class CampService
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
 
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
-            $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : '';
+            $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
             $tree = [];
+            $tree[$startCamp]['topic_id'] = $topicNumber;
+            $tree[$startCamp]['camp_id'] = $startCamp;
             $tree[$startCamp]['title'] = $topicName;
             $tree[$startCamp]['review_title'] = $reviewTopicName;
             $tree[$startCamp]['link'] = $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime);
@@ -136,30 +139,45 @@ class CampService
     {
 
         try {
-            if ($isReview) {
-                $topic = TopicService::getReviewTopic($topicNumber, $asOfTime,  ['nofilter' => true]);
-                $camp = $this->getReviewCamp($topicNumber, $campNumber);
-            } else {
-                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime,  ['nofilter' => true]);
-                $camp = $this->getLiveCamp($topicNumber, $campNumber, ['nofilter' => true], $asOfTime);
-            }
 
             $topic_name = '';
             $camp_name = '';
+            $topic_id_name = $topicNumber;
+            $camp_num_name = $campNumber;
+
+            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime,  ['nofilter' => true]);
+            $camp = $this->getLiveCamp($topicNumber, $campNumber, ['nofilter' => true], $asOfTime);
+
             if ($topic && isset($topic->topic_name)) {
                 $topic_name = ($topic->topic_name != '') ? $topic->topic_name : $topic->title;
             }
+
             if ($camp && isset($camp->camp_name)) {
                 $camp_name = $camp->camp_name;
             }
-            $topic_id_name = $topicNumber;
-            $camp_num_name = $campNumber;
+
+            // check if topic or camp are in review
+            if ($isReview) {
+                $ReviewTopic = TopicService::getReviewTopic($topicNumber, $asOfTime,  ['nofilter' => true]);
+                $ReviewCamp = $this->getReviewCamp($topicNumber, $campNumber);
+
+               // Log::info("Log".$ReviewCamp);
+
+                if ($ReviewTopic && isset($ReviewTopic->topic_name)) {
+                    $topic_name = ($ReviewTopic->topic_name != '') ? $ReviewTopic->topic_name : $ReviewTopic->title;
+                }
+                if ($ReviewCamp && isset($ReviewCamp->camp_name)) {
+                    $camp_name = $ReviewCamp->camp_name;
+                }
+            }
+
             if ($topic_name != '') {
                 $topic_id_name = $topicNumber . "-" . preg_replace('/[^A-Za-z0-9\-]/', '-', $topic_name);
             }
             if ($camp_name != '') {
-                $camp_num_name = $campNumber . "-" . preg_replace('/[^A-Za-z0-9\-]/', '-', $camp->camp_name);
+                $camp_num_name = $campNumber . "-" . preg_replace('/[^A-Za-z0-9\-]/', '-', $camp_name);
             }
+
 
             return $topic_id_name . '/' . $camp_num_name;
         } catch (CampURLException $th) {
@@ -210,6 +228,7 @@ class CampService
             return Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
                 ->where('objector_nick_id', '=', NULL)
+                ->where('grace_period', '=', 0)
                 ->latest('submit_time')->first();
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Review Camp Details Exception");
@@ -362,11 +381,13 @@ class CampService
                 //$childCount  = count($child->children($child->topic_num,$child->camp_num));
                 $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime);
                 $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
-                $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : '';
+                $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
 
                 $title = $oneCamp->camp_name; //preg_replace('/[^A-Za-z0-9\-]/', '-', $onecamp->camp_name);
                 $topic_id = $child->topic_num . "-" . $title;
 
+                $array[$child->camp_num]['topic_id'] = $topicNumber;
+                $array[$child->camp_num]['camp_id'] = $child->camp_num;
                 $array[$child->camp_num]['title'] = $title;
                 $array[$child->camp_num]['review_title'] = $reviewCampName;
 
