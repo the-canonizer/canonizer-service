@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Session;
 use Carbon\Carbon;
 class Topic extends Model {
 
-    protected $table = 'canonizer_service.topic';
+    protected $table = 'topic';
     public $timestamps = false;
 
     public static function boot() {
