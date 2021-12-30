@@ -17,7 +17,7 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $request = null, $asOfDate = null)
+    public function prepareMongoArr($tree, $topic = null, $request = null, $asOfDate = null, $algorithm = null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
@@ -25,7 +25,7 @@ class TreeService
 
         $mongoArr = [
             "topic_id" => $request->input('topic_num'),
-            "algorithm_id" => $request->input('algorithm'),
+            "algorithm_id" => $algorithm,
             "tree_structure" => $tree,
             "namespace_id" => $namespaceId,
             "topic_score" =>  $topicScore,
