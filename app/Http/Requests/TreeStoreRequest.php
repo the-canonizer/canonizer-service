@@ -23,10 +23,27 @@ class TreeStoreRequest extends FormRequest
      */
     protected function rules(): array
     {
-        return [
-            'topic_num' => 'required|integer',
-            'asofdate' => 'required',
-            'algorithm' => 'required|string'
-        ];
+        switch ($this->method()) {
+
+            case 'POST': {
+                    return [
+                        'topic_num' => 'required|integer',
+                        'asofdate' => 'required',
+                        'algorithm' => 'required|string',
+                        'update_all' => 'in:0,1'
+                    ];
+                    break;
+                }
+            case 'GET': {
+                    return [
+                        'topic_num' => 'required|integer',
+                        'asofdate' => 'required',
+                        'algorithm' => 'required|string'
+                    ];
+                    break;
+                }
+            default:
+                break;
+        }
     }
 }
