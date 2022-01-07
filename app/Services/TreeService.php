@@ -2,6 +2,17 @@
 
 namespace App\Services;
 
+use CampService;
+use TreeRepository;
+use DateTimeHelper;
+use TopicService;
+use AlgorithmService;
+use App\Exceptions\Camp\CampTreeException;
+use App\Exceptions\Camp\CampURLException;
+use App\Exceptions\Camp\CampDetailsException;
+use App\Exceptions\Camp\CampSupportCountException;
+use App\Exceptions\Camp\CampTreeCountException;
+
 
 
 class TreeService
@@ -40,7 +51,6 @@ class TreeService
      *
      * @param  int topicNumber
      * @param  string $algorithm
-     * @param  string $asOf
      * @param int $asOfTime
      *
      * @return array $conditions
@@ -54,4 +64,43 @@ class TreeService
             'as_of_date' => $asOfDate
         ];
     }
+
+
+    /**
+     * create or update the tree
+     *
+     * @param int topicNumber
+     * @param string $algorithm
+     * @param int $asOfTime
+     * @param int updateAll | default 0
+     * @param Illuminate\Http\Request | defualt []
+     *
+     * @return array $array
+     */
+
+    public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
+    {
+
+        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
+
+        foreach ($algorithms as $algo) {
+            try {
+
+                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime);
+                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+
+                //get date string from timestamp
+                $asOfDate = DateTimeHelper::getAsOfDate($request);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $request, $asOfDate, $algo);
+                $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
+            } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
+                return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
+            }
+
+            $tree = TreeRepository::upsertTree($mongoArr, $conditions);
+        }
+
+        return $tree;
+    }
+
 }
