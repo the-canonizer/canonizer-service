@@ -15,7 +15,7 @@ class TreeResource extends ResourceCollection
      */
     public function toArray($request)
     {
-        //if exception happen during the tree calculation
+        /* if exception happen during the tree calculation */
         if (isset($this->collection[0]['code']) && $this->collection[0]['code'] == 401) {
             return $this->collection[0];
         }
