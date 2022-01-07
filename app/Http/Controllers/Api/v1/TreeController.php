@@ -47,6 +47,7 @@ class TreeController extends Controller
         $algorithm = $request->input('algorithm');
         $asOfTime = $request->input('asofdate');
         $updateAll = $request->input('update_all', 0);
+
         // get the tree from mongoDb
         $asOfDate =  DateTimeHelper::getAsOfDate($request);
         $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);

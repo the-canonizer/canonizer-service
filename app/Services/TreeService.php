@@ -73,7 +73,7 @@ class TreeService
      * @param string $algorithm
      * @param int $asOfTime
      * @param int updateAll | default 0
-     * @param Illuminate\Http\Request | defualt []
+     * @param Illuminate\Http\Request | defualt Empty array
      *
      * @return array $array
      */
