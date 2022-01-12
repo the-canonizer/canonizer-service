@@ -202,18 +202,47 @@ class CampService
     {
 
         try {
+
             if (isset($filter['nofilter']) && $filter['nofilter']) {
                 $asOfTime  = time();
             }
 
-            return Camp::where('topic_num', $topicNumber)
+            $liveCamp =  Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
                 ->where('objector_nick_id', '=', NULL)
-                ->where('go_live_time', '<=', $asOfTime)
-                ->latest('submit_time')->first();
+                ->where('go_live_time', '<=', $asOfTime);
+
+             if($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime) > 0){
+                 $liveCamp =  $liveCamp->where('grace_period', '=', 1);
+              }
+
+              $liveCamp = $liveCamp ->latest('submit_time')->first();
+
+              return $liveCamp;
+
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Live Camp Details Exception");
         }
+    }
+
+     /**
+     * check that if all the grace periods are zeros or all changes go live
+     *
+     * @param  int $topicNumber
+     * @param  int $asOfTime
+     * @param  int $campNumber
+     *
+     * @return int count
+     */
+
+    public function checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime){
+
+        return Camp::where('topic_num', $topicNumber)
+            ->where('camp_num', '=', $campNumber)
+            ->where('objector_nick_id', '=', NULL)
+            ->where('go_live_time', '<=', $asOfTime)
+            ->where('grace_period', '=', 1)
+            ->count();
     }
 
     /**
