@@ -41,7 +41,7 @@ class CampService
      */
 
 
-    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1)
+    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '')
     {
         try {
 
@@ -97,10 +97,10 @@ class CampService
             $tree[$startCamp]['camp_id'] = $startCamp;
             $tree[$startCamp]['title'] = $topicName;
             $tree[$startCamp]['review_title'] = $reviewTopicName;
-            $tree[$startCamp]['link'] = $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime);
-            $tree[$startCamp]['review_link'] = $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
+            $tree[$startCamp]['link'] = $rootUrl .'/'.$this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime);
+            $tree[$startCamp]['review_link'] = $rootUrl .'/'.$this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime);
-            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime);
+            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
             throw new CampTreeException("Prepare Camp Tree Exception");
@@ -122,7 +122,7 @@ class CampService
     {
         try {
             $urlPortion = $this->getSeoBasedUrlPortion($topicNumber, $campNumber, $asOfTime, $isReview);
-            return url('topic/' . $urlPortion);
+            return ('topic/' . $urlPortion);
         } catch (CampURLException $th) {
             throw new CampURLException("URL Exception");
         }
@@ -398,7 +398,7 @@ class CampService
      *
      * @return array $array
      */
-    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime)
+    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl)
     {
         try {
             $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
@@ -424,10 +424,10 @@ class CampService
                 $array[$child->camp_num]['review_title'] = $reviewCampName;
 
                 $queryString = (app('request')->getQueryString()) ? '?' . app('request')->getQueryString() : "";
-                $array[$child->camp_num]['link'] = $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime) . $queryString . '#statement';
-                $array[$child->camp_num]['review_link'] = $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
+                $array[$child->camp_num]['link'] = $rootUrl .'/'.$this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime) . $queryString . '#statement';
+                $array[$child->camp_num]['review_link'] = $rootUrl .'/'.$this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
-                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime);
+                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
             }

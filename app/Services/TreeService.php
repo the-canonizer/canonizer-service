@@ -83,10 +83,15 @@ class TreeService
 
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
 
+        // $rootUrl = env('REFERER_URL');
+        $url = request()->headers->get('referer');
+        $rootUrl = isset($url) ? $url:env('REFERER_URL');
+        $startCamp = 1;
+
         foreach ($algorithms as $algo) {
             try {
 
-                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime);
+                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
 
                 //get date string from timestamp
