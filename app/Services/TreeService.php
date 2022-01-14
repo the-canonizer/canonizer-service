@@ -84,7 +84,8 @@ class TreeService
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
 
         // $rootUrl = env('REFERER_URL');
-        $rootUrl = request()->headers->get('referer');
+        $url = request()->headers->get('referer');
+        $rootUrl = isset($url) ? $url:env('REFERER_URL');
         $startCamp = 1;
 
         foreach ($algorithms as $algo) {
