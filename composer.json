@@ -11,7 +11,8 @@
         "illuminate/session": "^8.74",
         "jenssegers/mongodb": "*",
         "laravel/lumen-framework": "^8.3.1",
-        "mongodb/mongodb": "^1.10"
+        "mongodb/mongodb": "^1.10",
+        "zircote/swagger-php": "^4.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",

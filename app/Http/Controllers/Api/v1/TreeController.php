@@ -13,6 +13,112 @@ class TreeController extends Controller
 {
 
     /**
+     * @OA\Post(path="/tree/store",
+     *   tags={"tree"},
+     *   summary="Create or Update tree",
+     *   description="This api used to create Or update the tree. If tree exist then tree will be updated otherwise new tree will be created.",
+     *   operationId="createUpdateTree",
+     *   @OA\RequestBody(
+     *       required=true,
+     *       description="Create Update Tree",
+     *       @OA\MediaType(
+     *           mediaType="application/x-www-form-urlencoded",
+     *           @OA\Schema(
+     *                 @OA\Property(
+     *                     property="topic_num",
+     *                     description="The topic number of topic",
+     *                     required=true,
+     *                     type="integer",
+     *                     format="int32"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="asofdate",
+     *                     description="Updated status of the pet",
+     *                     required=true,
+     *                     type="integer",
+     *                     format="int32"
+     *                 ),
+     *                 @OA\Property(
+     *                     property="algorithm",
+     *                     description="current selected algorithm",
+     *                     required=true,
+     *                     type="string"
+     *                 ),
+     *                @OA\Property(
+     *                     property="update_all",
+     *                     description="if update_all is 0 then tree will be created using algortihm which sends in api otherwise tree will be created for all the algorithms",
+     *                     required=false,
+     *                     type="integer",
+     *                     format="int32"
+     *                 )
+     *       )
+     *   ),
+     *
+     *   @OA\Response(response=200,description="successful operation",
+     *                             @OA\JsonContent(
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                         name="data",
+     *                                         type="array"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="code",
+     *                                         type="integer"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="success",
+     *                                         type="boolean"
+     *                                    )
+     *                                 )
+     *                            )
+     *
+     *   @OA\Response(response=401, description="Exception occurs during tree calculation",
+     *                             @OA\JsonContent(
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                         name="data",
+     *                                         type="array"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="code",
+     *                                         type="integer"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="success",
+     *                                         type="boolean"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="error",
+     *                                         type="array"
+     *                                    )
+     *                                 )
+     *                             )
+     *   @OA\Response(response=404,
+     *                description="Tree not found",
+     *                @OA\JsonContent(
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                         name="data",
+     *                                         type="array"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="code",
+     *                                         type="integer"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="success",
+     *                                         type="boolean"
+     *                                    ),
+     *                                    @OA\Items(
+     *                                         name="error",
+     *                                         type="string"
+     *                                    )
+     *                          )
+     *                  )
+     * )
+     */
+
+    /**
      * Store a new tree.
      *
      * @param  TreeStoreRequest  $request
