@@ -8,6 +8,7 @@ use TreeService;
 use TreeRepository;
 use DateTimeHelper;
 use App\Http\Resources\TreeResource;
+use Illuminate\Support\Facades\Log;
 
 class TreeController extends Controller
 {
@@ -133,7 +134,14 @@ class TreeController extends Controller
         $asOfTime = $request->input('asofdate');
         $updateAll = $request->input('update_all', 0);
 
+        $start = microtime(true);
+
         $tree =  TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
+
+        $end = microtime(true);
+        $time = $end - $start;
+
+        Log::info("Time via store method: ". $time);
 
         return new TreeResource(array($tree));
     }
@@ -155,9 +163,16 @@ class TreeController extends Controller
         $updateAll = $request->input('update_all', 0);
 
         // get the tree from mongoDb
+        $start = microtime(true);
+
         $asOfDate =  DateTimeHelper::getAsOfDate($request);
         $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
         $tree =  TreeRepository::findTree($conditions);
+
+        $end = microtime(true);
+        $time = $end - $start;
+
+        Log::info("Time via find method: ". $time);
 
         // create tree if not found
         if($tree->isEmpty() || !$tree){
