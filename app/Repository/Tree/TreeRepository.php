@@ -87,8 +87,8 @@ class TreeRepository implements TreeInterface
      * @param int $namespaceId
      * @param int $asofdate
      * @param string $algorithm
-     * @param int $page_number
-     * @param int $page_size
+     * @param int $skip
+     * @param int $pageSize
      *
      *
      * @return array Response
@@ -118,8 +118,6 @@ class TreeRepository implements TreeInterface
      * @param int $namespaceId
      * @param int $asofdate
      * @param string $algorithm
-     * @param int $page_number
-     * @param int $page_size
      *
      *
      * @return array Response
