@@ -6,6 +6,7 @@ namespace App\Repository\Tree;
 use App\Model\v1\Tree;
 use App\Repository\Tree\TreeInterface;
 use Illuminate\Http\Request;
+use PHPUnit\TextUI\XmlConfiguration\Group;
 
 class TreeRepository implements TreeInterface
 {
@@ -79,4 +80,64 @@ class TreeRepository implements TreeInterface
             return $th->getMessage();
         }
     }
+
+    /**
+     * get tree with pagination.
+     *
+     * @param int $namespaceId
+     * @param int $asofdate
+     * @param string $algorithm
+     * @param int $page_number
+     * @param int $page_size
+     *
+     *
+     * @return array Response
+     */
+
+    public  function getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize)
+    {
+        try {
+            $record = $this->model::where('namespace_id', $namespaceId)
+            ->where('algorithm_id', $algorithm)
+            ->where('as_of_date','<=', $asofdate)
+            ->project(['_id'=> 0])
+            ->skip($skip)
+            ->take($pageSize)
+            ->orderBy('topic_score', 'desc')
+            ->groupBy('topic_id')
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    /**
+     * get count tree with condition.
+     *
+     * @param int $namespaceId
+     * @param int $asofdate
+     * @param string $algorithm
+     * @param int $page_number
+     * @param int $page_size
+     *
+     *
+     * @return array Response
+     */
+
+    public  function getTotalTrees($namespaceId, $asofdate, $algorithm)
+    {
+        try {
+            $record = $this->model::where('namespace_id', $namespaceId)
+            ->where('algorithm_id', $algorithm)
+            ->where('as_of_date','<=', $asofdate)
+            ->orderBy('topic_score', 'desc')
+            ->groupBy('topic_id','topic_name','topic_score','as_of_date')
+            ->count();
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
 }

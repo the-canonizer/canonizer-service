@@ -51,7 +51,8 @@ $app->withFacades(true, [
     'App\Facades\Services\TreeServiceFacade' => "TreeService",
     'App\Facades\Services\TopicServiceFacade' => "TopicService",
     'App\Facades\Repositories\TreeRepositoryFacade' => "TreeRepository",
-    'App\Facades\Helpers\DateTimeHelperFacade' => "DateTimeHelper"
+    'App\Facades\Helpers\DateTimeHelperFacade' => "DateTimeHelper",
+    'App\Facades\Helpers\UtilHelperFacade' => "UtilHelper",
 ]);
 
 $app->withEloquent();

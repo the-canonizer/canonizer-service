@@ -33,9 +33,11 @@ class TreeService
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
         $topicScore = isset($tree[1]['score']) ? $tree[1]['score'] : 0;
+        $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
 
         $mongoArr = [
             "topic_id" => $request->input('topic_num'),
+            "topic_name" => $topicTitle,
             "algorithm_id" => $algorithm,
             "tree_structure" => $tree,
             "namespace_id" => $namespaceId,
