@@ -165,7 +165,7 @@ class TreeController extends Controller
         // get the tree from mongoDb
         $start = microtime(true);
 
-        $asOfDate =  DateTimeHelper::getAsOfDate($request);
+        $asOfDate =  DateTimeHelper::getAsOfDate($asOfTime);
         $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
         $tree =  TreeRepository::findTree($conditions);
 
