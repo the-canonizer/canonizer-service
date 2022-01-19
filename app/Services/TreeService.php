@@ -28,15 +28,16 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $request = null, $asOfDate = null, $algorithm = null)
+    public function prepareMongoArr($tree, $topic = null, $asOfDate = null, $algorithm = null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
         $topicScore = isset($tree[1]['score']) ? $tree[1]['score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
+        $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
 
         $mongoArr = [
-            "topic_id" => $request->input('topic_num'),
+            "topic_id" => $topicNumber,
             "topic_name" => $topicTitle,
             "algorithm_id" => $algorithm,
             "tree_structure" => $tree,
@@ -92,13 +93,12 @@ class TreeService
 
         foreach ($algorithms as $algo) {
             try {
-
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
 
                 //get date string from timestamp
-                $asOfDate = DateTimeHelper::getAsOfDate($request);
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $request, $asOfDate, $algo);
+                $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $asOfDate, $algo);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

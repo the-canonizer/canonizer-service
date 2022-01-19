@@ -85,9 +85,6 @@ class CampService
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
 
-            Log::info("#######################");
-            Log::info("Topic Detais: ".json_encode($topic));
-            Log::info("#######################");
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
