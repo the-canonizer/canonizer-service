@@ -17,12 +17,12 @@ class DateTimeHelper
      */
 
 
-    public function getAsOfDate($request)
+    public function getAsOfDate($asOfTime)
     {
         $asOfDate = date('Y-m-d');
 
-        if (isset($request['asofdate'])) {
-            $asOfDate =  $request['asofdate'];
+        if (isset($asOfTime)) {
+            $asOfDate =  $asOfTime;
         }
         $asOfDate = strtotime(date('Y-m-d', $asOfDate));    //Y-m-d H:i:s
 
