@@ -129,10 +129,10 @@ class TreeController extends Controller
     public function store(TreeStoreRequest $request)
     {
         /* get input params from request */
-        $topicNumber = $request->input('topic_num');
+        $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime = $request->input('asofdate');
-        $updateAll = $request->input('update_all', 0);
+        $asOfTime = (int) $request->input('asofdate');
+        $updateAll = (int) $request->input('update_all', 0);
 
         $start = microtime(true);
 
@@ -157,10 +157,10 @@ class TreeController extends Controller
     public function find(TreeStoreRequest $request)
     {
         /* get input params from request */
-        $topicNumber = $request->input('topic_num');
+        $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime = $request->input('asofdate');
-        $updateAll = $request->input('update_all', 0);
+        $asOfTime = (int) $request->input('asofdate');
+        $updateAll = (int) $request->input('update_all', 0);
 
         // get the tree from mongoDb
         $start = microtime(true);
