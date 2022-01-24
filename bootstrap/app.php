@@ -122,6 +122,11 @@ $app->middleware([
     \Illuminate\Session\Middleware\StartSession::class,
 ]);
 
+$app->routeMiddleware([
+    'cors' => App\Http\Middleware\CorsMiddleware::class,
+]);
+
+
 /*
 |--------------------------------------------------------------------------
 | Register Service Providers
