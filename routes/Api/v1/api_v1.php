@@ -1,9 +1,11 @@
 <?php
 
-
+$router->post('/simpleApi', ['uses' => 'Api\v1\TreeController@simpleApi']);
 
 $router->group(['middleware'=>'cors','prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($router) {
 
+    // for testing
+    $router->post('/simpleApiTrack', ['uses' => 'TreeController@simpleApiTrack']);
     // trees
     $router->group(['prefix' => 'tree'], function () use ($router) {
         $router->post('/store', ['uses' => 'TreeController@store']);
