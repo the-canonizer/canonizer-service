@@ -181,4 +181,16 @@ class TreeController extends Controller
 
         return new TreeResource($tree);
     }
+
+    public function simpleApiTrack(){
+
+          return ['message'=>"simple api with cors middle and without headers"];
+
+    }
+
+    public function simpleApi(){
+
+        return ['message'=>"simple api without cors middle and without headers"];
+
+    }
 }
