@@ -106,7 +106,7 @@ class TopicController extends Controller
      *                                 type="array",
      *                                 @OA\Items(
      *                                         name="data",
-     *                                         type="array"
+     *                                         type="string"
      *                                    ),
      *                                    @OA\Items(
      *                                         name="status_code",
@@ -122,12 +122,12 @@ class TopicController extends Controller
      *                                    )
      *                                 )
      *                             )
-     *   @OA\Response(response=404, description="Tree not found",
+     *   @OA\Response(response=404, description="Topics not found",
      *                @OA\JsonContent(
      *                                 type="array",
      *                                 @OA\Items(
      *                                         name="data",
-     *                                         type="array"
+     *                                         type="string"
      *                                    ),
      *                                    @OA\Items(
      *                                         name="status_code",
