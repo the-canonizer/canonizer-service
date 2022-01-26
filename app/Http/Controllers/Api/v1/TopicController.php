@@ -10,6 +10,7 @@ use TreeRepository;
 use UtilHelper;
 use App\Http\Resources\TopicResource;
 use Illuminate\Support\Facades\Log;
+use DateTimeHelper;
 
 class TopicController extends Controller
 {
@@ -29,16 +30,31 @@ class TopicController extends Controller
         $asofdate = (int)$request->input('asofdate');
         $algorithm = $request->input('algorithm');
         $search = $request->input('search');
+        $filter = (float) $request->input('filter');
+
+        $asofdate = DateTimeHelper::getAsOfDate($asofdate);
 
         Log::info($asofdate);
 
-       $skip = ($pageNumber-1) * $pageSize;
+        $skip = ($pageNumber-1) * $pageSize;
 
-       $totalTrees = TreeRepository::getTotalTrees($namespaceId, $asofdate, $algorithm);
-       $numberOfPages = UtilHelper::getNumberOfPages($totalTrees, $pageSize);
-       $trees = TreeRepository::getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize);
+        /** if filter param set then only get those topics which have score more than give filter */
 
-       return new TopicResource($trees, $numberOfPages);
+        //get total trees
+        $totalTrees = (isset($filter) && $filter!=null && $filter!='') ?
+                      TreeRepository::getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter):
+                      TreeRepository::getTotalTrees($namespaceId, $asofdate, $algorithm);
+
+        $totalTrees = count($totalTrees);
+
+        $numberOfPages = UtilHelper::getNumberOfPages($totalTrees, $pageSize);
+
+        //get topics with score
+        $trees = (isset($filter) && $filter!=null && $filter!='') ?
+                 TreeRepository::getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter):
+                 TreeRepository::getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize);
+
+        return new TopicResource($trees, $numberOfPages);
 
     }
 }

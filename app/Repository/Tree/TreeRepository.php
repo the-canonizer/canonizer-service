@@ -113,6 +113,39 @@ class TreeRepository implements TreeInterface
     }
 
     /**
+     * get tree with pagination.
+     *
+     * @param int $namespaceId
+     * @param int $asofdate
+     * @param string $algorithm
+     * @param int $skip
+     * @param int $pageSize
+     * @param float $filter
+     *
+     *
+     * @return array Response
+     */
+
+    public  function getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter)
+    {
+        try {
+            $record = $this->model::where('namespace_id', $namespaceId)
+            ->where('algorithm_id', $algorithm)
+            ->where('as_of_date','<=', $asofdate)
+            ->where('topic_score','>', $filter)
+            ->project(['_id'=> 0])
+            ->skip($skip)
+            ->take($pageSize)
+            ->orderBy('topic_score', 'desc')
+            ->groupBy('topic_id')
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+    /**
      * get count tree with condition.
      *
      * @param int $namespaceId
@@ -129,9 +162,37 @@ class TreeRepository implements TreeInterface
             $record = $this->model::where('namespace_id', $namespaceId)
             ->where('algorithm_id', $algorithm)
             ->where('as_of_date','<=', $asofdate)
+            ->groupBy('topic_id')
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+            return $record;
+        } catch (\Throwable $th) {
+            return $th->getMessage();
+        }
+    }
+
+
+    /**
+     * get count tree with condition.
+     *
+     * @param int $namespaceId
+     * @param int $asofdate
+     * @param string $algorithm
+     * @param float $filter
+     *
+     *
+     * @return array Response
+     */
+
+    public  function getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter)
+    {
+        try {
+            $record = $this->model::where('namespace_id', $namespaceId)
+            ->where('algorithm_id', $algorithm)
+            ->where('as_of_date','<=', $asofdate)
+            ->where('topic_score','>', $filter)
             ->orderBy('topic_score', 'desc')
-            ->groupBy('topic_id','topic_name','topic_score','as_of_date')
-            ->count();
+            ->groupBy('topic_id')
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
