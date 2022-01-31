@@ -138,7 +138,7 @@ class TreeRepository implements TreeInterface
             ->take($pageSize)
             ->orderBy('topic_score', 'desc')
             ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -163,7 +163,7 @@ class TreeRepository implements TreeInterface
             ->where('algorithm_id', $algorithm)
             ->where('as_of_date','<=', $asofdate)
             ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date','tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
