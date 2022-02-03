@@ -37,9 +37,9 @@ class TopicResource extends ResourceCollection
                 'message' => 'Success',
                 'error' => null,
                 'data' => [
-                    'topic' => $this->resource
+                    'topic' => $this->resource,
+                    'number_of_pages' => $this->numberOfPages
                 ],
-                'number_of_pages' => $this->numberOfPages
             ];
         } else if (count($this->resource) <= 0 || $this->resource->isEmpty()) {
 

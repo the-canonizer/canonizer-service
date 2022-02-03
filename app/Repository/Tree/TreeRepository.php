@@ -2,11 +2,8 @@
 
 namespace App\Repository\Tree;
 
-
 use App\Model\v1\Tree;
 use App\Repository\Tree\TreeInterface;
-use Illuminate\Http\Request;
-use PHPUnit\TextUI\XmlConfiguration\Group;
 
 class TreeRepository implements TreeInterface
 {
@@ -19,9 +16,8 @@ class TreeRepository implements TreeInterface
      */
     public function __construct(Tree $tree)
     {
-        $this->model =  $tree;
+        $this->model = $tree;
     }
-
 
     /**
      * create a new tree.
@@ -30,11 +26,11 @@ class TreeRepository implements TreeInterface
      * @return boolean Response
      */
 
-    public  function createTree($tree)
+    public function createTree($tree)
     {
 
         try {
-            $record =  Tree::create($tree);
+            $record = Tree::create($tree);
             return $record->wasRecentlyCreated;
         } catch (\Throwable $th) {
             return false;
@@ -50,10 +46,10 @@ class TreeRepository implements TreeInterface
      * @return boolean Response
      */
 
-    public  function upsertTree($treeArr, $conditions)
+    public function upsertTree($treeArr, $conditions)
     {
         try {
-            $record =  Tree::updateOrCreate(
+            $record = Tree::updateOrCreate(
                 $conditions,
                 $treeArr
             );
@@ -71,10 +67,10 @@ class TreeRepository implements TreeInterface
      * @return array Response
      */
 
-    public  function findTree($conditions)
+    public function findTree($conditions)
     {
         try {
-            $record =  Tree::where($conditions)->get();
+            $record = Tree::where($conditions)->get();
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -94,18 +90,21 @@ class TreeRepository implements TreeInterface
      * @return array Response
      */
 
-    public  function getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize)
+    public function getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search = '')
     {
         try {
             $record = $this->model::where('namespace_id', $namespaceId)
-            ->where('algorithm_id', $algorithm)
-            ->where('as_of_date','<=', $asofdate)
-            ->project(['_id'=> 0])
-            ->skip($skip)
-            ->take($pageSize)
-            ->orderBy('topic_score', 'desc')
-            ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+                ->where('algorithm_id', $algorithm)
+                ->where('as_of_date', '<=', $asofdate);
+            if (isset($search) && $search != '') {
+                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+            };
+            $record = $record->project(['_id' => 0])
+                ->skip($skip)
+                ->take($pageSize)
+                ->orderBy('topic_score', 'desc')
+                ->groupBy('topic_id')
+                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -126,19 +125,22 @@ class TreeRepository implements TreeInterface
      * @return array Response
      */
 
-    public  function getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter)
+    public function getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search = '')
     {
         try {
             $record = $this->model::where('namespace_id', $namespaceId)
-            ->where('algorithm_id', $algorithm)
-            ->where('as_of_date','<=', $asofdate)
-            ->where('topic_score','>', $filter)
-            ->project(['_id'=> 0])
-            ->skip($skip)
-            ->take($pageSize)
-            ->orderBy('topic_score', 'desc')
-            ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+                ->where('algorithm_id', $algorithm)
+                ->where('as_of_date', '<=', $asofdate)
+                ->where('topic_score', '>', $filter);
+            if (isset($search) && $search != '') {
+                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+            };
+            $record = $record->project(['_id' => 0])
+                ->skip($skip)
+                ->take($pageSize)
+                ->orderBy('topic_score', 'desc')
+                ->groupBy('topic_id')
+                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -156,20 +158,22 @@ class TreeRepository implements TreeInterface
      * @return array Response
      */
 
-    public  function getTotalTrees($namespaceId, $asofdate, $algorithm)
+    public function getTotalTrees($namespaceId, $asofdate, $algorithm, $search = '')
     {
         try {
             $record = $this->model::where('namespace_id', $namespaceId)
-            ->where('algorithm_id', $algorithm)
-            ->where('as_of_date','<=', $asofdate)
-            ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+                ->where('algorithm_id', $algorithm)
+                ->where('as_of_date', '<=', $asofdate);
+            if (isset($search) && $search != '') {
+                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+            }
+            $record = $record->groupBy('topic_id')
+                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
         }
     }
-
 
     /**
      * get count tree with condition.
@@ -183,16 +187,19 @@ class TreeRepository implements TreeInterface
      * @return array Response
      */
 
-    public  function getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter)
+    public function getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search = '')
     {
         try {
             $record = $this->model::where('namespace_id', $namespaceId)
-            ->where('algorithm_id', $algorithm)
-            ->where('as_of_date','<=', $asofdate)
-            ->where('topic_score','>', $filter)
-            ->orderBy('topic_score', 'desc')
-            ->groupBy('topic_id')
-            ->get(['topic_id','topic_score', 'topic_name', 'as_of_date']);
+                ->where('algorithm_id', $algorithm)
+                ->where('as_of_date', '<=', $asofdate)
+                ->where('topic_score', '>', $filter);
+            if (isset($search) && $search != '') {
+                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+            }
+            $record = $record->orderBy('topic_score', 'desc')
+                ->groupBy('topic_id')
+                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();

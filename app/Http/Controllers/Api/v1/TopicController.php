@@ -162,7 +162,7 @@ class TopicController extends Controller
         $asofdate = (int)$request->input('asofdate');
         $algorithm = $request->input('algorithm');
         $search = $request->input('search');
-        $filter = (float) $request->input('filter');
+        $filter = (float) $request->input('filter') ?? null;
 
         $asofdate = DateTimeHelper::getAsOfDate($asofdate);
 
@@ -174,8 +174,8 @@ class TopicController extends Controller
 
         //get total trees
         $totalTrees = (isset($filter) && $filter!=null && $filter!='') ?
-                      TreeRepository::getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter):
-                      TreeRepository::getTotalTrees($namespaceId, $asofdate, $algorithm);
+                      TreeRepository::getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
+                      TreeRepository::getTotalTrees($namespaceId, $asofdate, $algorithm, $search);
 
         $totalTrees = count($totalTrees);
 
@@ -183,8 +183,8 @@ class TopicController extends Controller
 
         //get topics with score
         $trees = (isset($filter) && $filter!=null && $filter!='') ?
-                 TreeRepository::getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter):
-                 TreeRepository::getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize);
+                 TreeRepository::getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search):
+                 TreeRepository::getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search);
 
         return new TopicResource($trees, $numberOfPages);
 
