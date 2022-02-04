@@ -3,14 +3,14 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Http\Requests\TopicRequest;
-use App\Model\v1\Tree;
-use TreeRepository;
-use UtilHelper;
 use App\Http\Resources\TopicResource;
-use Illuminate\Support\Facades\Log;
+use App\Model\v1\Tree;
+use CampService;
 use DateTimeHelper;
+use Illuminate\Http\Request;
+use TopicService;
+use UtilHelper;
 
 class TopicController extends Controller
 {
@@ -158,35 +158,38 @@ class TopicController extends Controller
         /* get input params from request */
         $pageNumber = $request->input('page_number');
         $pageSize = $request->input('page_size');
-        $namespaceId = (int)$request->input('namespace_id');
-        $asofdate = (int)$request->input('asofdate');
+        $namespaceId = (int) $request->input('namespace_id');
+        $asofdateTime = (int) $request->input('asofdate');
         $algorithm = $request->input('algorithm');
         $search = $request->input('search');
+        $asof = $request->input('asof');
         $filter = (float) $request->input('filter') ?? null;
 
-        $asofdate = DateTimeHelper::getAsOfDate($asofdate);
+        $asofdate = DateTimeHelper::getAsOfDate($asofdateTime);
+        $skip = ($pageNumber - 1) * $pageSize;
 
-        Log::info($asofdate);
+        /** Get Cron Run date from .env file and make timestring */
+        $cronDate = UtilHelper::getCronRunDateString();
 
-        $skip = ($pageNumber-1) * $pageSize;
+        /* if $asofdate is greater then cron run date then get topics
+         * with score from mongodb instance else fetch Topics with Score
+         * from Mysql
+         */
+        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
 
-        /** if filter param set then only get those topics which have score more than give filter */
+            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $search);
+            $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search);
+        } else {
 
-        //get total trees
-        $totalTrees = (isset($filter) && $filter!=null && $filter!='') ?
-                      TreeRepository::getTotalTreesWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
-                      TreeRepository::getTotalTrees($namespaceId, $asofdate, $algorithm, $search);
+            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId);
+            $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+            /** find the total pages */
+            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, true);
+            $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+        }
 
-        $totalTrees = count($totalTrees);
-
-        $numberOfPages = UtilHelper::getNumberOfPages($totalTrees, $pageSize);
-
-        //get topics with score
-        $trees = (isset($filter) && $filter!=null && $filter!='') ?
-                 TreeRepository::getTreesWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search):
-                 TreeRepository::getTreesWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search);
-
-        return new TopicResource($trees, $numberOfPages);
+        return new TopicResource($topics, $numberOfPages);
 
     }
 }

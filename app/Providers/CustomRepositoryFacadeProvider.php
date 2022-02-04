@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Repository\Tree\TreeRepository;
+use App\Repository\Topic\TopicRepository;
 use App\Model\v1\Tree;
 
 class CustomRepositoryFacadeProvider extends ServiceProvider
@@ -28,6 +29,11 @@ class CustomRepositoryFacadeProvider extends ServiceProvider
         /**  Bind TreeRepository Class */
         $this->app->bind('TreeRepository', function () {
             return new TreeRepository(new Tree());
+        });
+
+        /**  Bind TopicRepository Class */
+        $this->app->bind('TopicRepository', function () {
+            return new TopicRepository(new Tree());
         });
     }
 }
