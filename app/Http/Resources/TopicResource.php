@@ -30,7 +30,8 @@ class TopicResource extends ResourceCollection
      */
     public function toArray($request)
     {
-        if (count($this->resource) > 0 && !$this->resource->isEmpty()) {
+
+        if (count(array($this->resource)) > 0) {
 
             return [
                 'status_code' => 200,
@@ -41,7 +42,7 @@ class TopicResource extends ResourceCollection
                     'number_of_pages' => $this->numberOfPages
                 ],
             ];
-        } else if (count($this->resource) <= 0 || $this->resource->isEmpty()) {
+        } else if (count(array($this->resource)) <= 0) {
 
             return [
                 'status_code' => 404,

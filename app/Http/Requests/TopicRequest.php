@@ -35,6 +35,7 @@ class TopicRequest extends FormRequest
                         'namespace_id' => 'required|integer',
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
+                        'asof' => 'required|string',
                         'search' => 'nullable|string'
                     ];
                     break;
