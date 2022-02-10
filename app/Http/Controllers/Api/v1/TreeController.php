@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
-use TreeService;
-use TreeRepository;
-use DateTimeHelper;
 use App\Http\Resources\TreeResource;
+use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
+use TreeRepository;
+use TreeService;
+use UtilHelper;
 
 class TreeController extends Controller
 {
@@ -136,16 +137,15 @@ class TreeController extends Controller
 
         $start = microtime(true);
 
-        $tree =  TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
+        $tree = TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
 
         $end = microtime(true);
         $time = $end - $start;
 
-        Log::info("Time via store method: ". $time);
+        Log::info("Time via store method: " . $time);
 
         return new TreeResource(array($tree));
     }
-
 
     /**
      * @OA\Post(path="/tree/get",
@@ -267,23 +267,36 @@ class TreeController extends Controller
         $algorithm = $request->input('algorithm');
         $asOfTime = (int) $request->input('asofdate');
         $updateAll = (int) $request->input('update_all', 0);
+        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+
+        /** Get Cron Run date from .env file and make timestring */
+        $cronDate = UtilHelper::getCronRunDateString();
 
         // get the tree from mongoDb
         $start = microtime(true);
 
-        $asOfDate =  DateTimeHelper::getAsOfDate($asOfTime);
-        $conditions =  TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
-        $tree =  TreeRepository::findTree($conditions);
+        /* if $asofdate is greater then cron run date then get tree
+         * with score from mongodb instance else fetch tree with Score
+         * from Mysql
+         */
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
+
+            $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
+            $tree = TreeRepository::findTree($conditions);
+
+            if ($tree->isEmpty() || !$tree) {
+                $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            }
+
+        } else {
+            //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
+            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+        }
 
         $end = microtime(true);
         $time = $end - $start;
 
-        Log::info("Time via find method: ". $time);
-
-        // create tree if not found
-        if($tree->isEmpty() || !$tree){
-           $tree =  array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-        }
+        Log::info("Time via find method: " . $time);
 
         return new TreeResource($tree);
     }

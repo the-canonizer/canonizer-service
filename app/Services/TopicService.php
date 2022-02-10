@@ -125,8 +125,9 @@ class TopicService
     /**
      * Sort the topics based on score.
      *
-     * @param Illuminate\Database\Eloquent\Collection $namespaceId
+     * @param int $namespaceId
      * @param string $algorithm
+     * @param int $asOfTime
      *
      * @return Illuminate\Database\Eloquent\Collection;
      */
@@ -161,6 +162,24 @@ class TopicService
             return $topics;
         }
     }
+
+    /**
+     * Filter the topics collection .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+     public function filterTopicCollection($topics, $filter){
+
+        $filteredTopics = $topics->filter(function ($value, $key) use($filter) {
+            return $value->score > $filter;
+        });
+
+        return $filteredTopics;
+
+     }
 
 
 

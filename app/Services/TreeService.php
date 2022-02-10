@@ -85,21 +85,19 @@ class TreeService
     {
 
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
-
-        // $rootUrl = env('REFERER_URL');
-        $url = request()->headers->get('referer');
-        $rootUrl = isset($url) ? $url:env('REFERER_URL');
+        $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
 
         foreach ($algorithms as $algo) {
             try {
+
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
-
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $asOfDate, $algo);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
+
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
             }
@@ -108,6 +106,49 @@ class TreeService
         }
 
         return $tree;
+    }
+
+
+    /**
+     * Get Topic tree from mysql if it is not exist in mongodb
+     *
+     * @param int topicNumber
+     * @param string $algorithm
+     * @param int $asOfTime
+     * @param int updateAll | default 0
+     * @param Illuminate\Http\Request | defualt Empty array
+     *
+     * @return array $array
+     */
+    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = []){
+
+        $rootUrl =  $this->getRootUrl($request);
+        $startCamp = 1;
+        try {
+           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+        }
+        catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
+            return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
+        }
+
+        return $tree;
+    }
+
+
+    /**
+     * Get root url
+     *
+     * @param Illuminate\Http\Request
+     *
+     * @return string $rootUrl
+     */
+    public function getRootUrl($request){
+
+         // $rootUrl = env('REFERER_URL');
+         $url = request()->headers->get('referer');
+         $rootUrl = isset($url) ? $url:env('REFERER_URL');
+
+         return $rootUrl;
     }
 
 }

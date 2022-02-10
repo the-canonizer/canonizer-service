@@ -182,10 +182,17 @@ class TopicController extends Controller
             $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search);
         } else {
 
-            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId);
+            /*  search & filter functionality */
+            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $search);
             $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-            /** find the total pages */
-            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, true);
+
+            /** filter the collection if filter parameter set */
+            if (isset($filter) && $filter != '' && $filter != null) {
+               $topics = TopicService::filterTopicCollection($topics, $filter);
+            }
+
+            /** total pages */
+            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $search, true);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
         }
 
