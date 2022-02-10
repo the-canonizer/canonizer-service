@@ -116,6 +116,8 @@ class TopicService
                       TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
                       TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $search);
 
+        Log::info("getTotalTopics mongodb ".$totalTopics);
+
         $totalTopics = count($totalTopics) ?? 0;
 
         return $totalTopics;
