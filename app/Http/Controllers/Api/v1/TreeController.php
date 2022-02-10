@@ -284,7 +284,7 @@ class TreeController extends Controller
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
             $tree = TreeRepository::findTree($conditions);
 
-            if ($tree->isEmpty() || !$tree) {
+            if (!$tree || !count($tree)) {
                 $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             }
 
