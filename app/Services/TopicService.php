@@ -112,7 +112,7 @@ class TopicService
     public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $search){
 
         /** if filter param set then only get those topics which have score more than give filter */
-        $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
+       return $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
                       TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
                       TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $search);
 
