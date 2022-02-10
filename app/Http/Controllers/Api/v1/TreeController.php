@@ -282,9 +282,7 @@ class TreeController extends Controller
         if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
 
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
-           return $tree = TreeRepository::findTree($conditions);
-
-            Log::info("Tree Controller ".$tree);
+            $tree = TreeRepository::findTree($conditions);
 
             if (!$tree || !count($tree)) {
                 $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
