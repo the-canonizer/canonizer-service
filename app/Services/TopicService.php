@@ -28,7 +28,7 @@ class TopicService
             ->where('go_live_time', '<=', $asOfTime);
 
         if($this->checkIfAnyReviewChangeExist($topicNumber, $asOfTime) > 0){
-             $liveTopic =  $liveTopic->where('grace_period', '=', 1);
+             $liveTopic =  $liveTopic->where('grace_period', '=', 0);
         }
 
         $liveTopic = $liveTopic->latest('submit_time')->first();
@@ -45,10 +45,16 @@ class TopicService
      */
     public function getReviewTopic($topicNumber)
     {
-        return Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL)
-            ->where('grace_period', '=', 0)
-            ->latest('submit_time')->first();
+        $topic = Topic::where('topic_num', $topicNumber)
+            ->where('objector_nick_id', '=', NULL);
+
+           if($this->checkIfAnyReviewChangeExist($topicNumber) > 0){
+                $topic =  $topic->where('grace_period', '=', 0);
+           }
+
+           $topic = $topic->latest('submit_time')
+                                      ->first();
+          return $topic;
     }
 
 
@@ -61,13 +67,18 @@ class TopicService
      * @return int count
      */
 
-    public function checkIfAnyReviewChangeExist($topicNumber, $asOfTime){
+    public function checkIfAnyReviewChangeExist($topicNumber, $asOfTime = null){
 
-        return Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL)
-            ->where('go_live_time', '<=', $asOfTime)
-            ->where('grace_period', '=', 1)
-            ->count();
+        $topic = Topic::where('topic_num', $topicNumber)
+            ->where('objector_nick_id', '=', NULL);
+
+            if($asOfTime != null){
+                $topic = $topic->where('go_live_time', '<=', $asOfTime);
+            }
+
+            $topic = $topic->where('grace_period', '=', 0)
+                           ->count();
+            return $topic;
     }
 
 
