@@ -209,7 +209,7 @@ class CampService
                 ->where('go_live_time', '<=', $asOfTime);
 
             if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime) > 0) {
-                $liveCamp = $liveCamp->where('grace_period', '=', 1);
+                $liveCamp = $liveCamp->where('grace_period', '=', 0);
             }
 
             $liveCamp = $liveCamp->latest('submit_time')->first();
@@ -231,15 +231,21 @@ class CampService
      * @return int count
      */
 
-    public function checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime)
+    public function checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime=null)
     {
 
-        return Camp::where('topic_num', $topicNumber)
+        $reviewCampCount =  Camp::where('topic_num', $topicNumber)
             ->where('camp_num', '=', $campNumber)
-            ->where('objector_nick_id', '=', null)
-            ->where('go_live_time', '<=', $asOfTime)
-            ->where('grace_period', '=', 1)
-            ->count();
+            ->where('objector_nick_id', '=', null);
+
+            if($asOfTime != null){
+                $reviewCampCount = $reviewCampCount->where('go_live_time', '<=', $asOfTime);
+            }
+
+            $reviewCampCount = $reviewCampCount->where('grace_period', '=', 0)
+                                               ->count();
+
+            return $reviewCampCount;
     }
 
     /**
@@ -254,11 +260,19 @@ class CampService
     {
 
         try {
-            return Camp::where('topic_num', $topicNumber)
+
+             $reviewCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
-                ->where('objector_nick_id', '=', null)
-                ->where('grace_period', '=', 0)
-                ->latest('submit_time')->first();
+                ->where('objector_nick_id', '=', null);
+
+                if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber) > 0) {
+                    $reviewCamp = $reviewCamp->where('grace_period', '=', 0);
+                }
+
+                $reviewCamp = $reviewCamp->latest('submit_time')->first();
+
+                return $reviewCamp;
+
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Review Camp Details Exception");
         }
