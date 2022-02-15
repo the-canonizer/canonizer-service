@@ -30,7 +30,7 @@ class TreeGetApiTest extends TestCase
     public function testStoreApiWithCorrectValues()
     {
         print sprintf("Test with correct values");
-        $response = $this->call('POST', '/api/v1/tree/get', ['topic_num'=>238,'asofdate'=>1642510854,'algorithm'=>'blind_popularity','update_all'=>0]);
+        $response = $this->call('POST', '/api/v1/tree/get', ['topic_num'=>238,'asofdate'=>time(),'algorithm'=>'blind_popularity','update_all'=>0]);
         $this->assertEquals(200, $response->status());
     }
 }
