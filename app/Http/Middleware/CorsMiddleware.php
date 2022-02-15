@@ -23,6 +23,8 @@ class CorsMiddleware
             $origin = 'https://canonizer.com';
         }
 
+        $origin = '*';
+
         $headers = [
             'Access-Control-Allow-Origin'      => $origin,
             'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
