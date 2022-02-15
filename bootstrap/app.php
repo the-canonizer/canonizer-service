@@ -119,11 +119,11 @@ $app->configure('app');
 //     'auth' => App\Http\Middleware\Authenticate::class,
 // ]);
 
-// $app->middleware([
-//     \Illuminate\Session\Middleware\StartSession::class,
-//     App\Http\Middleware\CorsMiddleware::class
+$app->middleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    App\Http\Middleware\CorsMiddleware::class
 
-// ]);
+]);
 
 /*
 |--------------------------------------------------------------------------
