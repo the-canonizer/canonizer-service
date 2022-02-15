@@ -25,13 +25,13 @@ class GetAllTopicsApiTest extends TestCase
     }
 
     /**
-     * Check Api with correct values
+     * Check Api with correct values without asof
      */
     public function testWithCorrectValuesWithoutFilter()
     {
         print sprintf("Test with correct values without filter");
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>1643210702,'search'=>'Hard']);
-        $this->assertEquals(200, $response->status());
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>time()]);
+        $this->assertEquals(422, $response->status());
     }
 
     /**
@@ -42,17 +42,43 @@ class GetAllTopicsApiTest extends TestCase
     public function testWithWrongValuesWithoutFilter()
     {
         print sprintf("Test with correct values without filter");
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>0, 'asofdate'=>1643210702,'search'=>'Hard']);
-        $this->assertEquals(404, $response['status_code']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof'=>'default','page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>0, 'asofdate'=>time()]);
+        $this->assertCount(0, $response['data']['topic']);
     }
 
     /**
-     * Check Api with correct values with filter
+     * Check Api with correct values with filter search
      */
-    public function testWithCorrectValuesWithFilter()
+    public function testWithCorrectValuesWithFilterSearch()
     {
         print sprintf("Test with correct values with filter");
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>1643210702,'search'=>'Hard', 'filter'=>1.7]);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof'=>'default','page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>time(),'search'=>'Hard', 'filter'=>1.7]);
         $this->assertEquals(200, $response->status());
+    }
+
+     /**
+     * Check Api with correct values without search and filter
+     */
+    public function testWithCorrectValuesWithoutFilterSearch()
+    {
+        print sprintf("Test with correct values with filter");
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof'=>'default','page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>time()]);
+        $this->assertEquals(200, $response->status());
+    }
+
+     /**
+     * Check Json structure
+     */
+    public function checkApiJSONStructure()
+    {
+        print sprintf("Test with correct values with filter");
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof'=>'default','page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>time()]);
+        $this->seeJsonStructure(
+            ['status_code',
+             'message',
+             'error',
+             'data'=>['topic', 'number_of_pages'],
+            ]
+       );
     }
 }
