@@ -22,6 +22,7 @@ class CorsMiddleware
         } else {
             $origin = 'https://canonizer.com';
         }
+        $origin = $_SERVER['HTTP_ORIGIN'];
 
         $headers = [
             'Access-Control-Allow-Origin'      => $origin,
