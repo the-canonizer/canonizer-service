@@ -43,24 +43,24 @@ class CreateTopicTreeCommand extends Command
     {
         //get all namespaces
         $namespaces = Namespaces::all();
+        $asOfTime =  time();
         foreach ($namespaces as $value) {
             // get all topic associated with this namespace
             $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
                 ->where(["namespace_id" => $value['id']])
                 ->groupBy('topic_num')
                 ->get();
-             $this->createLess166Topics($topics);
-             $this->creategreater166Topics($topics);
+             $this->createLess166Topics($topics, $asOfTime);
+             $this->creategreater166Topics($topics, $asOfTime);
         }
     }
 
-    private function createLess166Topics($topics)
+    private function createLess166Topics($topics, $asOfTime)
     {
         if (count($topics)) {
             // create the tree for every topic
             foreach ($topics  as $key => $value) {
 
-                $asOfTime =  strtotime(date('Y-m-d'));
                 $topic_num = $value['topic_num'];
                 $updateAll = 1;
 
@@ -71,13 +71,12 @@ class CreateTopicTreeCommand extends Command
             }
         }
     }
-    private function creategreater166Topics($topics)
+    private function creategreater166Topics($topics, $asOfTime)
     {
         if (count($topics)) {
             // create the tree for every topic
             foreach ($topics  as $key => $value) {
 
-                $asOfTime =  strtotime(date('Y-m-d'));
                 $topic_num = $value['topic_num'];
                 $updateAll = 1;
 
