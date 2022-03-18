@@ -32,7 +32,7 @@ class TopicRequest extends FormRequest
                     return [
                         'page_number' => 'required|integer',
                         'page_size' => 'required|integer',
-                        'namespace_id' => 'required|integer',
+                        'namespace_id' => 'integer',
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
                         'asof' => 'required|string',

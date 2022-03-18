@@ -696,8 +696,11 @@ class CampService
         /* Common conditions in all queries */
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
-            ->where('topic.objector_nick_id', '=', null)
-            ->whereIn('namespace_id', explode(',', $namespaceId));
+            ->where('topic.objector_nick_id', '=', null);
+
+        $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {     
+            $q->whereIn('namespace_id', explode(',', $namespaceId));
+        });
 
             /* if the search paramet is set then add search condition in the query */
         if (isset($search) && $search != '') {
