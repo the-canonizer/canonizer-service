@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
-use App\Model\v1\Job;
 use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
 use TreeRepository;
