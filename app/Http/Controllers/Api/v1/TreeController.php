@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
+use App\Model\v1\Job;
 use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
 use TreeRepository;
@@ -279,15 +280,40 @@ class TreeController extends Controller
          * with score from mongodb instance else fetch tree with Score
          * from Mysql
          */
+        
         if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
-
+            
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
-            $tree = TreeRepository::findTree($conditions);
 
-            if (!$tree || !count($tree)) {
-                $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            /**
+             * Fetch topic tree on the basis of jobs in queue or processed ones
+             * If there is any job exists in jobs table, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+             * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
+             * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+             * If latest processed job status is success, then topic tree has been updated in Mongo -- Get tree from Mongo Database
+             */
+
+            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
+            $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
+            $allProcessedJobs = \DB::table('processed_jobs')->select('id', 'response->topic_id as topic_number')->orderBy('id', 'desc')->get();
+            $allProcessedJobs = $allProcessedJobs = \DB::table('processed_jobs')->select('id', 'response->topic_id as topic_number')->orderBy('id', 'desc')->get();
+            foreach($allProcessedJobs as $job) {
+                \DB::table('processed_jobs')->where('id', $job->id)->update(['topic_num' => $job->topic_number]);
             }
+            
+            if($isLastJobPending) {
+                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            } else {
+                if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
+                    $tree = TreeRepository::findTree($conditions);
 
+                    if (!$tree || !count($tree)) {
+                        $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    }
+                } else {
+                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                }
+            }
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
