@@ -289,7 +289,8 @@ class TreeController extends Controller
              * If there is any job exists in jobs table, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
              * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
              * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
-             * If latest processed job status is success, then topic tree has been updated in Mongo -- Get tree from Mongo Database
+             * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
+             * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
              */
 
             $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
@@ -299,10 +300,15 @@ class TreeController extends Controller
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
-                    $tree = TreeRepository::findTree($conditions);
+                    $mongoTree = TreeRepository::findTree($conditions);
 
-                    if (!$tree || !count($tree)) {
-                        $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    if (!$mongoTree || !count($mongoTree)) {
+                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    }
+                    if($mongoTree && count($mongoTree)) {
+                        $tree = collect([$mongoTree[0]['tree_structure']]);
+                    } else {
+                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                 } else {
                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
