@@ -43,7 +43,7 @@ class TopicController extends Controller
      *                @OA\Property(
      *                     property="namespace_id",
      *                     description="namespace id",
-     *                     required=true,
+     *                     required=false,
      *                     type="integer",
      *                     format="int32"
      *                 ),
@@ -158,7 +158,7 @@ class TopicController extends Controller
         /* get input params from request */
         $pageNumber = $request->input('page_number');
         $pageSize = $request->input('page_size');
-        $namespaceId = (int) $request->input('namespace_id');
+        $namespaceId = $request->input('namespace_id') !== "" ? (int) $request->input('namespace_id') : $request->input('namespace_id');
         $asofdateTime = (int) $request->input('asofdate');
         $algorithm = $request->input('algorithm');
         $search = $request->input('search');
