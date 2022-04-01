@@ -79,7 +79,7 @@ class CampService
                 ->groupBy('camp_num')
                 ->orderBy('submit_time', 'desc')
                 ->get();
-
+                            
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
 
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
@@ -196,56 +196,18 @@ class CampService
      */
     public function getLiveCamp($topicNumber, $campNumber, $filter = array(), $asOfTime)
     {
-
         try {
-
-            if (isset($filter['nofilter']) && $filter['nofilter']) {
-                $asOfTime = time();
-            }
-
             $liveCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
                 ->where('objector_nick_id', '=', null)
-                ->where('go_live_time', '<=', $asOfTime);
-
-            if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime) > 0) {
-                $liveCamp = $liveCamp->where('grace_period', '=', 0);
-            }
-
-            $liveCamp = $liveCamp->latest('submit_time')->first();
-
+                ->where('go_live_time', '<=', $asOfTime)
+                ->latest('submit_time')->first();
+           
             return $liveCamp;
 
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Live Camp Details Exception");
         }
-    }
-
-    /**
-     * check that if all the grace periods are zeros or all changes go live
-     *
-     * @param  int $topicNumber
-     * @param  int $asOfTime
-     * @param  int $campNumber
-     *
-     * @return int count
-     */
-
-    public function checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime=null)
-    {
-
-        $reviewCampCount =  Camp::where('topic_num', $topicNumber)
-            ->where('camp_num', '=', $campNumber)
-            ->where('objector_nick_id', '=', null);
-
-            if($asOfTime != null){
-                $reviewCampCount = $reviewCampCount->where('go_live_time', '<=', $asOfTime);
-            }
-
-            $reviewCampCount = $reviewCampCount->where('grace_period', '=', 0)
-                                               ->count();
-
-            return $reviewCampCount;
     }
 
     /**
@@ -260,18 +222,12 @@ class CampService
     {
 
         try {
-
-             $reviewCamp = Camp::where('topic_num', $topicNumber)
+            $reviewCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
-                ->where('objector_nick_id', '=', null);
+                ->where('objector_nick_id', '=', null)
+                ->latest('submit_time')->first();
 
-                if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber) > 0) {
-                    $reviewCamp = $reviewCamp->where('grace_period', '=', 0);
-                }
-
-                $reviewCamp = $reviewCamp->latest('submit_time')->first();
-
-                return $reviewCamp;
+            return $reviewCamp;
 
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Review Camp Details Exception");
@@ -480,9 +436,9 @@ class CampService
             }
             $this->traversetempArray[] = $key;
             $childs = $this->campChildrens($topicNumber, $parentCamp);
+            
             $array = [];
             foreach ($childs as $key => $child) {
-                //$childCount  = count($child->children($child->topic_num,$child->camp_num));
                 $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime);
                 $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
                 $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;

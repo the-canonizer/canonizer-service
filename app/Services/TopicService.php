@@ -25,13 +25,8 @@ class TopicService
     {
         $liveTopic =  Topic::where('topic_num', $topicNumber)
             ->where('objector_nick_id', '=', NULL)
-            ->where('go_live_time', '<=', $asOfTime);
-
-        if($this->checkIfAnyReviewChangeExist($topicNumber, $asOfTime) > 0){
-             $liveTopic =  $liveTopic->where('grace_period', '=', 0);
-        }
-
-        $liveTopic = $liveTopic->latest('submit_time')->first();
+            ->where('go_live_time', '<=', $asOfTime)
+            ->latest('submit_time')->first();
 
         return $liveTopic;
     }
@@ -46,41 +41,11 @@ class TopicService
     public function getReviewTopic($topicNumber)
     {
         $topic = Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL);
+            ->where('objector_nick_id', '=', NULL)
+            ->latest('submit_time')->first();
 
-           if($this->checkIfAnyReviewChangeExist($topicNumber) > 0){
-                $topic =  $topic->where('grace_period', '=', 0);
-           }
-
-           $topic = $topic->latest('submit_time')
-                                      ->first();
           return $topic;
     }
-
-
-     /**
-     * check that if all the grace periods are zeros or all changes go live
-     *
-     * @param  int $topicNumber
-     * @param  int $asOfTime
-     *
-     * @return int count
-     */
-
-    public function checkIfAnyReviewChangeExist($topicNumber, $asOfTime = null){
-
-        $topic = Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL);
-
-            if($asOfTime != null){
-                $topic = $topic->where('go_live_time', '<=', $asOfTime);
-            }
-
-            $topic = $topic->where('grace_period', '=', 0)
-                           ->count();
-            return $topic;
-    }
-
 
     /**
      * get topics with score from mongoDb.
