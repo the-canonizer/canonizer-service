@@ -712,7 +712,7 @@ class Camp extends Model
                 }
             }
         } catch (\Exception $e) {
-            echo "topic-support-nickname-$topicnum" . $e->getMessage();
+            return $e->getMessage();
         }
 
         return $supportCountTotal;
