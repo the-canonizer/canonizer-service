@@ -354,7 +354,7 @@ class CampService
                    }
                 }
             } catch (\Exception $e) {
-                echo "topic-support-nickname-$topicNumber" . $e->getMessage();
+                return $e->getMessage();
             }
 
             return $supportCountTotal;
