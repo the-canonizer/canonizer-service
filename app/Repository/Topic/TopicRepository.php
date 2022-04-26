@@ -33,13 +33,20 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search = '')
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '')
     {
         try {
-            $record = $this->treeModel::where('namespace_id', $namespaceId)
-                ->where('algorithm_id', $algorithm)
+            $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '<=', $asofdate);
+                
+            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                $q->where('namespace_id', $namespaceId);
+            });
 
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('submitter_nick_id', $nickNameIds);
+            });
+            
             if (isset($search) && $search != '') {
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             };
@@ -71,13 +78,20 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search = '')
+    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '')
     {
         try {
-            $record = $this->treeModel::where('namespace_id', $namespaceId)
-                ->where('algorithm_id', $algorithm)
+            $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '<=', $asofdate)
                 ->where('topic_score', '>', $filter);
+
+            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                $q->where('namespace_id', $namespaceId);
+            });
+
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('submitter_nick_id', $nickNameIds);
+            });
 
             if (isset($search) && $search != '') {
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
@@ -107,13 +121,20 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $search = '')
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '')
     {
         try {
-            $record = $this->treeModel::where('namespace_id', $namespaceId)
-                ->where('algorithm_id', $algorithm)
+            $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '<=', $asofdate);
 
+            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                $q->where('namespace_id', $namespaceId);
+            });    
+            
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('submitter_nick_id', $nickNameIds);
+            });
+            
             if (isset($search) && $search != '') {
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }
@@ -139,14 +160,21 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search = '')
+    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '')
     {
         try {
-            $record = $this->treeModel::where('namespace_id', $namespaceId)
-                ->where('algorithm_id', $algorithm)
+            $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '<=', $asofdate)
                 ->where('topic_score', '>', $filter);
 
+            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                $q->where('namespace_id', $namespaceId);
+            });
+
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('submitter_nick_id', $nickNameIds);
+            });
+   
             if (isset($search) && $search != '') {
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }

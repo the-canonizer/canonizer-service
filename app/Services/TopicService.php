@@ -25,13 +25,8 @@ class TopicService
     {
         $liveTopic =  Topic::where('topic_num', $topicNumber)
             ->where('objector_nick_id', '=', NULL)
-            ->where('go_live_time', '<=', $asOfTime);
-
-        if($this->checkIfAnyReviewChangeExist($topicNumber, $asOfTime) > 0){
-             $liveTopic =  $liveTopic->where('grace_period', '=', 0);
-        }
-
-        $liveTopic = $liveTopic->latest('submit_time')->first();
+            ->where('go_live_time', '<=', $asOfTime)
+            ->latest('submit_time')->first();
 
         return $liveTopic;
     }
@@ -46,41 +41,11 @@ class TopicService
     public function getReviewTopic($topicNumber)
     {
         $topic = Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL);
+            ->where('objector_nick_id', '=', NULL)
+            ->latest('submit_time')->first();
 
-           if($this->checkIfAnyReviewChangeExist($topicNumber) > 0){
-                $topic =  $topic->where('grace_period', '=', 0);
-           }
-
-           $topic = $topic->latest('submit_time')
-                                      ->first();
           return $topic;
     }
-
-
-     /**
-     * check that if all the grace periods are zeros or all changes go live
-     *
-     * @param  int $topicNumber
-     * @param  int $asOfTime
-     *
-     * @return int count
-     */
-
-    public function checkIfAnyReviewChangeExist($topicNumber, $asOfTime = null){
-
-        $topic = Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL);
-
-            if($asOfTime != null){
-                $topic = $topic->where('go_live_time', '<=', $asOfTime);
-            }
-
-            $topic = $topic->where('grace_period', '=', 0)
-                           ->count();
-            return $topic;
-    }
-
 
     /**
      * get topics with score from mongoDb.
@@ -97,12 +62,12 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search){
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search){
 
         /** if filter param set then only get those topics which have score more than give filter */
         $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
-                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search):
-                 TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search);
+                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search):
+                 TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search);
 
         return $topicsWithScore;
     }
@@ -120,12 +85,12 @@ class TopicService
      * @return int $totalTrees
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $search){
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search){
 
         /** if filter param set then only get those topics which have score more than give filter */
         $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
-                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
-                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $search);
+                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search):
+                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search);
 
         $totalTopics = count($totalTopics) ?? 0;
 
@@ -155,7 +120,7 @@ class TopicService
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure_1_review_title = $reducedTree[$value->camp_num]['review_title'];
-                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
+                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);                        
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
@@ -164,7 +129,7 @@ class TopicService
                         $topics[$key]->tree_structure_1_review_title = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
-
+                    
                 }
               // $topics = $topics->sortBy('score',SORT_REGULAR, true);
                 $topics = collect(collect($topics)->sortByDesc('score'))->values();

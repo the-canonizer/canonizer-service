@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
 use App\Model\v1\Tree;
+use App\Model\v1\Nickname;
 use CampService;
 use DateTimeHelper;
 use Illuminate\Http\Request;
@@ -43,7 +44,7 @@ class TopicController extends Controller
      *                @OA\Property(
      *                     property="namespace_id",
      *                     description="namespace id",
-     *                     required=true,
+     *                     required=false,
      *                     type="integer",
      *                     format="int32"
      *                 ),
@@ -71,6 +72,12 @@ class TopicController extends Controller
      *                     description="select filter",
      *                     required=false,
      *                     type="float"
+     *                 ),
+     *                @OA\Property(
+     *                     property="user_email",
+     *                     description="user email for returning only user topics",
+     *                     required=false,
+     *                     type="string"
      *                 )
      *         )
      *   ),
@@ -158,13 +165,13 @@ class TopicController extends Controller
         /* get input params from request */
         $pageNumber = $request->input('page_number');
         $pageSize = $request->input('page_size');
-        $namespaceId = (int) $request->input('namespace_id');
+        $namespaceId = $request->input('namespace_id') !== "" ? (int) $request->input('namespace_id') : $request->input('namespace_id');
         $asofdateTime = (int) $request->input('asofdate');
         $algorithm = $request->input('algorithm');
         $search = $request->input('search');
         $asof = $request->input('asof');
         $filter = (float) $request->input('filter') ?? null;
-
+        $nickNameIds= $request->input('user_email') ? Nickname::personNicknameIdsByEmail($request->input('user_email')) : [];
         $asofdate = DateTimeHelper::getAsOfDate($asofdateTime);
         $skip = ($pageNumber - 1) * $pageSize;
 
@@ -177,22 +184,22 @@ class TopicController extends Controller
          */
         if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
 
-            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $search);
+            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search);
+            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search);
         } else {
 
             /*  search & filter functionality */
-            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $search);
+            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
             $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-
+            
             /** filter the collection if filter parameter */
             if (isset($filter) && $filter != '' && $filter != null) {
                $topics = TopicService::filterTopicCollection($topics, $filter);
             }
 
             /** total pages */
-            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $search, true);
+            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
         }
 

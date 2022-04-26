@@ -6,6 +6,8 @@ use App\Model\v1\EtherAddresses;
 use App\Model\v1\Nickname;
 use App\Model\v1\SharesAlgorithm;
 use App\Exceptions\Algorithm\ShareAlgorithmException;
+use Illuminate\Support\Facades\Cache;
+use DB;
 use CampService;
 use UtilHelper;
 

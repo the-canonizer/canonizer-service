@@ -35,6 +35,7 @@ class TreeService
         $topicScore = isset($tree[1]['score']) ? $tree[1]['score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
+        $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
 
         $mongoArr = [
             "topic_id" => $topicNumber,
@@ -43,7 +44,8 @@ class TreeService
             "tree_structure" => $tree,
             "namespace_id" => $namespaceId,
             "topic_score" =>  $topicScore,
-            "as_of_date" => $asOfDate
+            "as_of_date" => $asOfDate,
+            "submitter_nick_id" =>$submitter_nick_id
         ];
 
         return $mongoArr;
@@ -107,8 +109,8 @@ class TreeService
 
         return $tree;
     }
-
-
+    
+    
     /**
      * Get Topic tree from mysql if it is not exist in mongodb
      *

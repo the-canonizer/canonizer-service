@@ -279,15 +279,41 @@ class TreeController extends Controller
          * with score from mongodb instance else fetch tree with Score
          * from Mysql
          */
+        
         if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
-
+            
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
-            $tree = TreeRepository::findTree($conditions);
 
-            if (!$tree || !count($tree)) {
-                $tree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            /**
+             * Fetch topic tree on the basis of jobs in queue or processed ones
+             * If there is any job exists in jobs table, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+             * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
+             * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+             * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
+             * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
+             */
+
+            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
+            $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
+            
+            if($isLastJobPending) {
+                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            } else {
+                if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
+                    $mongoTree = TreeRepository::findTree($conditions);
+
+                    if (!$mongoTree || !count($mongoTree)) {
+                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    }
+                    if($mongoTree && count($mongoTree)) {
+                        $tree = collect([$mongoTree[0]['tree_structure']]);
+                    } else {
+                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    }
+                } else {
+                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                }
             }
-
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));

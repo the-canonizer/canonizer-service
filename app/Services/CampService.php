@@ -84,7 +84,7 @@ class CampService
 
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
-
+            
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
@@ -97,6 +97,7 @@ class CampService
             $tree[$startCamp]['link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime);
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
+            $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
@@ -196,56 +197,18 @@ class CampService
      */
     public function getLiveCamp($topicNumber, $campNumber, $filter = array(), $asOfTime)
     {
-
         try {
-
-            if (isset($filter['nofilter']) && $filter['nofilter']) {
-                $asOfTime = time();
-            }
-
             $liveCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
                 ->where('objector_nick_id', '=', null)
-                ->where('go_live_time', '<=', $asOfTime);
-
-            if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime) > 0) {
-                $liveCamp = $liveCamp->where('grace_period', '=', 0);
-            }
-
-            $liveCamp = $liveCamp->latest('submit_time')->first();
+                ->where('go_live_time', '<=', $asOfTime)
+                ->latest('submit_time')->first();
 
             return $liveCamp;
-
+            
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Live Camp Details Exception");
         }
-    }
-
-    /**
-     * check that if all the grace periods are zeros or all changes go live
-     *
-     * @param  int $topicNumber
-     * @param  int $asOfTime
-     * @param  int $campNumber
-     *
-     * @return int count
-     */
-
-    public function checkIfAnyReviewChangeExist($topicNumber, $campNumber, $asOfTime=null)
-    {
-
-        $reviewCampCount =  Camp::where('topic_num', $topicNumber)
-            ->where('camp_num', '=', $campNumber)
-            ->where('objector_nick_id', '=', null);
-
-            if($asOfTime != null){
-                $reviewCampCount = $reviewCampCount->where('go_live_time', '<=', $asOfTime);
-            }
-
-            $reviewCampCount = $reviewCampCount->where('grace_period', '=', 0)
-                                               ->count();
-
-            return $reviewCampCount;
     }
 
     /**
@@ -260,18 +223,12 @@ class CampService
     {
 
         try {
-
-             $reviewCamp = Camp::where('topic_num', $topicNumber)
+            $reviewCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
-                ->where('objector_nick_id', '=', null);
+                ->where('objector_nick_id', '=', null)
+                ->latest('submit_time')->first();
 
-                if ($this->checkIfAnyReviewChangeExist($topicNumber, $campNumber) > 0) {
-                    $reviewCamp = $reviewCamp->where('grace_period', '=', 0);
-                }
-
-                $reviewCamp = $reviewCamp->latest('submit_time')->first();
-
-                return $reviewCamp;
+            return $reviewCamp;
 
         } catch (CampDetailsException $th) {
             throw new CampDetailsException("Review Camp Details Exception");
@@ -352,11 +309,11 @@ class CampService
                         );
                         $multiSupport = false; //default;
 
-                         if ($nickNameSupports->count() > 1) {
+                        if ($nickNameSupports->count() > 1) {
                             $multiSupport = true;
                             $supportCountTotal += round($supportPoint / (2 ** ($currentCampSupport->support_order)), 2);
                         } else if ($nickNameSupports->count() == 1) {
-                             $supportCountTotal += $supportPoint;
+                            $supportCountTotal += $supportPoint;
                         }
                         $supportCountTotal += $this->getDeletegatedSupportCount(
                             $algorithm,
@@ -368,7 +325,7 @@ class CampService
                             $asOfTime
                         );
                     }
-                    else if ($currentCampSupport && $nickNameId == null) {
+                     else if ($currentCampSupport && $nickNameId == null) {                        
                         $supportPoint = AlgorithmService::{$algorithm}(
                             $supported->nick_name_id,
                             $supported->topic_num,
@@ -377,16 +334,16 @@ class CampService
                         );
                         $multiSupport = false; //default
                         if ($nickNameSupports->count() > 1) {
-                           $multiSupport = true;
-                           if($algorithm =='mind_experts'){
-                               $supportCountTotal +=  $supportPoint;
-                           }else{
-                               $supportCountTotal +=  round($supportPoint / (2 ** ($currentCampSupport->support_order)), 2);
-                           }
-                       } else if ($nickNameSupports->count() == 1) {
+                            $multiSupport = true;
+                            if($algorithm =='mind_experts'){
+                                $supportCountTotal +=  $supportPoint;
+                            }else{
+                                $supportCountTotal +=  round($supportPoint / (2 ** ($currentCampSupport->support_order)), 2);
+                            }
+                        } else if ($nickNameSupports->count() == 1) {
                             $supportCountTotal += $supportPoint;
-                       }
-                       $supportCountTotal += $this->getDeletegatedSupportCount(
+                        }
+                        $supportCountTotal += $this->getDeletegatedSupportCount(   
                             $algorithm,
                             $topicNumber,
                             $campNumber,
@@ -395,10 +352,10 @@ class CampService
                             $multiSupport,
                             $asOfTime
                         );
-                   }
+                    }
                 }
             } catch (\Exception $e) {
-                echo "topic-support-nickname-$topicNumber" . $e->getMessage();
+                return $e->getMessage();
             }
 
             return $supportCountTotal;
@@ -480,9 +437,9 @@ class CampService
             }
             $this->traversetempArray[] = $key;
             $childs = $this->campChildrens($topicNumber, $parentCamp);
+
             $array = [];
             foreach ($childs as $key => $child) {
-                //$childCount  = count($child->children($child->topic_num,$child->camp_num));
                 $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime);
                 $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
                 $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
@@ -499,6 +456,7 @@ class CampService
                 $array[$child->camp_num]['link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime) . $queryString . '#statement';
                 $array[$child->camp_num]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
+                $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
                 $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
@@ -567,7 +525,7 @@ class CampService
             })->last();
 
             if (!$expertCamp) { # not an expert canonized nick.
-            return 0;
+                return 0;
             }
 
             $key = '';
@@ -620,13 +578,13 @@ class CampService
             //     }
             // }
 
-                $topicNumArr = array();
-                $campNumArray = array();
+            $topicNumArr = array();
+            $campNumArray = array();
 
-                foreach ($user_support_camps as $scamp) {
-                    $topicNumArr[] = $scamp->topic_num;
-                    $campNumArray[] = $scamp->camp_num;
-                }
+            foreach ($user_support_camps as $scamp) {
+                $topicNumArr[] = $scamp->topic_num;
+                $campNumArray[] = $scamp->camp_num;
+            }
 
             $retCamp = Camp::whereIn('topic_num', array_unique($topicNumArr))
                 ->whereIn('camp_num', array_unique($campNumArray))
@@ -661,7 +619,7 @@ class CampService
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $search = '', $isCount = false)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false)
     {
 
         $returnTopics = [];
@@ -696,13 +654,20 @@ class CampService
         /* Common conditions in all queries */
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
-            ->where('topic.objector_nick_id', '=', null)
-            ->whereIn('namespace_id', explode(',', $namespaceId));
+            ->where('topic.objector_nick_id', '=', null);
 
-            /* if the search paramet is set then add search condition in the query */
+        $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {
+            $q->where('namespace_id', $namespaceId);
+        });
+
+        $returnTopics->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+            $q->whereIn('topic.submitter_nick_id', $nickNameIds);
+        });
+
+        /* if the search paramet is set then add search condition in the query */
         if (isset($search) && $search != '') {
-             $returnTopics->where('title', 'like', '%' . $search . '%');
-         };
+            $returnTopics->where('title', 'like', '%' . $search . '%');
+        };
 
         $returnTopics
             ->latest('support')
@@ -711,7 +676,7 @@ class CampService
 
         if($isCount){
             return $returnTopics->get()->count();
-         }
+        }
 
         return $returnTopics
             ->skip($skip)
@@ -719,7 +684,7 @@ class CampService
             ->get();
     }
 
-     /**
+    /**
      * Get the camp count .
      * @param int $nickNameId
      * @param string $condition
@@ -754,21 +719,21 @@ class CampService
                 return DB::select("$sql $sql2");
             });
 
-		 if($political==true && $topicNumber==231 && ($campNumber==2 ||  $campNumber==3 || $campNumber==4) ) {
+            if($political==true && $topicNumber==231 && ($campNumber==2 ||  $campNumber==3 || $campNumber==4) ) {
 
-			if($result[0]->support_order==1)
-				$total = $result[0]->countTotal / 2;
-			else if($result[0]->support_order==2)
-				$total = $result[0]->countTotal / 4;
-			else if($result[0]->support_order==3)
-				$total = $result[0]->countTotal / 6;
-			else if($result[0]->support_order==4)
-				$total = $result[0]->countTotal / 8;
-			else $total = $result[0]->countTotal;
+                if($result[0]->support_order==1)
+                    $total = $result[0]->countTotal / 2;
+                else if($result[0]->support_order==2)
+                    $total = $result[0]->countTotal / 4;
+                else if($result[0]->support_order==3)
+                    $total = $result[0]->countTotal / 6;
+                else if($result[0]->support_order==4)
+                    $total = $result[0]->countTotal / 8;
+                else $total = $result[0]->countTotal;
 
-		 } else {
-			$total = $result[0]->countTotal;
-		 }
+            } else {
+                $total = $result[0]->countTotal;
+            }
 
 
             return isset($result[0]->countTotal) ? $total : 0;
