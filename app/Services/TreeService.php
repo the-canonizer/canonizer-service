@@ -122,12 +122,12 @@ class TreeService
      *
      * @return array $array
      */
-    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = []){
+    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $fetchTopicHistory){
 
         $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
         try {
-           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $fetchTopicHistory);
         }
         catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

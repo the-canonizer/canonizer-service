@@ -267,8 +267,9 @@ class TreeController extends Controller
         $algorithm = $request->input('algorithm');
         $asOfTime = (int) $request->input('asofdate');
         $updateAll = (int) $request->input('update_all', 0);
+        $fetchTopicHistory =  $request->input('fetch_topic_history');
         $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-
+        
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
 
@@ -280,7 +281,7 @@ class TreeController extends Controller
          * from Mysql
          */
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory)) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
@@ -297,7 +298,7 @@ class TreeController extends Controller
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
             if($isLastJobPending) {
-                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
             } else {
                 if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
                     $mongoTree = TreeRepository::findTree($conditions);
@@ -308,15 +309,15 @@ class TreeController extends Controller
                     if($mongoTree && count($mongoTree)) {
                         $tree = collect([$mongoTree[0]['tree_structure']]);
                     } else {
-                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
                     }
                 } else {
-                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
                 }
             }
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
         }
 
         $end = microtime(true);
