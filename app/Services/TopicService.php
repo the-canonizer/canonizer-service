@@ -62,12 +62,12 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search){
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search){
 
         /** if filter param set then only get those topics which have score more than give filter */
         $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
-                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $search):
-                 TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $search);
+                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search):
+                 TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search);
 
         return $topicsWithScore;
     }
@@ -85,12 +85,12 @@ class TopicService
      * @return int $totalTrees
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $search){
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search){
 
         /** if filter param set then only get those topics which have score more than give filter */
         $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
-                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $search):
-                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $search);
+                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search):
+                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search);
 
         $totalTopics = count($totalTopics) ?? 0;
 
@@ -120,7 +120,7 @@ class TopicService
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure_1_review_title = $reducedTree[$value->camp_num]['review_title'];
-                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
+                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);                        
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
@@ -129,7 +129,7 @@ class TopicService
                         $topics[$key]->tree_structure_1_review_title = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
-
+                    
                 }
               // $topics = $topics->sortBy('score',SORT_REGULAR, true);
                 $topics = collect(collect($topics)->sortByDesc('score'))->values();
