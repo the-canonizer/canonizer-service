@@ -298,7 +298,7 @@ class TreeController extends Controller
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
             if($isLastJobPending) {
-                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
+                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
                     $mongoTree = TreeRepository::findTree($conditions);
@@ -309,15 +309,15 @@ class TreeController extends Controller
                     if($mongoTree && count($mongoTree)) {
                         $tree = collect([$mongoTree[0]['tree_structure']]);
                     } else {
-                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
+                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                 } else {
-                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
+                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 }
             }
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
+            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
         }
 
         $end = microtime(true);

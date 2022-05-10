@@ -21,7 +21,7 @@ class TopicService
      * @return Illuminate\Support\Collection
      */
 
-    public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $fetchTopicHistory)
+    public function getLiveTopic($topicNumber, $asOfTime, $filter = array())
     {
         $liveTopic =  Topic::where('topic_num', $topicNumber)
                         ->where('go_live_time', '<=', $asOfTime)
