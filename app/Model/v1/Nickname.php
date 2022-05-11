@@ -362,6 +362,12 @@ class Nickname extends Model {
         return [];
     }
 
+    public static function personNicknameIdsByEmail($email) {
+            $userId= DB::table('person')->where('email',$email)->pluck('id')->first();
+            $encode = General::canon_encode($userId);
+            return DB::table('nick_name')->where('owner_code', $encode)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+    }
+
     public static function getUserIDByNickName($nick_id) {
 
         $nickname = self::find($nick_id);
