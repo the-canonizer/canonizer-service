@@ -94,9 +94,10 @@ class TreeService
             try {
 
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 //get date string from timestamp
-                $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+                $asOfDate = DateTimeHelper::getAsOfDateTime($asOfTime);
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $asOfDate, $algo);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
