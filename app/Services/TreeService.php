@@ -97,7 +97,7 @@ class TreeService
                 
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 //get date string from timestamp
-                $asOfDate = DateTimeHelper::getAsOfDateTime($asOfTime);
+                $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $asOfDate, $algo);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
