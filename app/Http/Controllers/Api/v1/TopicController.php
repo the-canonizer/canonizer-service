@@ -172,7 +172,7 @@ class TopicController extends Controller
         $asof = $request->input('asof');
         $filter = (float) $request->input('filter') ?? null;
         $nickNameIds= $request->input('user_email') ? Nickname::personNicknameIdsByEmail($request->input('user_email')) : [];
-        $asofdate = DateTimeHelper::getAsOfDate($asofdateTime);
+        $asofdate = DateTimeHelper::getAsOfDateTime($asofdateTime);
         $skip = ($pageNumber - 1) * $pageSize;
 
         /** Get Cron Run date from .env file and make timestring */

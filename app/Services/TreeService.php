@@ -94,6 +94,7 @@ class TreeService
             try {
 
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
