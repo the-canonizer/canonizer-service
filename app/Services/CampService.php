@@ -41,10 +41,10 @@ class CampService
      * @return array $tree
      */
 
-    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null)
+    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null, $asOf = 'default', $fetchTopicHistory = 0)
     {
         try {
-
+            
             $this->traversetempArray = [];
 
             if (!Arr::exists($this->sessionTempArray, "topic-support-nickname-{$topicNumber}")) {
@@ -81,7 +81,7 @@ class CampService
                 ->get();
 
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
