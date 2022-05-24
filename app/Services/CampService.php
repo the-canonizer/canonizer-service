@@ -41,10 +41,10 @@ class CampService
      * @return array $tree
      */
 
-    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null)
+    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null, $asOf = 'default', $fetchTopicHistory = 0)
     {
         try {
-
+            
             $this->traversetempArray = [];
 
             if (!Arr::exists($this->sessionTempArray, "topic-support-nickname-{$topicNumber}")) {
@@ -81,8 +81,7 @@ class CampService
                 ->get();
 
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
-
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
@@ -200,10 +199,9 @@ class CampService
         try {
             $liveCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
-                ->where('objector_nick_id', '=', null)
                 ->where('go_live_time', '<=', $asOfTime)
-                ->latest('submit_time')->first();
-
+                ->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
+           
             return $liveCamp;
             
         } catch (CampDetailsException $th) {
@@ -225,8 +223,9 @@ class CampService
         try {
             $reviewCamp = Camp::where('topic_num', $topicNumber)
                 ->where('camp_num', '=', $campNumber)
+                ->where('grace_period', 0)
                 ->where('objector_nick_id', '=', null)
-                ->latest('submit_time')->first();
+                ->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
 
             return $reviewCamp;
 

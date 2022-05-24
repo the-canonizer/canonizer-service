@@ -89,11 +89,12 @@ class TreeService
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
         $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
-
+        
         foreach ($algorithms as $algo) {
             try {
 
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
@@ -122,12 +123,13 @@ class TreeService
      *
      * @return array $array
      */
-    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = []){
+    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $fetchTopicHistory = 0){
 
         $rootUrl =  $this->getRootUrl($request);
+        $asOf = $request->asOf ?? 'default';
         $startCamp = 1;
         try {
-           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
         }
         catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

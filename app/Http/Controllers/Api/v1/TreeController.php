@@ -267,8 +267,9 @@ class TreeController extends Controller
         $algorithm = $request->input('algorithm');
         $asOfTime = (int) $request->input('asofdate');
         $updateAll = (int) $request->input('update_all', 0);
-        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-
+        $fetchTopicHistory =  $request->input('fetch_topic_history');
+        $asOfDate = DateTimeHelper::getAsOfDateTime($asOfTime);
+        
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
 
@@ -280,7 +281,7 @@ class TreeController extends Controller
          * from Mysql
          */
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory)) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
@@ -316,7 +317,7 @@ class TreeController extends Controller
             }
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
         }
 
         $end = microtime(true);

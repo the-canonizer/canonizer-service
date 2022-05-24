@@ -21,13 +21,17 @@ class TopicService
      * @return Illuminate\Support\Collection
      */
 
-    public function getLiveTopic($topicNumber, $asOfTime, $filter = array())
+    public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
     {
-        $liveTopic =  Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL)
-            ->where('go_live_time', '<=', $asOfTime)
-            ->latest('submit_time')->first();
-
+        $topic =  Topic::where('topic_num', $topicNumber);
+                        if($fetchTopicHistory != 1 && ($asOf == 'default' || $asOf == 'review')) {
+                            $topic->where('objector_nick_id', NULL);
+                        }
+                       
+                        $topic->where('go_live_time', '<=', $asOfTime);
+                        
+        $liveTopic = $topic->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
+        
         return $liveTopic;
     }
 
@@ -41,8 +45,9 @@ class TopicService
     public function getReviewTopic($topicNumber)
     {
         $topic = Topic::where('topic_num', $topicNumber)
-            ->where('objector_nick_id', '=', NULL)
-            ->latest('submit_time')->first();
+            ->where('grace_period', 0)
+            ->where('objector_nick_id', NULL)
+            ->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
 
           return $topic;
     }
