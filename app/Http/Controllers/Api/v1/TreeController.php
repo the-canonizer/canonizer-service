@@ -268,7 +268,7 @@ class TreeController extends Controller
         $asOfTime = (int) $request->input('asofdate');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
-        $asOfDate = DateTimeHelper::getAsOfDateTime($asOfTime);
+        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
         
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
