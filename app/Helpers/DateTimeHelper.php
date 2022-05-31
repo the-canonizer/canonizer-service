@@ -28,23 +28,4 @@ class DateTimeHelper
 
         return $asOfDate;
     }
-
-    /**
-     * Get as of date time
-     * 
-     * @param Illuminate\Http\Request
-     *
-     * @return int $asOfDateTime
-     */
-    public function getAsOfDateTime($asOfTime)
-    {
-        $asOfDateTime = date('Y-m-d');
-
-        if (isset($asOfTime)) {
-            $asOfDateTime =  $asOfTime;
-        }
-        $asOfDateTime = strtotime(date('Y-m-d H:i:s', $asOfDateTime));    //Y-m-d H:i:s
-
-        return $asOfDateTime;
-    }
 }
