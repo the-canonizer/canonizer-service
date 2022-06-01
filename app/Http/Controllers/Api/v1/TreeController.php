@@ -268,7 +268,7 @@ class TreeController extends Controller
         $asOfTime = (int) $request->input('asofdate');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
-        $asOfDate = DateTimeHelper::getAsOfDateTime($asOfTime);
+        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
         
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
@@ -292,6 +292,7 @@ class TreeController extends Controller
              * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
              * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
              * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
+             * If there is no processed job found for specific topic -- Get tree from Mongo
              */
 
             $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
@@ -300,7 +301,7 @@ class TreeController extends Controller
             if($isLastJobPending) {
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
-                if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
+                if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                     $mongoTree = TreeRepository::findTree($conditions);
 
                     if (!$mongoTree || !count($mongoTree)) {
