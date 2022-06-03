@@ -97,7 +97,7 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
-            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl);
+            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
             throw new CampTreeException("Prepare Camp Tree Exception");
@@ -194,13 +194,17 @@ class CampService
      *
      * @return Illuminate\Support\Collection
      */
-    public function getLiveCamp($topicNumber, $campNumber, $filter = array(), $asOfTime)
+    public function getLiveCamp($topicNumber, $campNumber, $filter = array(), $asOfTime, $asOf = 'default')
     {
         try {
-            $liveCamp = Camp::where('topic_num', $topicNumber)
-                ->where('camp_num', '=', $campNumber)
-                ->where('go_live_time', '<=', $asOfTime)
-                ->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
+            $query = Camp::where('topic_num', $topicNumber)
+                ->where('camp_num', '=', $campNumber);
+                if($asOf == 'default' || $asOf == 'review') {
+                    $query->where('objector_nick_id', NULL);
+                }
+                $query->where('go_live_time', '<=', $asOfTime);
+            
+            $liveCamp = $query->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
            
             return $liveCamp;
             
@@ -426,7 +430,7 @@ class CampService
      *
      * @return array $array
      */
-    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl)
+    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default')
     {
         try {
             $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
@@ -439,7 +443,7 @@ class CampService
 
             $array = [];
             foreach ($childs as $key => $child) {
-                $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime);
+                $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime, $asOf);
                 $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
                 $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
 
@@ -456,7 +460,7 @@ class CampService
                 $array[$child->camp_num]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
-                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl);
+                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
             }
