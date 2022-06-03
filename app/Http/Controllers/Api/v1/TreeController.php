@@ -301,7 +301,7 @@ class TreeController extends Controller
             if($isLastJobPending) {
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
-                if($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') {
+                if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                     $mongoTree = TreeRepository::findTree($conditions);
 
                     if (!$mongoTree || !count($mongoTree)) {
