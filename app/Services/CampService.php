@@ -71,15 +71,26 @@ class CampService
                 $this->sessionTempArray["topic-support-{$topicNumber}"] = $topicSupport;
             }
 
-            $topicChild = Camp::where('topic_num', '=', $topicNumber)
-                ->where('camp_name', '!=', 'Agreement')
-                ->where('objector_nick_id', '=', null)
-                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and go_live_time <= ' . $asOfTime . ' group by camp_num)')
-                ->where('go_live_time', '<=', $asOfTime)
-                ->groupBy('camp_num')
-                ->orderBy('submit_time', 'desc')
-                ->get();
+            if($asOf == 'review') {
+                $topicChild = Camp::where('topic_num', '=', $topicNumber)
+                                ->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                                ->groupBy('camp_num')
+                                ->orderBy('submit_time', 'desc')
+                                ->get();
 
+            } else {
+                $topicChild = Camp::where('topic_num', '=', $topicNumber)
+                                ->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and go_live_time <= ' . $asOfTime . ' group by camp_num)')
+                                ->where('go_live_time', '<=', $asOfTime)
+                                ->groupBy('camp_num')
+                                ->orderBy('submit_time', 'desc')
+                                ->get();
+            }
+            
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
             $reviewTopic = TopicService::getReviewTopic($topicNumber);
