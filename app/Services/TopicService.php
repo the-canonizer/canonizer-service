@@ -124,14 +124,14 @@ class TopicService
                         $topics[$key]->topic_score = $reducedTree[$value->camp_num]['score'];
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
-                        $topics[$key]->tree_structure_1_review_title = $reducedTree[$value->camp_num]['review_title'];
+                        $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);                        
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
                         $topics[$key]->topic_id = $value->topic_num;
                         $topics[$key]->topic_name = $value->title;
-                        $topics[$key]->tree_structure_1_review_title = $value->title;
+                        $topics[$key]->tree_structure[1]['review_title'] = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
                     
