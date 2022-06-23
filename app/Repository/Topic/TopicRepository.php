@@ -123,7 +123,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '')
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '') 
     {
         try {
             $nextDay = $asofdate + 86400;
