@@ -27,12 +27,8 @@ class TopicService
                         if($asOf == 'default' || $asOf == 'review') {
                             $topic->where('objector_nick_id', NULL);
                         }
-                        if($asOf == 'default') {
-                            $topic->where('go_live_time', '<=', time());
-                        }
-                        if($asOf == 'bydate') {
-                            $topic->where('go_live_time', '<=', $asOfTime);
-                        }
+                       
+                        $topic->where('go_live_time', '<=', $asOfTime);
                         
         $liveTopic = $topic->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
         

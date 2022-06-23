@@ -213,12 +213,7 @@ class CampService
                 if($asOf == 'default' || $asOf == 'review') {
                     $query->where('objector_nick_id', NULL);
                 }
-                if($asOf == 'default') {
-                    $query->where('go_live_time', '<=', time());
-                }
-                if($asOf == 'bydate') {
-                    $query->where('go_live_time', '<=', $asOfTime);
-                }
+                $query->where('go_live_time', '<=', $asOfTime);
             
             $liveCamp = $query->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
            
