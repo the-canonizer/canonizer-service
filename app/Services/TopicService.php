@@ -29,10 +29,10 @@ class TopicService
                         }
                        
                         if($asOf == 'default') {
-                            $query->where('go_live_time', '<=', time());
+                            $topic->where('go_live_time', '<=', time());
                         }
                         if($asOf == 'bydate') {
-                            $query->where('go_live_time', '<=', $asOfTime);
+                            $topic->where('go_live_time', '<=', $asOfTime);
                         }
                         
         $liveTopic = $topic->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
