@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 use App\Console\Commands\CreateTopicTreeCommand;
+use App\Console\Commands\TruncateOldTrees;
 
 class Kernel extends ConsoleKernel
 {
@@ -14,7 +15,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        CreateTopicTreeCommand::class
+        CreateTopicTreeCommand::class,
+        TruncateOldTrees::class
     ];
 
     /**
@@ -25,6 +27,6 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        //
+        $schedule->command('truncate:trees')->daily();
     }
 }
