@@ -187,6 +187,25 @@ class TopicController extends Controller
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search);
+
+            /**
+             * If no topics found in Mongo database, fetch data from MySQL 
+             */
+            if(!$topics->count()) {
+
+                /*  search & filter functionality */
+                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
+                $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+                
+                /** filter the collection if filter parameter */
+                if (isset($filter) && $filter != '' && $filter != null) {
+                    $topics = TopicService::filterTopicCollection($topics, $filter);
+                }
+
+                /** total pages */
+                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
+                $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+            }
         } else {
 
             /*  search & filter functionality */
@@ -204,6 +223,5 @@ class TopicController extends Controller
         }
 
         return new TopicResource($topics, $numberOfPages);
-
     }
 }
