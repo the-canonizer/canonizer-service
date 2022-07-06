@@ -295,10 +295,18 @@ class TreeController extends Controller
              * If there is no processed job found for specific topic -- Get tree from Mongo
              */
 
-            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
+             /**
+              * We should use same worker name for both canonizer 2.0 and 3.0 services (Need to confirm)
+              */
+            $queueWorkersList  = [
+                'canonizer-service', 
+                'canonizer3-service'
+            ];
+
+            $isLastJobPending = \DB::table('jobs')->whereIn('queue', $queueWorkersList)->count();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
-            if($isLastJobPending) {
+            if($isLastJobPending > 0) {
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
