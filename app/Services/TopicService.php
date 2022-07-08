@@ -125,8 +125,8 @@ class TopicService
                     $campData = Camp::where('topic_num',$value->topic_num)->where('camp_num',$value->camp_num)->first();
                     if( $campData){
                         $reducedTree = CampService::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
-                        $topics[$key]->score = $reducedTree[$value->camp_num]['score'];
-                        $topics[$key]->topic_score = $reducedTree[$value->camp_num]['score'];
+                        $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
+                        $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
