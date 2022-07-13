@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Support\Facades\Artisan;
 
 $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($router) {
 
@@ -6,6 +7,10 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
     $router->group(['prefix' => 'tree'], function () use ($router) {
         $router->post('/store', ['uses' => 'TreeController@store']);
         $router->post('/get', ['uses' => 'TreeController@find']);
+        $router->get('/all', function () {
+            Artisan::call('tree:all');
+            dd('All topics trees generated successfully');
+        });
     });
 
     // topics

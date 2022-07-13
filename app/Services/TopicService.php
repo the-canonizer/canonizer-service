@@ -24,11 +24,16 @@ class TopicService
     public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
     {
         $topic =  Topic::where('topic_num', $topicNumber);
-                        if($fetchTopicHistory != 1 && ($asOf == 'default' || $asOf == 'review')) {
+                        if($asOf == 'default' || $asOf == 'review') {
                             $topic->where('objector_nick_id', NULL);
                         }
                        
-                        $topic->where('go_live_time', '<=', $asOfTime);
+                        if($asOf == 'default') {
+                            $topic->where('go_live_time', '<=', time());
+                        }
+                        if($asOf == 'bydate') {
+                            $topic->where('go_live_time', '<=', $asOfTime);
+                        }
                         
         $liveTopic = $topic->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
         
@@ -120,18 +125,18 @@ class TopicService
                     $campData = Camp::where('topic_num',$value->topic_num)->where('camp_num',$value->camp_num)->first();
                     if( $campData){
                         $reducedTree = CampService::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
-                        $topics[$key]->score = $reducedTree[$value->camp_num]['score'];
-                        $topics[$key]->topic_score = $reducedTree[$value->camp_num]['score'];
+                        $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
+                        $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
-                        $topics[$key]->tree_structure_1_review_title = $reducedTree[$value->camp_num]['review_title'];
+                        $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);                        
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
                         $topics[$key]->topic_id = $value->topic_num;
                         $topics[$key]->topic_name = $value->title;
-                        $topics[$key]->tree_structure_1_review_title = $value->title;
+                        $topics[$key]->tree_structure[1]['review_title'] = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
                     

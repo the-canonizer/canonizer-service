@@ -36,8 +36,10 @@ class TopicRepository implements TopicInterface
     public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '')
     {
         try {
+            $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
-                ->where('as_of_date', '<=', $asofdate);
+                ->where('as_of_date', '>=', $asofdate)
+                ->where('as_of_date', '<', $nextDay);
                 
             $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                 $q->where('namespace_id', $namespaceId);
@@ -55,7 +57,6 @@ class TopicRepository implements TopicInterface
                 ->skip($skip)
                 ->take($pageSize)
                 ->orderBy('topic_score', 'desc')
-                ->groupBy('topic_id')
                 ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
@@ -81,8 +82,10 @@ class TopicRepository implements TopicInterface
     public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '')
     {
         try {
+            $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
-                ->where('as_of_date', '<=', $asofdate)
+                ->where('as_of_date', '>=', $asofdate)
+                ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
             $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
@@ -101,7 +104,6 @@ class TopicRepository implements TopicInterface
                 ->skip($skip)
                 ->take($pageSize)
                 ->orderBy('topic_score', 'desc')
-                ->groupBy('topic_id')
                 ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
@@ -121,11 +123,13 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '')
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '') 
     {
         try {
+            $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
-                ->where('as_of_date', '<=', $asofdate);
+                ->where('as_of_date', '>=', $asofdate)
+                ->where('as_of_date', '<', $nextDay);
 
             $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                 $q->where('namespace_id', $namespaceId);
@@ -139,8 +143,7 @@ class TopicRepository implements TopicInterface
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }
 
-            $record = $record->groupBy('topic_id')
-                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+            $record = $record->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -163,8 +166,10 @@ class TopicRepository implements TopicInterface
     public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '')
     {
         try {
+            $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
-                ->where('as_of_date', '<=', $asofdate)
+                ->where('as_of_date', '>=', $asofdate)
+                ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
             $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
@@ -179,9 +184,7 @@ class TopicRepository implements TopicInterface
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }
 
-            $record = $record->orderBy('topic_score', 'desc')
-                ->groupBy('topic_id')
-                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+            $record = $record->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();

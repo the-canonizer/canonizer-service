@@ -788,7 +788,7 @@ class Camp extends Model
                 $campData = self::where('topic_num', $value->topic_num)->where('camp_num', $value->camp_num)->first();
                 if ($campData) {
                     $reducedTree = $campData->getTopicScore(session('defaultAlgo', 'blind_popularity'), $activeAcamp = null, $supportCampCount = 0, $needSelected = 0);
-                    $topics[$key]->score = $reducedTree[$value->camp_num]['score'];
+                    $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                 } else {
                     $topics[$key]->score = 0;
                 }

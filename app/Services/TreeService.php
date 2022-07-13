@@ -32,7 +32,7 @@ class TreeService
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
-        $topicScore = isset($tree[1]['score']) ? $tree[1]['score'] : 0;
+        $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
