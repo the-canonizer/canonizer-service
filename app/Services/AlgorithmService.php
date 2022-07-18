@@ -54,7 +54,7 @@ class AlgorithmService
 
     public function mind_experts($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
-        return CampService::campTreeCount(81, $nickNameId, $asOfTime);
+        return CampService::campTreeCount(81, $nickNameId,$topicNumber,$campNumber, $asOfTime);
     }
 
     /**
@@ -69,7 +69,7 @@ class AlgorithmService
 
     public function computer_science_experts($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
-        return CampService::campTreeCount(124, $nickNameId, $asOfTime);
+        return CampService::campTreeCount(124, $nickNameId, $topicNumber, $campNumber,$asOfTime);
     }
 
     /**
