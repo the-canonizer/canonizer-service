@@ -975,7 +975,7 @@ class CampService
                         $multiSupport =  count($camp_score) > 1 ? 1 : 0;
                        foreach($camp_score as $campNum=>$score){
                             if($support_order > 1 && $index == count($scoreData)  && $is_add_reminder_back_flag){
-                                if(count(array_keys($nick_name_support_tree[$nickNameId][1])) > 0){
+                                if(array_key_exists($nickNameId,$nick_name_support_tree) && array_key_exists(1,$nick_name_support_tree[$nickNameId]) && count(array_keys($nick_name_support_tree[$nickNameId][1])) > 0){
                                 $campNumber = array_keys($nick_name_support_tree[$nickNameId][1])[0];
                                 $nick_name_support_tree[$nickNameId][1][$campNumber]['score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['score'] + $score['score'];
                                 $camp_wise_score[$campNumber][1][$nickNameId]['score'] = $camp_wise_score[$campNumber][1][$nickNameId]['score'] + $score['score'];
