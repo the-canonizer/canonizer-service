@@ -660,7 +660,7 @@ class CampService
 
         /* if the search paramet is set then add search condition in the query */
         if (isset($search) && $search != '') {
-            $returnTopics->where('title', 'like', '%' . $search . '%');
+            $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
         };
 
         $returnTopics
