@@ -299,7 +299,7 @@ class TreeController extends Controller
             $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->orWhere('unique_id', $topicNumber)->first();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
-            if($isLastJobPending > 0) {
+            if($isLastJobPending) {
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
