@@ -182,7 +182,7 @@ class TopicController extends Controller
          * with score from mongodb instance else fetch Topics with Score
          * from Mysql
          */
-        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts")) {
+        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == 'computer_science_experts')) {
 
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
