@@ -148,8 +148,8 @@ class TreeService
      */
     public function getRootUrl($request){
 
-         // $rootUrl = env('REFERER_URL');
          $url = request()->headers->get('referer');
+         $url = rtrim($url,"/");
          $rootUrl = isset($url) ? $url:env('REFERER_URL');
 
          return $rootUrl;
