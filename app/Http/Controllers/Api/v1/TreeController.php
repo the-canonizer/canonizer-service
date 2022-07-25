@@ -281,7 +281,7 @@ class TreeController extends Controller
          * from Mysql
          */
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory)) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == "computer_science_experts") && !($fetchTopicHistory)) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
