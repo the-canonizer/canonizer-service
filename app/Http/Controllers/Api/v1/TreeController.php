@@ -269,6 +269,7 @@ class TreeController extends Controller
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
         $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+        $campNumber = (int) $request->input('camp_num', 1);
         
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
@@ -295,8 +296,8 @@ class TreeController extends Controller
              * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
              * If there is no processed job found for specific topic -- Get tree from Mongo
              */
-
-            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->orWhere('unique_id', $topicNumber)->first();
+            $topicId = $topicNumber. '_'. $campNumber;
+            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
             if($isLastJobPending) {
