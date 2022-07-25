@@ -927,7 +927,7 @@ class CampService
     public function getCampAndNickNameWiseSupportTree($algorithm, $topicNumber,$asOfTime){
         try{
 
-            $is_add_reminder_back_flag = ($algorithm == 'blind_popularity') ? 1 : 0;
+            $is_add_reminder_back_flag = 1;//($algorithm == 'blind_popularity') ? 1 : 0;
             $nick_name_support_tree=[];
             $nick_name_wise_support=[];
             $camp_wise_support = [];
