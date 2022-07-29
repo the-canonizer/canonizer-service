@@ -5,7 +5,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
 
     // trees
     $router->group(['prefix' => 'tree'], function () use ($router) {
-        $router->post('/store', ['middleware' => 'auth', 'uses' => 'TreeController@store']);
+        $router->post('/store', ['uses' => 'TreeController@store']);
         $router->post('/get', ['uses' => 'TreeController@find']);
         $router->get('/all', function () {
             ini_set('max_execution_time', 3000);
