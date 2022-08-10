@@ -12,6 +12,7 @@ use DateTimeHelper;
 use Illuminate\Http\Request;
 use TopicService;
 use UtilHelper;
+use Illuminate\Support\Str;
 
 class TopicController extends Controller
 {
@@ -178,12 +179,30 @@ class TopicController extends Controller
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
 
-        /* if $asofdate is greater then cron run date then get topics
-         * with score from mongodb instance else fetch Topics with Score
-         * from Mysql
+        /**
+         * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
+         * Check if tree:all command is running in background
+         * Then command is in process of creating all topics trees in Mongo database (Mongo is not updated)
+         * Fetch topics from MySQL (updated database)
          */
-        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == 'computer_science_experts')) {
+        $commandStatus = 0; 
+        $commandStatement = "php artisan tree:all";
 
+        exec("ps -ef | grep \"tree:all\"", $output);
+
+        if(is_array($output) && count($output) > 0) {
+            foreach($output as $row) {
+                $contains = Str::contains($row, $commandStatement);
+    
+                if($contains) {
+                    $commandStatus = 1;
+                    break;
+                }
+            }
+        }
+        
+        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == 'computer_science_experts') && !$commandStatus) {
+            
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search);
