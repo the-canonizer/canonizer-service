@@ -282,8 +282,14 @@ class TreeController extends Controller
          * with score from mongodb instance else fetch tree with Score
          * from Mysql
          */
+
+        // If tree:all command is running, fetch tree from MySQL
+        $commandStatement = "php artisan tree:all";
+        $commandSignature = "tree:all";
+
+        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == "computer_science_experts") && !($fetchTopicHistory)) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == "computer_science_experts") && !($fetchTopicHistory) && !$commandStatus) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
