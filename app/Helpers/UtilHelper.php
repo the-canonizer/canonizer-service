@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use Illuminate\Support\Str;
+
 class UtilHelper
 {
 
@@ -83,6 +85,33 @@ class UtilHelper
         else {
             return $curlResponse;
         }
+    }
 
+    /**
+     * Get command (to create tree of all topics) status
+     * 
+     * @param string command statement
+     * @param string command signature
+     * 
+     * @return bool command status
+     */
+    public function getCommandRuningStatus($statement, $signature) {
+        
+        $commandStatus = 0; 
+        
+        exec("ps -ef | grep \"".$signature ."\"", $output);
+
+        if(is_array($output) && count($output) > 0) {
+            foreach($output as $row) {
+                $contains = Str::contains($row, $statement);
+    
+                if($contains) {
+                    $commandStatus = 1;
+                    break;
+                }
+            }
+        }
+
+        return $commandStatus;
     }
 }
