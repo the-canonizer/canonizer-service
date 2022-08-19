@@ -7,6 +7,7 @@ use App\Model\v1\Namespaces;
 use App\Model\v1\Topic;
 use TreeService;
 use Illuminate\Support\Facades\Log;
+use UtilHelper;
 
 class CreateTopicTreeCommand extends Command
 {
