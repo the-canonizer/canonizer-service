@@ -23,7 +23,8 @@ class AlgorithmService
      */
     public function getAlgorithmKeyList()
     {
-        return array('blind_popularity', 'mind_experts','computer_science_experts');
+        // return array('blind_popularity', 'mind_experts','computer_science_experts');
+        return array('blind_popularity', 'mind_experts');
     }
 
     /**
