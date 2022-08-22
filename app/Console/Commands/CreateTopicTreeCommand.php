@@ -7,6 +7,7 @@ use App\Model\v1\Namespaces;
 use App\Model\v1\Topic;
 use TreeService;
 use Illuminate\Support\Facades\Log;
+use UtilHelper;
 
 class CreateTopicTreeCommand extends Command
 {
@@ -41,17 +42,25 @@ class CreateTopicTreeCommand extends Command
      */
     public function handle()
     {
-        //get all namespaces
-        $namespaces = Namespaces::all();
-        $asOfTime =  time();
-        foreach ($namespaces as $value) {
-            // get all topic associated with this namespace
-            $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
-                ->where(["namespace_id" => $value['id']])
-                ->groupBy('topic_num')
-                ->get();
-             $this->createLess166Topics($topics, $asOfTime);
-             $this->creategreater166Topics($topics, $asOfTime);
+        // If tree:all command is already running, don't execute command
+        $commandStatement = "php artisan tree:all";
+        $commandSignature = "tree:all";
+
+        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+
+        if(!$commandStatus) {
+            //get all namespaces
+            $namespaces = Namespaces::all();
+            $asOfTime =  time();
+            foreach ($namespaces as $value) {
+                // get all topic associated with this namespace
+                $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
+                    ->where(["namespace_id" => $value['id']])
+                    ->groupBy('topic_num')
+                    ->get();
+                $this->createLess166Topics($topics, $asOfTime);
+                $this->creategreater166Topics($topics, $asOfTime);
+            }
         }
     }
 

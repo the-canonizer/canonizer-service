@@ -108,6 +108,8 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
+            $tree[$startCamp]['is_disabled'] = $topic->is_disabled ?? 0;
+            $tree[$startCamp]['is_one_level'] = $topic->is_one_level ?? 0;
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
@@ -509,6 +511,8 @@ class CampService
                 $array[$child->camp_num]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
+                $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
+                $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
                 $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
