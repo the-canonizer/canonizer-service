@@ -513,6 +513,16 @@ class CampService
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                
+                if($child->parent_camp_num == 1) {
+                    $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                } else {
+                    $parentCamp = $this->getLiveCamp($child->topic_num, $child->parent_camp_num, ['nofilter' => true], $asOfTime, $asOf);
+                }
+
+                $array[$child->camp_num]['parent_camp_is_disabled'] = $parentCamp->is_disabled ?? 0;
+                $array[$child->camp_num]['parent_camp_is_one_level'] = $parentCamp->is_one_level ?? 0;
+                
                 $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
