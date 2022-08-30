@@ -110,6 +110,11 @@ class CampService
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
             $tree[$startCamp]['is_disabled'] = $topic->is_disabled ?? 0;
             $tree[$startCamp]['is_one_level'] = $topic->is_one_level ?? 0;
+
+            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+            $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
+            $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
+            
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
