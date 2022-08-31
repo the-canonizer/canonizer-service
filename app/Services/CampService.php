@@ -575,8 +575,15 @@ class CampService
         
 		# start with one person one vote canonize.
        
-         if($topicNum == 81){  // mind expert special case
-            $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree('blind_popularity',$topicNumber,$asOfTime); # only need to canonize this branch
+         if($topicNum == 81 || $topicNum == 124){  // mind expert special case
+            $algo = 'blind_popularity';
+            if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNumber}_{$algo}")){
+                $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree($algo, $topicNumber,$asOfTime);
+                $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"] = $expertCampReducedTree;
+            }else{
+                $expertCampReducedTree = $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"];
+            } 
+            //$expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree('blind_popularity',$topicNumber,$asOfTime); # only need to canonize this branch
             $total_score = 0;
             if(array_key_exists('camp_wise_tree',$expertCampReducedTree) && array_key_exists($expertCamp->camp_num,$expertCampReducedTree['camp_wise_tree']) && count($expertCampReducedTree['camp_wise_tree'][$expertCamp->camp_num]) > 0){
                 foreach($expertCampReducedTree['camp_wise_tree'][$expertCamp->camp_num] as $tree_node){
@@ -590,7 +597,7 @@ class CampService
             
             return $total_score * $score_multiplier;
         }else{
-           $expertCampReducedTree = self::mindExpertsNonSpecial($topicNumber,$nickNameId,$asOfTime); # only need to canonize this branch
+           $expertCampReducedTree = self::mindExpertsNonSpecial($topicNumber,$nickNameId,$asOfTime,$topicNum); # only need to canonize this branch
             $total_score = 0;
             if(count($expertCampReducedTree) > 0){
                 foreach($expertCampReducedTree as $tree_node){
@@ -693,9 +700,10 @@ class CampService
      *
      * @return int $score
      */
-    public function campCount($nickNameId, $condition, $political=false, $topicNumber=0, $campNumber=0, $asOfTime = null){
+    public function campCount($nickNameId, $condition, $political=false, $topicNumber=0, $campNumber=0, $asOfTime = null,$topic_num = 0){
         // $as_of_time = time();
         $cacheWithTime = false;
+        $total = 0;
         // if(isset($_REQUEST['asof']) && $_REQUEST['asof'] == 'bydate'){
         //     if(isset($_REQUEST['asofdate']) && !empty($_REQUEST['asofdate'])){
         //         $as_of_time = strtotime($_REQUEST['asofdate']);
@@ -716,26 +724,33 @@ class CampService
             $result = Cache::remember("$sql", 1, function () use($sql,$sql2) {
                 return DB::select("$sql $sql2");
             });
+        }
 
             if($political==true && $topicNumber==231 && ($campNumber==2 ||  $campNumber==3 || $campNumber==4) ) {
-
-                if($result[0]->support_order==1)
-                    $total = $result[0]->countTotal / 2;
-                else if($result[0]->support_order==2)
-                    $total = $result[0]->countTotal / 4;
-                else if($result[0]->support_order==3)
-                    $total = $result[0]->countTotal / 6;
-                else if($result[0]->support_order==4)
-                    $total = $result[0]->countTotal / 8;
-                else $total = $result[0]->countTotal;
+                $sqlQuery = "select count(*) as countTotal,support_order,camp_num from support where nick_name_id = $nickNameId and topic_num = ".$topicNumber." and ((start < $asOfTime) and ((end = 0) or (end > $asOfTime)))";	
+                $supportCount = DB::select("$sqlQuery");
+                if($supportCount[0]->countTotal > 1 && $topic_num!=231){
+                    $supportPoint = $result[0]->countTotal;
+                    $total = $total + round($supportPoint * 1 / (2 ** ($result[0]->support_order)), 3);
+                }else{
+                    $total = $result[0]->countTotal;
+                } 
+                // if($result[0]->support_order==1)
+                //     $total = $result[0]->countTotal / 2;
+                // else if($result[0]->support_order==2)
+                //     $total = $result[0]->countTotal / 4;
+                // else if($result[0]->support_order==3)
+                //     $total = $result[0]->countTotal / 6;
+                // else if($result[0]->support_order==4)
+                //     $total = $result[0]->countTotal / 8;
+                // else $total = $result[0]->countTotal;
 
             } else {
                 $total = $result[0]->countTotal;
             }
 
 
-            return isset($result[0]->countTotal) ? $total : 0;
-        }
+            return $total;
     }
 
      /**
@@ -778,7 +793,7 @@ class CampService
      * @return int $camp_wise_score_tree
      */
 
-    public function mindExpertsNonSpecial($topicNumber,$nickNameId,$asOfTime){
+    public function mindExpertsNonSpecial($topicNumber,$nickNameId,$asOfTime,$topicNum){
         try {
         $expertCamp = self::getExpertCamp($topicNumber,$nickNameId,$asOfTime);
         if(!$expertCamp){ # not an expert canonized nick.
@@ -786,7 +801,25 @@ class CampService
         }
 
         $score_multiplier = self::getMindExpertScoreMultiplier($expertCamp,$topicNumber,$nickNameId,$asOfTime);
-        $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree('mind_experts',$topicNumber,$asOfTime); # only need to canonize this branch
+        if($topicNum == 124){
+            $algo = 'computer_science_experts';
+            if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNumber}_{$algo}")){
+                $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree($algo, $topicNumber,$asOfTime);
+                $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"] = $expertCampReducedTree;
+            }else{
+                $expertCampReducedTree = $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"];
+            } 
+           // $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree('computer_science_experts',$topicNumber,$asOfTime); # only need to canonize this branch
+        }else{
+           /// $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree('mind_experts',$topicNumber,$asOfTime); # only need to canonize this branch
+            $algo = 'mind_experts';
+            if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNumber}_{$algo}")){
+                $expertCampReducedTree = $this->getCampAndNickNameWiseSupportTree($algo, $topicNumber,$asOfTime);
+                $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"] = $expertCampReducedTree;
+            }else{
+                $expertCampReducedTree = $this->sessionTempArray["score_tree_{$topicNumber}_{$algo}"];
+            } 
+        }
              // Check if user supports himself
         if(array_key_exists('camp_wise_tree',$expertCampReducedTree) && array_key_exists($expertCamp->camp_num,$expertCampReducedTree['camp_wise_tree'])){
             return $expertCampReducedTree['camp_wise_tree'][$expertCamp->camp_num];
@@ -870,8 +903,9 @@ class CampService
     public function delegateSupportTree($algorithm, $topicNumber, $campnum, $delegateNickId, $parent_support_order, $parent_score,$multiSupport,$array=[],$asOfTime){
         try{
             $nick_name_support_tree=[];
-        $nick_name_wise_support=[];
-        $is_add_reminder_back_flag = ($algorithm == 'blind_popularity') ? 1 : 0;
+            $nick_name_wise_support=[];
+            $nick_name_delegate_support_tree = [];
+            $is_add_reminder_back_flag = 1;// ($algorithm == 'blind_popularity') ? 1 : 0;
 		/* Delegated Support */
         if (!Arr::exists($this->sessionTempArray, "topic-support-{$topicNumber}")){
             $supportData = Support::where('topic_num', '=', $topicNumber)
@@ -903,22 +937,54 @@ class CampService
         }
         
         foreach($nick_name_wise_support as $nickNameId=>$support_camp){
-           foreach($support_camp as $support){ 
-               if($support->camp_num == $campnum){
-                    $support_total = 0; 
-                    $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
-                    if($multiSupport){
-                        $support_total = $support_total + round($supportPoint * 1 / (2 ** ($support->support_order)), 3);
-                    }else{
-                        $support_total = $support_total + $supportPoint;
-                    } 
-                    $nick_name_support_tree[$support->nick_name_id]['score'] = ($is_add_reminder_back_flag) ? $parent_score : $support_total;
-                    $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campnum, $support->nick_name_id, $parent_support_order,$parent_score,$multiSupport,[],$asOfTime);
-                    $nick_name_support_tree[$support->nick_name_id]['delegates'] = $delegateTree;
-                }               
-               }
-        }
-       return $nick_name_support_tree;
+            foreach($support_camp as $support){ 
+                $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
+                $support_total = 0; 
+                     if($multiSupport){
+                         $support_total = $support_total + round($supportPoint * 1 / (2 ** ($support->support_order)), 3);
+                     }else{
+                         $support_total = $support_total + $supportPoint;
+                     } 
+                     $nick_name_support_tree[$support->nick_name_id][$support->support_order][$support->camp_num]['score']  = $support_total;
+                }
+         }
+        
+         if(count($nick_name_support_tree) > 0){
+             foreach($nick_name_support_tree as $nickNameId=>$scoreData){
+                 ksort($scoreData);
+                 $index = 0;
+                 $multiSupport =  count($scoreData) > 1 ? 1 : 0;
+                 foreach($scoreData as $support_order=>$camp_score){
+                     $index = $index +1;
+                    foreach($camp_score as $campNum=>$score){
+                         if($support_order > 1 && $index == count($scoreData)  && $is_add_reminder_back_flag){
+                             if(array_key_exists($nickNameId,$nick_name_support_tree) && array_key_exists(1,$nick_name_support_tree[$nickNameId]) && count(array_keys($nick_name_support_tree[$nickNameId][1])) > 0){
+                             $campNumber = array_keys($nick_name_support_tree[$nickNameId][1])[0];
+                             $nick_name_support_tree[$nickNameId][1][$campNumber]['score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['score'] + $score['score'];
+                             $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNumber, $nickNameId, $parent_support_order,$parent_score,$multiSupport ,[],$asOfTime);
+                             $nick_name_support_tree[$nickNameId][1][$campNumber]['delegates'] = $delegateTree;
+                         }
+                     }
+                     $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNum, $nickNameId, $parent_support_order, $parent_score,$multiSupport,[],$asOfTime);
+                     $nick_name_support_tree[$nickNameId][$support_order][$campNum]['delegates'] = $delegateTree;
+                    }
+                 }
+             }
+         }
+         if(count($nick_name_support_tree) > 0){
+             foreach($nick_name_support_tree as $nick=>$data){
+                 foreach($data as $support_order=>$camp_score){
+                    foreach($camp_score as $campNum=>$score){
+                         if($campNum == $campnum){
+                             $nick_name_delegate_support_tree[$nick]['score'] =   $score['score'];
+                             $nick_name_delegate_support_tree[$nick]['delegates'] = $score['delegates'];
+                         }
+                    }
+                 }
+                
+             }
+         }         
+        return $nick_name_delegate_support_tree;
 
        }catch (CampTreeCountException $th) {
             throw new CampTreeCountException("Camp Tree Count with Mind Expert Algorithm Exception");
@@ -974,16 +1040,16 @@ class CampService
                 foreach($nick_name_support_tree as $nickNameId=>$scoreData){
                     ksort($scoreData);
                     $index = 0;
+                    $multiSupport =  count($scoreData) > 1 ? 1 : 0;
                     foreach($scoreData as $support_order=>$camp_score){
-                        $index = $index +1;
-                        $multiSupport =  count($camp_score) > 1 ? 1 : 0;
+                        $index = $index +1;                        
                        foreach($camp_score as $campNum=>$score){
                             if($support_order > 1 && $index == count($scoreData)  && $is_add_reminder_back_flag){
                                 if(array_key_exists($nickNameId,$nick_name_support_tree) && array_key_exists(1,$nick_name_support_tree[$nickNameId]) && count(array_keys($nick_name_support_tree[$nickNameId][1])) > 0){
                                 $campNumber = array_keys($nick_name_support_tree[$nickNameId][1])[0];
                                 $nick_name_support_tree[$nickNameId][1][$campNumber]['score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['score'] + $score['score'];
                                 $camp_wise_score[$campNumber][1][$nickNameId]['score'] = $camp_wise_score[$campNumber][1][$nickNameId]['score'] + $score['score'];
-                                $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNumber, $nickNameId, 1,$camp_wise_score[$campNumber][1][$nickNameId]['score'],$multiSupport ,[],$asOfTime);
+                                $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNumber, $nickNameId, $support_order,$camp_wise_score[$campNumber][1][$nickNameId]['score'],$multiSupport ,[],$asOfTime);
                                 $nick_name_support_tree[$nickNameId][1][$campNumber]['delegates'] = $delegateTree;
                             }
                         }
