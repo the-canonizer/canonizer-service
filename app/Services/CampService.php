@@ -12,6 +12,7 @@ use App\Exceptions\Camp\AgreementCampsException;
 use App\Model\v1\Camp;
 use App\Model\v1\Support;
 use App\Model\v1\TopicSupport;
+use App\Model\v1\CampSubscription;
 use DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -110,10 +111,31 @@ class CampService
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
             $tree[$startCamp]['is_disabled'] = $topic->is_disabled ?? 0;
             $tree[$startCamp]['is_one_level'] = $topic->is_one_level ?? 0;
+            $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
             throw new CampTreeException("Prepare Camp Tree Exception");
+        }
+    }
+
+    /**
+     * Get the topic/camp subscriptions.
+     *
+     * @param int $topicNumber
+     * @param int $campNumber
+     *
+     * @return array subscribedBy
+     */
+
+    public function getTopicCampSubscriptions($topicNumber, $campNumber)
+    {
+        try {
+            $campSubscriptions = CampSubscription::where([['topic_num','=',$topicNumber],
+                ['camp_num','=',$campNumber]])->whereNull('subscription_end')->pluck('user_id')->toArray();
+            return $campSubscriptions;
+        } catch (CampURLException $th) {
+            abort(401, "Topic Camp Subscribe Exception: " . $th->getMessage());
         }
     }
 
@@ -513,6 +535,8 @@ class CampService
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num);
+                // $lastArray[$parentCamp]['subscribed_users'] = array_merge($lastArray[$parentCamp]['subscribed_users'], $array[$child->camp_num]['subscribed_users']);
                 
                 if($child->parent_camp_num == 1) {
                     $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
