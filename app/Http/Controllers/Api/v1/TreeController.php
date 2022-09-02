@@ -289,7 +289,7 @@ class TreeController extends Controller
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == "computer_science_experts") && !($fetchTopicHistory) && !$commandStatus) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) && !$commandStatus) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 

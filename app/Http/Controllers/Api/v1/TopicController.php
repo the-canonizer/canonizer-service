@@ -189,7 +189,7 @@ class TopicController extends Controller
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
-        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts" || $algorithm == 'computer_science_experts') && !$commandStatus) {
+        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !$commandStatus) {
             
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
