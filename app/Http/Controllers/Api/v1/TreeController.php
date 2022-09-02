@@ -7,9 +7,12 @@ use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
 use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use TreeRepository;
 use TreeService;
 use UtilHelper;
+use App\Model\v1\Topic;
+use App\Model\v1\Camp;
 
 class TreeController extends Controller
 {
@@ -136,6 +139,40 @@ class TreeController extends Controller
         $updateAll = (int) $request->input('update_all', 0);
 
         $start = microtime(true);
+        $currentTime = time();
+
+        /**
+         * Update each topic grace period where grace period duration is completed
+         */
+        $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        
+        if($topics->count() > 0) {
+            foreach($topics as $topic) {
+                $submittedTime = $topic->submit_time;
+                $gracePeriodEndTime = $submittedTime + 60;
+                if($currentTime > $gracePeriodEndTime) {
+                    $topic->grace_period = 0;
+                    $topic->update();
+                }
+            }
+        }
+        
+
+        /**
+         * Update each camp grace period where grace period duration is completed
+         */
+        $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        
+        if($camps->count() > 0) {
+            foreach($camps as $camp) {
+                $submittedTime = $camp->submit_time;
+                $gracePeriodEndTime = $submittedTime + 60;
+                if($currentTime > $gracePeriodEndTime) {
+                    $camp->grace_period = 0;
+                    $camp->update();
+                }
+            }
+        }
 
         $tree = TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
 
@@ -304,7 +341,7 @@ class TreeController extends Controller
              * If there is no processed job found for specific topic -- Get tree from Mongo
              */
 
-            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
+            $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
             if($isLastJobPending) {
