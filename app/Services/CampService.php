@@ -100,6 +100,13 @@ class CampService
             $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
+            $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
+            $isDisabled = 0;
+            $isOneLevel = 0;
+            if (!empty($agreementCamp)) {
+                $isDisabled = $agreementCamp->is_disabled ?? 0;
+                $isOneLevel = $agreementCamp->is_one_level ?? 0;
+            }
             $tree = [];
             $tree[$startCamp]['topic_id'] = $topicNumber;
             $tree[$startCamp]['camp_id'] = $startCamp;
@@ -109,8 +116,8 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
-            $tree[$startCamp]['is_disabled'] = $topic->is_disabled ?? 0;
-            $tree[$startCamp]['is_one_level'] = $topic->is_one_level ?? 0;
+            $tree[$startCamp]['is_disabled'] = $isDisabled;
+            $tree[$startCamp]['is_one_level'] = $isOneLevel;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
