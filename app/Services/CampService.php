@@ -115,6 +115,10 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
+            
+            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+            $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
+            $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
             $tree[$startCamp]['is_disabled'] = $isDisabled;
             $tree[$startCamp]['is_one_level'] = $isOneLevel;
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
@@ -743,12 +747,19 @@ class CampService
             });
         }
 
-            if($political==true && $topicNumber==231 && ($campNumber==2 ||  $campNumber==3 || $campNumber==4) ) {
+            if($political==true && $topicNumber==231 && ($campNumber==2 ||  $campNumber==3 || $campNumber==4 || $campNumber==6) ) {
                 $sqlQuery = "select count(*) as countTotal,support_order,camp_num from support where nick_name_id = $nickNameId and topic_num = ".$topicNumber." and ((start < $asOfTime) and ((end = 0) or (end > $asOfTime)))";	
                 $supportCount = DB::select("$sqlQuery");
                 if($supportCount[0]->countTotal > 1 && $topic_num!=231){
-                    $supportPoint = $result[0]->countTotal;
-                    $total = $total + round($supportPoint * 1 / (2 ** ($result[0]->support_order)), 3);
+                    if($result[0]->support_order == 1){
+                        for($i=1; $i<=$supportCount[0]->countTotal; $i++){
+                            $supportPoint = $result[0]->countTotal;
+                            $total = $total + round($supportPoint * 1 / (2 ** ($i)), 3);
+                        }
+                    }else{
+                        $supportPoint = $result[0]->countTotal;
+                        $total = $total + round($supportPoint * 1 / (2 ** ($result[0]->support_order)), 3);
+                    }
                 }else{
                     $total = $result[0]->countTotal;
                 } 
