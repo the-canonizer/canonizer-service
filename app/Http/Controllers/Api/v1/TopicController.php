@@ -186,14 +186,14 @@ class TopicController extends Controller
          */
         $commandStatement = "php artisan tree:all";
         $commandSignature = "tree:all";
-
+        
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !$commandStatus) {
             
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search);
+            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
 
             /**
              * If no topics found in Mongo database, fetch data from MySQL 

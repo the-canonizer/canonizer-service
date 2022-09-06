@@ -33,17 +33,24 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '')
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '', $asof)
     {
         try {
             $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
-                
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            
+            if($asof == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
+            
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
