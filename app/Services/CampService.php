@@ -158,7 +158,7 @@ class CampService
      * @param string $camp-title
      * @return int campNumber
      */
-    public function changeArrayExplicity($childCampSubscribers, $explicity, $title, $campNumber) {
+    public function changeArrayExplicity($childCampSubscribers, $title, $campNumber, $explicity= false) {
         $newArr = [];
         foreach ($childCampSubscribers as $key => $value) {
             $newValue = $value;
@@ -577,7 +577,7 @@ class CampService
                 }
                 
                 // Set the implicit subscription of the parent camp.
-                $implicitParentSubscriptionArray = $this->changeArrayExplicity($array[$child->camp_num]['subscribed_users'], false, $title, $child->camp_num);
+                $implicitParentSubscriptionArray = $this->changeArrayExplicity($array[$child->camp_num]['subscribed_users'], $title, $child->camp_num);
                 $lastArray[$child->parent_camp_num]['subscribed_users'] = $lastArray[$child->parent_camp_num]['subscribed_users'] + $implicitParentSubscriptionArray;
                 
                 $array[$child->camp_num]['parent_camp_is_disabled'] = $parentCamp->is_disabled ?? 0;
