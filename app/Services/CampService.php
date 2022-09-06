@@ -115,6 +115,10 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
+            
+            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+            $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
+            $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
             $tree[$startCamp]['is_disabled'] = $isDisabled;
             $tree[$startCamp]['is_one_level'] = $isOneLevel;
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
