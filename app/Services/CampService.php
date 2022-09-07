@@ -12,6 +12,7 @@ use App\Exceptions\Camp\AgreementCampsException;
 use App\Model\v1\Camp;
 use App\Model\v1\Support;
 use App\Model\v1\TopicSupport;
+use App\Model\v1\CampSubscription;
 use DB;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
@@ -115,13 +116,64 @@ class CampService
             $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
+            
+            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+            $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
+            $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
             $tree[$startCamp]['is_disabled'] = $isDisabled;
             $tree[$startCamp]['is_one_level'] = $isOneLevel;
-            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf);
+            $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
+            $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
         } catch (CampTreeException $th) {
             throw new CampTreeException("Prepare Camp Tree Exception");
         }
+    }
+
+    /**
+     * Get the topic/camp subscriptions.
+     *
+     * @param int $topicNumber
+     * @param int $campNumber
+     *
+     * @return array subscribedBy
+     */
+
+    public function getTopicCampSubscriptions($topicNumber, $campNumber) {
+        try {
+            $campSubscriptionsArr = [];
+            $campSubscriptions = CampSubscription::where([['topic_num','=',$topicNumber],
+                ['camp_num','=',$campNumber]])->whereNull('subscription_end')->pluck('user_id')->toArray();
+            if (count($campSubscriptions) > 0) {
+                $explicitArr = array("explicit" => true);
+                $campSubscriptionsArr = array_fill_keys($campSubscriptions, $explicitArr);
+            } 
+            return $campSubscriptionsArr;
+        } catch (CampURLException $th) {
+            abort(401, "Topic Camp Subscribe Exception: " . $th->getMessage());
+        }
+    }
+
+    /**
+     * Change the subscription array in case of implicit to parent.
+     *
+     * @param array $childCampSubscribers
+     * @param boolean $explicity
+     * @param string $camp-title
+     * @return int campNumber
+     */
+    public function changeArrayExplicity($childCampSubscribers, $title, $campNumber, $explicity= false) {
+        $newArr = [];
+        foreach ($childCampSubscribers as $key => $value) {
+            $newValue = $value;
+            $newValue['explicit'] = $explicity;
+            if (!$explicity) {
+                $newValue['child_camp_name'] = $title;
+                $newValue['child_camp_id'] = $campNumber;
+            }
+            $newArr[$key] = $newValue; // Can be true/false.
+        }
+        return $newArr;
     }
 
     /**
@@ -488,7 +540,7 @@ class CampService
      *
      * @return array $array
      */
-    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default')
+    public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default', & $lastArray)
     {
         try {
             $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
@@ -520,17 +572,22 @@ class CampService
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
-                
+                $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
+
                 if($child->parent_camp_num == 1) {
                     $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 } else {
                     $parentCamp = $this->getLiveCamp($child->topic_num, $child->parent_camp_num, ['nofilter' => true], $asOfTime, $asOf);
                 }
-
+                
+                // Set the implicit subscription of the parent camp.
+                $implicitParentSubscriptionArray = $this->changeArrayExplicity($array[$child->camp_num]['subscribed_users'], $title, $child->camp_num);
+                $lastArray[$child->parent_camp_num]['subscribed_users'] = $lastArray[$child->parent_camp_num]['subscribed_users'] + $implicitParentSubscriptionArray;
+                
                 $array[$child->camp_num]['parent_camp_is_disabled'] = $parentCamp->is_disabled ?? 0;
                 $array[$child->camp_num]['parent_camp_is_one_level'] = $parentCamp->is_one_level ?? 0;
                 
-                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf);
+                $children = $this->traverseCampTree($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf, $array);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
             }
