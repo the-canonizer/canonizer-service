@@ -750,7 +750,9 @@ class CampService
                     if($result[0]->support_order == 1){
                         for($i=1; $i<=$supportCount[0]->countTotal; $i++){
                             $supportPoint = $result[0]->countTotal;
-                            $total = $total + round($supportPoint * 1 / (2 ** ($i)), 3);
+                            if($i == 1 || $i == $supportCount[0]->countTotal){ // adding only last reminder
+                                $total = $total + round($supportPoint * 1 / (2 ** ($i)), 3);
+                            }
                         }
                     }else{
                         $supportPoint = $result[0]->countTotal;
