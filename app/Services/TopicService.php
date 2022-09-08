@@ -167,6 +167,17 @@ class TopicService
 
      }
 
+    /**
+     * Get the topic created date .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
 
-
+    public function getTopicCreatedDate($topicNumber){
+        return Topic::where('topic_num', $topicNumber)
+                ->pluck('submit_time')
+                ->first();
+    }
 }

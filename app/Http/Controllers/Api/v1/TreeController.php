@@ -7,9 +7,12 @@ use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
 use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 use TreeRepository;
 use TreeService;
 use UtilHelper;
+use App\Model\v1\Topic;
+use App\Model\v1\Camp;
 
 class TreeController extends Controller
 {
@@ -136,6 +139,40 @@ class TreeController extends Controller
         $updateAll = (int) $request->input('update_all', 0);
 
         $start = microtime(true);
+        $currentTime = time();
+
+        /**
+         * Update each topic grace period where grace period duration is completed
+         */
+        $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        
+        if($topics->count() > 0) {
+            foreach($topics as $topic) {
+                $submittedTime = $topic->submit_time;
+                $gracePeriodEndTime = $submittedTime + 60;
+                if($currentTime > $gracePeriodEndTime) {
+                    $topic->grace_period = 0;
+                    $topic->update();
+                }
+            }
+        }
+        
+
+        /**
+         * Update each camp grace period where grace period duration is completed
+         */
+        $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        
+        if($camps->count() > 0) {
+            foreach($camps as $camp) {
+                $submittedTime = $camp->submit_time;
+                $gracePeriodEndTime = $submittedTime + 60;
+                if($currentTime > $gracePeriodEndTime) {
+                    $camp->grace_period = 0;
+                    $camp->update();
+                }
+            }
+        }
 
         $tree = TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
 
@@ -269,6 +306,8 @@ class TreeController extends Controller
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
         $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+        $campNumber = (int) $request->input('camp_num', 1);
+        $topicId = $topicNumber. '_'. $campNumber;
         
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
@@ -280,14 +319,21 @@ class TreeController extends Controller
          * with score from mongodb instance else fetch tree with Score
          * from Mysql
          */
+
+        // If tree:all command is running, fetch tree from MySQL
+        $commandStatement = "php artisan tree:all";
+        $commandSignature = "tree:all";
+
+        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory)) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) && !$commandStatus) {
             
             $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
             /**
              * Fetch topic tree on the basis of jobs in queue or processed ones
-             * If there is any job exists in jobs table, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+             * If there is any job exists in jobs table, either model_id has topic number (for 2.0) or unique id has topic number (for 3.0)
+             * then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
              * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
              * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
              * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
@@ -295,7 +341,7 @@ class TreeController extends Controller
              * If there is no processed job found for specific topic -- Get tree from Mongo
              */
 
-            $isLastJobPending = \DB::table('jobs')->where('model_id', $topicNumber)->first();
+            $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
             if($isLastJobPending) {

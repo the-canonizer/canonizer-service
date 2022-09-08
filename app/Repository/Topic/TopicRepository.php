@@ -58,6 +58,7 @@ class TopicRepository implements TopicInterface
                 ->take($pageSize)
                 ->orderBy('topic_score', 'desc')
                 ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+                
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();

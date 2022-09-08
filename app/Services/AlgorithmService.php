@@ -23,7 +23,8 @@ class AlgorithmService
      */
     public function getAlgorithmKeyList()
     {
-        return array('blind_popularity', 'mind_experts');
+        //return array('mind_experts');
+        return array('blind_popularity', 'mind_experts','computer_science_experts');
     }
 
     /**
@@ -228,7 +229,7 @@ class AlgorithmService
     public function united_utah($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 2)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 2, $asOfTime);
+        return CampService::campCount($nickNameId, $condition, true, 231, 2, $asOfTime,$topicNumber);
     }
 
     /**
@@ -246,7 +247,13 @@ class AlgorithmService
     public function republican($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 3)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 3, $asOfTime);
+        return CampService::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
+    }
+
+    // Forward party Algorith using related topic and camp
+    public function forward_party($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null){
+        $condition = '(topic_num = 231 and camp_num = 6)';
+        return CampService::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
     }
 
     /**
@@ -264,7 +271,7 @@ class AlgorithmService
     public function democrat($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 4)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 4, $asOfTime);
+        return CampService::campCount($nickNameId, $condition, true, 231, 4, $asOfTime,$topicNumber);
     }
 
     /**
@@ -321,6 +328,36 @@ class AlgorithmService
         }
 
         return $totalEthers;
+    }
+
+     /**
+     * Get canonizer sandy city algorithm score.
+     *
+     * @param int $nickNameId
+     * @param int $topicNumber
+     * @param int $campNumber
+     * @param int $asOfTime
+     *
+     * @return int $score
+     */
+
+    public function sandy_city($nickNameId = null, $topicNumber = 0, $campNumber = 0,$asOfTime = null){
+        return $this->sandy_city_algo($nickNameId);
+    }
+
+     /**
+     * Get canonizer sandy city council algorithm score.
+     *
+     * @param int $nickNameId
+     * @param int $topicNumber
+     * @param int $campNumber
+     * @param int $asOfTime
+     *
+     * @return int $score
+     */
+
+    public  function sandy_city_council($nickNameId = null, $topicNumber = 0, $campNumber = 0,$asOfTime = null){
+        return $this->sandy_city_council_algo($nickNameId);
     }
 
     /**
@@ -411,6 +448,41 @@ class AlgorithmService
         } catch (ShareAlgorithmException $th) {
             throw new ShareAlgorithmException($th->getMessage(), 403);
         }
+
+    }
+
+    /**
+     * Get sandy city algorithm score
+     *
+     * @param int $nickNameId
+     *
+     * @return int $score
+     */
+    public function sandy_city_algo($nickNameId = null){
+        $user=Nickname::getUserByNickName($nickNameId);
+        $score = 0;
+        if($user && $user->city !=='' && str_contains(strtolower($user->city),'sandy')){
+            $score = 1;
+        }
+        return $score;
+
+    }
+
+     /**
+     * Get sandy city council algorithm score
+     *
+     * @param int $nickNameId
+     *
+     * @return int $score
+     */
+    public function sandy_city_council_algo($nickNameId=null){
+        $nick_name_list=[1,346];
+        $nick_name_score_list = [1=>1,346=>1];
+        $score = 0;
+        if(in_array($nickNameId,$nick_name_list)){
+            $score = $nick_name_score_list[$nickNameId];
+        }
+        return $score;
 
     }
 

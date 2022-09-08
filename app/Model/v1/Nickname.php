@@ -11,6 +11,7 @@ use App\Model\v1\Camp;
 use App\Model\v1\Support;
 use App\Model\v1\Topic;
 use App\Model\v1\Statement;
+use App\Model\v1\User;
 use Illuminate\Database\Eloquent\Collection;
 
 class Nickname extends Model {
@@ -243,7 +244,7 @@ class Nickname extends Model {
     public function getUser() {
 
         $userId = \App\Library\General::canon_decode($this->owner_code);
-        return \App\User::find($userId);
+        return User::find($userId);
     }
 
     public static function getUserByNickName($nick_id) {
@@ -251,7 +252,7 @@ class Nickname extends Model {
         $nickname = self::find($nick_id);
 
         $userId = \App\Library\General::canon_decode($nickname->owner_code);
-        return \App\User::find($userId);
+        return User::find($userId);
     }
 
     public static function getNickName($nick_id) {
