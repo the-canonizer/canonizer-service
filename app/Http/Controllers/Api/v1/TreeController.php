@@ -303,6 +303,7 @@ class TreeController extends Controller
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
         $asOfTime = (int) $request->input('asofdate');
+        $asOf = $request->input('asOf');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
         $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
@@ -344,7 +345,8 @@ class TreeController extends Controller
             $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
-            if($isLastJobPending) {
+            // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
+            if($isLastJobPending || $asOf == "review") {
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
