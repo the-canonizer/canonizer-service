@@ -76,7 +76,7 @@ class TopicService
 
         /** if filter param set then only get those topics which have score more than give filter */
         $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
-                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search):
+                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof):
                  TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
 
         return $topicsWithScore;
@@ -95,12 +95,12 @@ class TopicService
      * @return int $totalTrees
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search){
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default'){
 
         /** if filter param set then only get those topics which have score more than give filter */
         $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
-                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search):
-                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search);
+                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof):
+                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search, $asof);
 
         $totalTopics = count($totalTopics) ?? 0;
 

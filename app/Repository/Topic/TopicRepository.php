@@ -33,7 +33,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '', $asof)
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -41,7 +41,7 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
             
-            if($asof == 'review') {
+            if($asOf == 'review') {
                 $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                     $q->where('review_namespace_id', $namespaceId);
                 });
@@ -87,7 +87,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '')
+    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -96,9 +96,15 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
@@ -131,7 +137,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '') 
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '', $asOf) 
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -139,9 +145,16 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });    
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
+              
             
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
@@ -171,7 +184,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '')
+    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -180,9 +193,15 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);

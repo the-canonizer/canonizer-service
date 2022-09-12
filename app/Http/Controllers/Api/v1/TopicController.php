@@ -191,7 +191,7 @@ class TopicController extends Controller
 
         if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !$commandStatus) {
             
-            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
+            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
 
