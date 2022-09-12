@@ -40,7 +40,11 @@ class TopicRepository implements TopicInterface
             $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
-            
+                
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
             if($asOf == 'review') {
                 $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                     $q->where('review_namespace_id', $namespaceId);
@@ -96,6 +100,10 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
             if($asOf == 'review') {
                 $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                     $q->where('review_namespace_id', $namespaceId);
@@ -144,7 +152,11 @@ class TopicRepository implements TopicInterface
             $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
-
+            
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
             if($asOf == 'review') {
                 $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                     $q->where('review_namespace_id', $namespaceId);
@@ -193,6 +205,10 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
             if($asOf == 'review') {
                 $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
                     $q->where('review_namespace_id', $namespaceId);
