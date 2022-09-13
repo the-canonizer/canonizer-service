@@ -33,7 +33,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '')
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -41,9 +41,20 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
                 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
+            
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
@@ -80,7 +91,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '')
+    public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -89,9 +100,19 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
@@ -124,17 +145,28 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '') 
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search = '', $asOf) 
     {
         try {
             $nextDay = $asofdate + 86400;
             $record = $this->treeModel::where('algorithm_id', $algorithm)
                 ->where('as_of_date', '>=', $asofdate)
                 ->where('as_of_date', '<', $nextDay);
-
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });    
+            
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
+              
             
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);
@@ -164,7 +196,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
 
-    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '')
+    public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
             $nextDay = $asofdate + 86400;
@@ -173,9 +205,19 @@ class TopicRepository implements TopicInterface
                 ->where('as_of_date', '<', $nextDay)
                 ->where('topic_score', '>', $filter);
 
-            $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
-                $q->where('namespace_id', $namespaceId);
-            });
+            /* CAN-1084 -- to get all topics using namespace that is in-review change 
+                Added the new key in prepareMongoArr (review_namespace_id)
+                if as == review then fetch on base of review_namespace_id 
+            */
+            if($asOf == 'review') {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('review_namespace_id', $namespaceId);
+                });
+            } else {
+                $record->when($namespaceId !== '', function ($q) use($namespaceId) { 
+                    $q->where('namespace_id', $namespaceId);
+                });
+            }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
                 $q->whereIn('submitter_nick_id', $nickNameIds);

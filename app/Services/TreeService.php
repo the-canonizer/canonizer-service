@@ -28,24 +28,26 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $asOfDate = null, $algorithm = null)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
+        $reviewNamespaceId = isset($reviewTopic->namespace_id) ? $reviewTopic->namespace_id : '';
         $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
 
         $mongoArr = [
-            "topic_id" => $topicNumber,
-            "topic_name" => $topicTitle,
-            "algorithm_id" => $algorithm,
-            "tree_structure" => $tree,
-            "namespace_id" => $namespaceId,
-            "topic_score" =>  $topicScore,
-            "as_of_date" => $asOfDate,
-            "submitter_nick_id" =>$submitter_nick_id
+        "topic_id" => $topicNumber,
+        "topic_name" => $topicTitle,
+        "algorithm_id" => $algorithm,
+        "tree_structure" => $tree,
+        "namespace_id" => $namespaceId,
+        "review_namespace_id" => $reviewNamespaceId,
+        "topic_score" => $topicScore,
+        "as_of_date" => $asOfDate,
+        "submitter_nick_id" =>$submitter_nick_id
         ];
 
         return $mongoArr;
@@ -96,9 +98,10 @@ class TreeService
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
                 
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $asOfDate, $algo);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
