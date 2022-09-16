@@ -114,4 +114,15 @@ class UtilHelper
 
         return $commandStatus;
     }
+
+    /**
+     * Only for debug purpose.
+     * As dd() not works in lumen, so we can use this below.
+     * For only dump and die purpose.
+     */
+    function dd() {
+        $args = func_get_args();
+        call_user_func_array('dump', $args);
+        die();
+    }
 }
