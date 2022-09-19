@@ -219,14 +219,16 @@ class TopicController extends Controller
             /*  search & filter functionality */
             $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
             $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
             
             /** filter the collection if filter parameter */
             if (isset($filter) && $filter != '' && $filter != null) {
                $topics = TopicService::filterTopicCollection($topics, $filter);
+               /* We will count the filtered topic here, because the above totalTopics is without filter */
+               $totalTopics = $topics->count();
             }
 
             /** total pages */
-            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
         }
 
