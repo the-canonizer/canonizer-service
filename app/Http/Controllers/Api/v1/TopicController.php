@@ -186,31 +186,32 @@ class TopicController extends Controller
          */
         $commandStatement = "php artisan tree:all";
         $commandSignature = "tree:all";
-
+        
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !$commandStatus) {
             
-            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search);
+            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search);
+            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
 
             /**
              * If no topics found in Mongo database, fetch data from MySQL 
              */
             if(!$topics->count()) {
-
                 /*  search & filter functionality */
                 $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
                 $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                
+                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
+
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {
                     $topics = TopicService::filterTopicCollection($topics, $filter);
+                    /* We will count the filtered topic here, because the above totalTopics is without filter */
+                    $totalTopics = $topics->count();
                 }
 
                 /** total pages */
-                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
                 $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             }
         } else {
@@ -218,14 +219,16 @@ class TopicController extends Controller
             /*  search & filter functionality */
             $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
             $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
             
             /** filter the collection if filter parameter */
             if (isset($filter) && $filter != '' && $filter != null) {
                $topics = TopicService::filterTopicCollection($topics, $filter);
+               /* We will count the filtered topic here, because the above totalTopics is without filter */
+               $totalTopics = $topics->count();
             }
 
             /** total pages */
-            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
         }
 

@@ -39,12 +39,15 @@ class TopicSupport extends Model {
         return $this->hasMany('App\Model\SupportInstance', 'topic_support_id', 'id')->groupBy('camp_num')->orderBy('support_order','ASC')->orderBy('submit_time','DESC');
     }
 
-    public static function reducedSum($array){
+    public static function reducedSum($array,$full_score = false){
         $sum = $array['score'];
+        if($full_score){
+            $sum = $array['full_score'];
+        }
         try{
 		  if(isset($array['children']) && is_array($array['children'])) {
 			foreach($array['children'] as $arr){
-					$sum=$sum + self::reducedSum($arr);
+					$sum=$sum + self::reducedSum($arr,$full_score);
 			}
 		  }
         }catch(\Exception $e){
@@ -242,6 +245,8 @@ class TopicSupport extends Model {
         foreach($traversedTreeArray as $key => $array){
 
            $traversedTreeArray[$key]['score']=self::reducedSum($array);
+
+           $traversedTreeArray[$key]['full_score']=self::reducedSum($array,true);
 
            $traversedTreeArray[$key]['children']=self::sumTranversedArraySupportCount($array['children']);
         }
