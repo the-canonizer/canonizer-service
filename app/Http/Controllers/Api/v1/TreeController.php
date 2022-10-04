@@ -13,6 +13,7 @@ use TreeService;
 use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
+use App\Services\CampService;
 
 class TreeController extends Controller
 {
@@ -375,8 +376,27 @@ class TreeController extends Controller
         $end = microtime(true);
         $time = $end - $start;
 
+        $response = new TreeResource($tree);
+        $collectionToJson = json_encode($response, true);
+        $responseArray = json_decode($collectionToJson, true);
+
+        // Below code is for checking the requested camp number is created on the asOfTime.
+        if(array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf=='bydate' && $campNumber != 1) {
+            $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+
+            if($asOfTime < $campCreatedDate) {
+                $campInfo = [
+                    'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
+                    'created_at' => $campCreatedDate
+                ];
+                array_push($responseArray['data'], $campInfo);
+            }
+
+            $response = $responseArray;
+        }
+        
         Log::info("Time via find method: " . $time);
 
-        return new TreeResource($tree);
+        return $response;
     }
 }

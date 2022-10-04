@@ -178,6 +178,20 @@ class CampService
     }
 
     /**
+     * Get the camp created date .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+    public function getCampCreatedDate($campNumber, $topicNumber){
+        return Camp::where('topic_num', $topicNumber)->where('camp_num', $campNumber)
+                ->pluck('submit_time')
+                ->first();
+    }
+
+    /**
      * Get the camp url.
      *
      * @param int $topicNumber
