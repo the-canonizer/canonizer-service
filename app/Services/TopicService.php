@@ -180,4 +180,16 @@ class TopicService
                 ->pluck('submit_time')
                 ->first();
     }
+
+    /**
+     * Check topic exists in MySql .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+    public function checkTopicInMySql($topicNumber) {
+        return Topic::where('topic_num', $topicNumber)->first();
+    }
 }
