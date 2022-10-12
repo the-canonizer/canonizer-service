@@ -34,6 +34,7 @@ class TreeService
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
         $reviewNamespaceId = isset($reviewTopic->namespace_id) ? $reviewTopic->namespace_id : '';
         $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
+        $topicFullScore = isset($tree[1]['full_score']) && !is_string($tree[1]['full_score']) ? $tree[1]['full_score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
@@ -46,6 +47,7 @@ class TreeService
         "namespace_id" => $namespaceId,
         "review_namespace_id" => $reviewNamespaceId,
         "topic_score" => $topicScore,
+        "topic_full_score" => $topicFullScore,
         "as_of_date" => $asOfDate,
         "submitter_nick_id" =>$submitter_nick_id
         ];
