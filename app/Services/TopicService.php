@@ -24,7 +24,7 @@ class TopicService
     public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
     {
         $topic =  Topic::where('topic_num', $topicNumber);
-                        if($asOf == 'default' || $asOf == 'review') {
+                        if($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate') { // bydate filter must be without objection also
                             $topic->where('objector_nick_id', NULL);
                         }
                        
