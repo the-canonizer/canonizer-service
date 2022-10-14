@@ -24,7 +24,7 @@ class TopicService
     public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
     {
         $topic =  Topic::where('topic_num', $topicNumber);
-                        if($asOf == 'default' || $asOf == 'review') {
+                        if($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate') { // bydate filter must be without objection also
                             $topic->where('objector_nick_id', NULL);
                         }
                        
@@ -179,5 +179,17 @@ class TopicService
         return Topic::where('topic_num', $topicNumber)
                 ->pluck('submit_time')
                 ->first();
+    }
+
+    /**
+     * Check topic exists in MySql .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+    public function checkTopicInMySql($topicNumber) {
+        return Topic::where('topic_num', $topicNumber)->first();
     }
 }

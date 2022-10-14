@@ -14,10 +14,10 @@ use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
 use App\Services\CampService;
+use App\Services\TopicService;
 
 class TreeController extends Controller
 {
-
     /**
      * @OA\Post(path="/tree/store",
      *   tags={"tree"},
@@ -352,8 +352,10 @@ class TreeController extends Controller
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                     $mongoTree = TreeRepository::findTree($conditions);
-
-                    if (!$mongoTree || !count($mongoTree)) {
+                    // First check the topic exist in database, then we can run upsertTree.
+                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
+                    
+                    if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
                         $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                     if($mongoTree && count($mongoTree)) {
