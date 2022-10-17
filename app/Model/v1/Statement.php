@@ -13,9 +13,9 @@ class Statement extends Model {
 
     const AGREEMENT_CAMP = "Agreement";
 
-    public static function boot() {
+    // public static function boot() { // currently this boot is un-used, and occuring issue for creating instance.
 
-    }
+    // }
 
     public function objectornickname() {
         return $this->hasOne('App\Model\Nickname', 'id', 'objector_nick_id');
