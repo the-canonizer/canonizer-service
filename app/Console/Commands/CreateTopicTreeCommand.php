@@ -16,7 +16,7 @@ class CreateTopicTreeCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tree:all';
+    protected $signature = 'tree:all {asOfTime?}';
 
     /**
      * The console command description.
@@ -41,7 +41,15 @@ class CreateTopicTreeCommand extends Command
      * @return mixed
      */
     public function handle()
-    {
+    {   
+        $asOfTime = $this->argument('asOfTime') ?? NULL;
+        // check the argument of asOfTime with command / else use the current time.
+        if(!empty($asOfTime)) {
+            $asOfTime =  $asOfTime;
+        } else {
+            $asOfTime =  time();
+        }
+
         // If tree:all command is already running, don't execute command
         $commandStatement = "php artisan tree:all";
         $commandSignature = "tree:all";
@@ -51,7 +59,7 @@ class CreateTopicTreeCommand extends Command
         if(!$commandStatus) {
             //get all namespaces
             $namespaces = Namespaces::all();
-            $asOfTime =  time();
+            // $asOfTime =  time();
             foreach ($namespaces as $value) {
                 // get all topic associated with this namespace
                 $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
