@@ -68,7 +68,7 @@ class TopicRepository implements TopicInterface
                 ->skip($skip)
                 ->take($pageSize)
                 ->orderBy('topic_score', 'desc')
-                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+                ->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
                 
             return $record;
         } catch (\Throwable $th) {
@@ -126,7 +126,7 @@ class TopicRepository implements TopicInterface
                 ->skip($skip)
                 ->take($pageSize)
                 ->orderBy('topic_score', 'desc')
-                ->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+                ->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -176,7 +176,7 @@ class TopicRepository implements TopicInterface
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }
 
-            $record = $record->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+            $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -227,7 +227,7 @@ class TopicRepository implements TopicInterface
                 $record = $record->where('topic_name', 'like', '%' . $search . '%');
             }
 
-            $record = $record->get(['topic_id', 'topic_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
+            $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
