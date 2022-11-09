@@ -61,7 +61,7 @@ class TopicRepository implements TopicInterface
             });
             
             if (isset($search) && $search != '') {
-                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+                $record = $record->where(($asOf == 'review') ? 'tree_structure.1.review_title' : 'topic_name', 'like', '%' . $search . '%');
             };
 
             $record = $record->project(['_id' => 0])
@@ -119,7 +119,7 @@ class TopicRepository implements TopicInterface
             });
 
             if (isset($search) && $search != '') {
-                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+                $record = $record->where(($asOf == 'review') ? 'tree_structure.1.review_title' : 'topic_name', 'like', '%' . $search . '%');
             }
 
             $record = $record->project(['_id' => 0])
@@ -173,7 +173,7 @@ class TopicRepository implements TopicInterface
             });
             
             if (isset($search) && $search != '') {
-                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+                $record = $record->where(($asOf == 'review') ? 'tree_structure.1.review_title' : 'topic_name', 'like', '%' . $search . '%');
             }
 
             $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
@@ -224,7 +224,7 @@ class TopicRepository implements TopicInterface
             });
    
             if (isset($search) && $search != '') {
-                $record = $record->where('topic_name', 'like', '%' . $search . '%');
+                $record = $record->where(($asOf == 'review') ? 'tree_structure.1.review_title' : 'topic_name', 'like', '%' . $search . '%');
             }
 
             $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
