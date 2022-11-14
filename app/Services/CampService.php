@@ -765,7 +765,12 @@ class CampService
 
         /* if the search paramet is set then add search condition in the query */
         if (isset($search) && $search != '') {
+
             $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
+
+            if($asof == "bydate") {
+                $returnTopics->where('topic.go_live_time', '<=', $asofdate);
+            }
         };
 
         $returnTopics
