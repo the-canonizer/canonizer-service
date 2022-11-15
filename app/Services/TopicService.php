@@ -101,8 +101,8 @@ class TopicService
         $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
                       TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof):
                       TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search, $asof);
-
-        $totalTopics = count($totalTopics) ?? 0;
+        
+        $totalTopics = is_array($totalTopics) ? count($totalTopics) : 0;
 
         return $totalTopics;
     }
