@@ -24,7 +24,7 @@ class TopicService
     public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
     {
         $topic =  Topic::where('topic_num', $topicNumber);
-                        if($asOf == 'default' || $asOf == 'review') {
+                        if($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate' && !$fetchTopicHistory) { // bydate filter must be without objection also
                             $topic->where('objector_nick_id', NULL);
                         }
                        
@@ -101,8 +101,8 @@ class TopicService
         $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
                       TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof):
                       TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search, $asof);
-
-        $totalTopics = count($totalTopics) ?? 0;
+        
+        $totalTopics = is_array($totalTopics) ? count($totalTopics) : 0;
 
         return $totalTopics;
     }
@@ -127,6 +127,7 @@ class TopicService
                         $reducedTree = CampService::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
                         $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
+                        $topics[$key]->topic_full_score = !is_string($reducedTree[$value->camp_num]['full_score']) ? $reducedTree[$value->camp_num]['full_score'] : 0;
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
@@ -134,6 +135,7 @@ class TopicService
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
+                        $topics[$key]->topic_full_score = 0;
                         $topics[$key]->topic_id = $value->topic_num;
                         $topics[$key]->topic_name = $value->title;
                         $topics[$key]->tree_structure[1]['review_title'] = $value->title;
@@ -179,5 +181,17 @@ class TopicService
         return Topic::where('topic_num', $topicNumber)
                 ->pluck('submit_time')
                 ->first();
+    }
+
+    /**
+     * Check topic exists in MySql .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+    public function checkTopicInMySql($topicNumber) {
+        return Topic::where('topic_num', $topicNumber)->first();
     }
 }

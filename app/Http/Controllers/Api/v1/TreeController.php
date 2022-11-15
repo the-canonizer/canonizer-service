@@ -13,10 +13,12 @@ use TreeService;
 use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
+use App\Model\v1\Statement;
+use App\Services\CampService;
+use App\Services\TopicService;
 
 class TreeController extends Controller
 {
-
     /**
      * @OA\Post(path="/tree/store",
      *   tags={"tree"},
@@ -170,6 +172,22 @@ class TreeController extends Controller
                 if($currentTime > $gracePeriodEndTime) {
                     $camp->grace_period = 0;
                     $camp->update();
+                }
+            }
+        }
+
+        /**
+         * Update each statement grace period where grace period duration is completed
+         */
+        $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        
+        if($statements->count() > 0) {
+            foreach($statements as $statement) {
+                $submittedTime = $statement->submit_time;
+                $gracePeriodEndTime = $submittedTime + 60;
+                if($currentTime > $gracePeriodEndTime) {
+                    $statement->grace_period = 0;
+                    $statement->update();
                 }
             }
         }
@@ -351,8 +369,10 @@ class TreeController extends Controller
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                     $mongoTree = TreeRepository::findTree($conditions);
-
-                    if (!$mongoTree || !count($mongoTree)) {
+                    // First check the topic exist in database, then we can run upsertTree.
+                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
+                    
+                    if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
                         $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                     if($mongoTree && count($mongoTree)) {
@@ -375,8 +395,27 @@ class TreeController extends Controller
         $end = microtime(true);
         $time = $end - $start;
 
+        $response = new TreeResource($tree);
+        $collectionToJson = json_encode($response, true);
+        $responseArray = json_decode($collectionToJson, true);
+
+        // Below code is for checking the requested camp number is created on the asOfTime.
+        if(array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf=='bydate' && $campNumber != 1) {
+            $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+
+            if($asOfTime < $campCreatedDate) {
+                $campInfo = [
+                    'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
+                    'created_at' => $campCreatedDate
+                ];
+                array_push($responseArray['data'], $campInfo);
+            }
+
+            $response = $responseArray;
+        }
+        
         Log::info("Time via find method: " . $time);
 
-        return new TreeResource($tree);
+        return $response;
     }
 }

@@ -178,6 +178,20 @@ class CampService
     }
 
     /**
+     * Get the camp created date .
+     *
+     * @param Illuminate\Database\Eloquent\Collection
+     *
+     * @return Illuminate\Database\Eloquent\Collection;
+     */
+
+    public function getCampCreatedDate($campNumber, $topicNumber){
+        return Camp::where('topic_num', $topicNumber)->where('camp_num', $campNumber)
+                ->pluck('submit_time')
+                ->first();
+    }
+
+    /**
      * Get the camp url.
      *
      * @param int $topicNumber
@@ -575,6 +589,7 @@ class CampService
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['full_score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime,null,true);
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
+                $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
@@ -750,7 +765,12 @@ class CampService
 
         /* if the search paramet is set then add search condition in the query */
         if (isset($search) && $search != '') {
+
             $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
+
+            if($asof == "bydate") {
+                $returnTopics->where('topic.go_live_time', '<=', $asofdate);
+            }
         };
 
         $returnTopics
@@ -1052,7 +1072,7 @@ class CampService
                              if(array_key_exists($nickNameId,$nick_name_support_tree) && array_key_exists(1,$nick_name_support_tree[$nickNameId]) && count(array_keys($nick_name_support_tree[$nickNameId][1])) > 0){
                              $campNumber = array_keys($nick_name_support_tree[$nickNameId][1])[0];
                              $nick_name_support_tree[$nickNameId][1][$campNumber]['score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['score'] + $score['score'];
-                             $nick_name_support_tree[$nickNameId][1][$campNumber]['full_score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['full_score'] + $score['full_score'];
+                             //$nick_name_support_tree[$nickNameId][1][$campNumber]['full_score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['full_score'] + $score['full_score'];
                              $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNumber, $nickNameId, $parent_support_order,$parent_score,$multiSupport ,[],$asOfTime);
                              $nick_name_support_tree[$nickNameId][1][$campNumber]['delegates'] = $delegateTree;
                          }
@@ -1146,8 +1166,8 @@ class CampService
                                 $campNumber = array_keys($nick_name_support_tree[$nickNameId][1])[0];
                                 $nick_name_support_tree[$nickNameId][1][$campNumber]['score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['score'] + $score['score'];
                                 $camp_wise_score[$campNumber][1][$nickNameId]['score'] = $camp_wise_score[$campNumber][1][$nickNameId]['score'] + $score['score'];
-                                $nick_name_support_tree[$nickNameId][1][$campNumber]['full_score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['full_score'] + $score['full_score'];
-                                $camp_wise_score[$campNumber][1][$nickNameId]['full_score'] = $camp_wise_score[$campNumber][1][$nickNameId]['full_score'] + $score['full_score'];
+                               // $nick_name_support_tree[$nickNameId][1][$campNumber]['full_score']=$nick_name_support_tree[$nickNameId][1][$campNumber]['full_score'] + $score['full_score'];
+                                // $camp_wise_score[$campNumber][1][$nickNameId]['full_score'] = $camp_wise_score[$campNumber][1][$nickNameId]['full_score'] + $score['full_score'];
                                 
                                 $delegateTree = $this->delegateSupportTree($algorithm, $topicNumber,$campNumber, $nickNameId, $support_order,$camp_wise_score[$campNumber][1][$nickNameId]['score'],$multiSupport ,[],$asOfTime);
                                 $nick_name_support_tree[$nickNameId][1][$campNumber]['delegates'] = $delegateTree;
