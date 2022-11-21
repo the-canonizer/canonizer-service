@@ -41,7 +41,7 @@ class CreateTopicTreeCommand extends Command
      * @return mixed
      */
     public function handle()
-    {   
+    {
         $asOfTime = $this->argument('asOfTime') ?? NULL;
         // check the argument of asOfTime with command / else use the current time.
         if(!empty($asOfTime)) {
@@ -69,6 +69,11 @@ class CreateTopicTreeCommand extends Command
                 $this->createLess166Topics($topics, $asOfTime);
                 $this->creategreater166Topics($topics, $asOfTime);
             }
+
+            // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
+            $this->call('tree:remove-duplicate', [
+                'asOfTime' => $asOfTime
+            ]);
         }
     }
 
