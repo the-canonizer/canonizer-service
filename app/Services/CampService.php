@@ -347,7 +347,7 @@ class CampService
                 $this->sessionTempArray["score_tree_{$topicnum}_{$algorithm}"] = $score_tree;
             }else{
                 $score_tree = $this->sessionTempArray["score_tree_{$topicnum}_{$algorithm}"];
-            }            
+            } 
             $support_total = 0;
             try{
                 if(array_key_exists('camp_wise_tree',$score_tree) && count($score_tree['camp_wise_tree']) > 0 && array_key_exists($campnum,$score_tree['camp_wise_tree'])){
@@ -358,7 +358,8 @@ class CampService
                                    $delegate_arr = $score_tree['nick_name_wise_tree'][$nick][$order][$campnum];
                                    $delegate_score = $this->getDelegatesScore($delegate_arr,$full_score);
                                    if($full_score){
-                                    $support_total = $support_total + $score['full_score'] + $delegate_score; 
+                                    $delegate_full_score = $this->getDelegatesFullScore($delegate_arr);
+                                    $support_total = $support_total + $score['full_score'] + $delegate_full_score; 
                                    }else{
                                      $support_total =$support_total + $score['score'] + $delegate_score;
                                    }
@@ -1183,6 +1184,23 @@ class CampService
         }catch (CampTreeCountException $th) {
             throw new CampTreeCountException("Camp Tree Count with Mind Expert Algorithm Exception");
         }
+    }
+
+    public function getDelegatesFullScore($tree){
+        try{
+            $score = 0;
+            if(count($tree['delegates']) > 0){
+                foreach($tree['delegates'] as $nick=>$delScore){
+                    $score = $score + $delScore['full_score'];              
+                    if(count($delScore['delegates']) > 0){
+                        $score = $score + $this->getDelegatesFullScore($delScore);
+                    }
+                }
+            }
+            return $score;
+            }catch (CampTreeCountException $th) {
+                throw new CampTreeCountException("Camp Tree Count with Mind Expert Algorithm Exception");
+            }
     }
     
     public function getDelegatesScore($tree,$full_score = false){

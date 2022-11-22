@@ -5,6 +5,7 @@ namespace App\Console;
 use Illuminate\Console\Scheduling\Schedule;
 use Laravel\Lumen\Console\Kernel as ConsoleKernel;
 use App\Console\Commands\CreateTopicTreeCommand;
+use App\Console\Commands\RemoveDuplicateTrees;
 use App\Console\Commands\TruncateOldTrees;
 
 class Kernel extends ConsoleKernel
@@ -16,7 +17,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         CreateTopicTreeCommand::class,
-        TruncateOldTrees::class
+        TruncateOldTrees::class,
+        RemoveDuplicateTrees::class,
     ];
 
     /**
