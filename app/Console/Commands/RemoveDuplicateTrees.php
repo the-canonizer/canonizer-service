@@ -22,7 +22,9 @@ class RemoveDuplicateTrees extends Command
      *
      * @var string
      */
-    protected $description = 'This command will remove all the duplicated documents in tree if any.';
+    protected $description = 'This command will remove all the duplicated record in tree if any.
+        {asOfTime?} is optional. If {asOfTime?} is not present, command will pick current system date and time and change it to start of the day.
+        {--do-not-delete} is used to log all the duplicated records without deleting the record.';
 
     /**
      * Create a new command instance.
