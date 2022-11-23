@@ -151,7 +151,7 @@ class TreeController extends Controller
         if($topics->count() > 0) {
             foreach($topics as $topic) {
                 $submittedTime = $topic->submit_time;
-                $gracePeriodEndTime = $submittedTime + 60;
+                $gracePeriodEndTime = $submittedTime + (60*60);
                 if($currentTime > $gracePeriodEndTime) {
                     $topic->grace_period = 0;
                     $topic->update();
@@ -168,7 +168,7 @@ class TreeController extends Controller
         if($camps->count() > 0) {
             foreach($camps as $camp) {
                 $submittedTime = $camp->submit_time;
-                $gracePeriodEndTime = $submittedTime + 60;
+                $gracePeriodEndTime = $submittedTime + (60*60);
                 if($currentTime > $gracePeriodEndTime) {
                     $camp->grace_period = 0;
                     $camp->update();
@@ -184,7 +184,7 @@ class TreeController extends Controller
         if($statements->count() > 0) {
             foreach($statements as $statement) {
                 $submittedTime = $statement->submit_time;
-                $gracePeriodEndTime = $submittedTime + 60;
+                $gracePeriodEndTime = $submittedTime + (60*60);
                 if($currentTime > $gracePeriodEndTime) {
                     $statement->grace_period = 0;
                     $statement->update();
