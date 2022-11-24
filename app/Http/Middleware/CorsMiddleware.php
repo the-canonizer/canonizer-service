@@ -20,7 +20,7 @@ class CorsMiddleware
         if (in_array($request->header('origin'), $allowedOrigins)) {
             $origin = $request->header('origin');
         } else {
-            $origin = 'https://canonizer.com';
+            $origin = env('ACCESS_CONTROL_ALLOW_ORIGIN_SPECIFIC');
         }
 
         //$origin = $_SERVER['HTTP_ORIGIN'] ? $_SERVER['HTTP_ORIGIN'] : 'https://canonizer.com';
@@ -30,7 +30,7 @@ class CorsMiddleware
             'Access-Control-Allow-Methods'     => 'POST, GET, OPTIONS, PUT, DELETE',
             'Access-Control-Allow-Credentials' => 'false',
             'Access-Control-Max-Age'           => '86400',
-            'Access-Control-Allow-Headers'     => 'Content-Type, X-Requested-With'
+            'Access-Control-Allow-Headers'     => 'Content-Type, X-Requested-With,Authorization'
         ];
 
         if ($request->isMethod('OPTIONS')) {
