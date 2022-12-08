@@ -16,6 +16,7 @@ use App\Model\v1\Camp;
 use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
+use Throwable;
 
 class TreeController extends Controller
 {
@@ -418,16 +419,17 @@ class TreeController extends Controller
         Log::info("Time via find method: " . $time);
 
         return $response;
-        } catch (\Exception $e) {
-
-            $errArr = [
-                'error_code' => $e->getCode(),
-                'error_message' => $e->getMessage(),
-                'error_file' => $e->getFile(),
-                'error_line' => $e->getLine(),
-                'error_trace' => $e->getTrace(),
+        } catch (Throwable $e) {
+            $errResponse = [
+                'status_code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'data' => null,
+                'errors' => [
+                    'message' => $e->getFile().' on line '.$e->getLine(),
+                    'errors' => []
+                ]
             ];
-            return response()->json($errArr, 400);
+            return response()->json($errResponse, 500);
         }
     }
 }
