@@ -162,6 +162,7 @@ class TopicController extends Controller
 
     public function getAll(TopicRequest $request)
     {
+        try {
         /* get input params from request */
         $pageNumber = $request->input('page_number');
         $pageSize = $request->input('page_size');
@@ -233,5 +234,16 @@ class TopicController extends Controller
         }
 
         return new TopicResource($topics, $numberOfPages);
+        } catch (\Exception $e) {
+
+            $errArr = [
+                'error_code' => $e->getCode(),
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'error_trace' => $e->getTrace(),
+            ];
+            return response()->json($errArr, 400);
+        }
     }
 }

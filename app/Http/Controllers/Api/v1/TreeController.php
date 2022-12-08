@@ -317,6 +317,7 @@ class TreeController extends Controller
 
     public function find(TreeStoreRequest $request)
     {
+        try{
         /* get input params from request */
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
@@ -417,5 +418,16 @@ class TreeController extends Controller
         Log::info("Time via find method: " . $time);
 
         return $response;
+        } catch (\Exception $e) {
+
+            $errArr = [
+                'error_code' => $e->getCode(),
+                'error_message' => $e->getMessage(),
+                'error_file' => $e->getFile(),
+                'error_line' => $e->getLine(),
+                'error_trace' => $e->getTrace(),
+            ];
+            return response()->json($errArr, 400);
+        }
     }
 }

@@ -75,7 +75,7 @@ class TreeRepository implements TreeInterface
             return $record;
 
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            throw $th;
         }
     }
 
