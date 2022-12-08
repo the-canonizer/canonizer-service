@@ -12,6 +12,7 @@ use DateTimeHelper;
 use Illuminate\Http\Request;
 use TopicService;
 use UtilHelper;
+use Throwable;
 
 class TopicController extends Controller
 {
@@ -234,16 +235,17 @@ class TopicController extends Controller
         }
 
         return new TopicResource($topics, $numberOfPages);
-        } catch (\Exception $e) {
-
-            $errArr = [
-                'error_code' => $e->getCode(),
-                'error_message' => $e->getMessage(),
-                'error_file' => $e->getFile(),
-                'error_line' => $e->getLine(),
-                'error_trace' => $e->getTrace(),
+        } catch (Throwable $e) {
+            $errResponse = [
+                'status_code' => $e->getCode(),
+                'message' => $e->getMessage(),
+                'data' => null,
+                'errors' => [
+                    'message' => $e->getFile().' on line '.$e->getLine(),
+                    'errors' => []
+                ]
             ];
-            return response()->json($errArr, 400);
+            return response()->json($errResponse, 500);
         }
     }
 }
