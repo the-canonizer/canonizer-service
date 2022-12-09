@@ -421,12 +421,12 @@ class TreeController extends Controller
         return $response;
         } catch (Throwable $e) {
             $errResponse = [
-                'status_code' => $e->getCode(),
-                'message' => $e->getMessage(),
-                'data' => null,
-                'errors' => [
-                    'message' => $e->getFile().' on line '.$e->getLine(),
-                    'errors' => []
+                'data' => [],
+                "code" => $e->getCode(),
+                'success' => false,
+                'error' => $e->getMessage(),
+                'error' => [
+                    'message' => $e->getFile().' on line '.$e->getLine()
                 ]
             ];
             return response()->json($errResponse, 500);
