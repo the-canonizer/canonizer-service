@@ -125,4 +125,25 @@ class UtilHelper
         call_user_func_array('dump', $args);
         die();
     }
+
+    /**
+     * Exception Handling Response.
+     * Required exception collection and error tracing.
+     * In case of error tracing it will give additional tracing of error.
+     */
+    function exceptionResponse($exception, $errorTracing = false) {
+        $errResponse = [
+            'error_code' => $exception->getCode(),
+            'message' => $exception->getMessage(),
+            'data' => NULL,
+            'error' => [
+                'message' => $exception->getFile().' on line '.$exception->getLine(),
+                'errorTraced' => []
+            ]
+        ];
+        if($errorTracing) {
+            $errResponse['error']["errorTraced"] = $exception->getTrace();
+        }
+        return $errResponse;
+    }
 }

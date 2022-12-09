@@ -236,15 +236,7 @@ class TopicController extends Controller
 
         return new TopicResource($topics, $numberOfPages);
         } catch (Throwable $e) {
-            $errResponse = [
-                'status_code' => $e->getCode(),
-                'message' => $e->getMessage(),
-                'data' => null,
-                'errors' => [
-                    'message' => $e->getFile().' on line '.$e->getLine(),
-                    'errors' => []
-                ]
-            ];
+            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
     }

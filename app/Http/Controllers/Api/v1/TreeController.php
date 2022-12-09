@@ -420,15 +420,7 @@ class TreeController extends Controller
 
         return $response;
         } catch (Throwable $e) {
-            $errResponse = [
-                'data' => [],
-                "code" => $e->getCode(),
-                'success' => false,
-                'error' => $e->getMessage(),
-                'error' => [
-                    'message' => $e->getFile().' on line '.$e->getLine()
-                ]
-            ];
+            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
     }
