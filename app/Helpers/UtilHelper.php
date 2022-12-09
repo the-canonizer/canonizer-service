@@ -133,8 +133,8 @@ class UtilHelper
      */
     function exceptionResponse($exception, $errorTracing = false) {
         $errResponse = [
-            'error_code' => $exception->getCode(),
-            'message' => $exception->getMessage(),
+            'error_code' => $exception->getCode() ?? 500,
+            'message' => $exception->getMessage() ?? "Something went wrong",
             'data' => NULL,
             'error' => [
                 'message' => $exception->getFile().' on line '.$exception->getLine(),
