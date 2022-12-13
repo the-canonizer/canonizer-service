@@ -747,9 +747,6 @@ class CampService
                         ->where('camp.go_live_time', '<=', $asofdate);
                 }
             }
-        } catch (\Throwable $th) {
-            throw new AgreementCampsException("Exception in GetAgreementCamp:". $th->getMessage());
-        }
 
         /* Common conditions in all queries */
         $returnTopics
@@ -787,6 +784,9 @@ class CampService
             ->skip($skip)
             ->take($pageSize)
             ->get();
+        } catch (\Throwable $th) {
+            throw new AgreementCampsException("Exception in GetAgreementCamp:". $th->getMessage());
+        }
     }
 
     /**
