@@ -12,6 +12,7 @@ use DateTimeHelper;
 use Illuminate\Http\Request;
 use TopicService;
 use UtilHelper;
+use Throwable;
 
 class TopicController extends Controller
 {
@@ -162,6 +163,7 @@ class TopicController extends Controller
 
     public function getAll(TopicRequest $request)
     {
+        try {
         /* get input params from request */
         $pageNumber = $request->input('page_number');
         $pageSize = $request->input('page_size');
@@ -233,5 +235,9 @@ class TopicController extends Controller
         }
 
         return new TopicResource($topics, $numberOfPages);
+        } catch (Throwable $e) {
+            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            return response()->json($errResponse, 500);
+        }
     }
 }

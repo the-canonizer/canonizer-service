@@ -16,6 +16,7 @@ use App\Model\v1\Camp;
 use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
+use Throwable;
 
 class TreeController extends Controller
 {
@@ -317,6 +318,7 @@ class TreeController extends Controller
 
     public function find(TreeStoreRequest $request)
     {
+        try{
         /* get input params from request */
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
@@ -417,5 +419,9 @@ class TreeController extends Controller
         Log::info("Time via find method: " . $time);
 
         return $response;
+        } catch (Throwable $e) {
+            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            return response()->json($errResponse, 500);
+        }
     }
 }
