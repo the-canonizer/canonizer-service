@@ -27,16 +27,16 @@ class TopicService
                         if($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate' && !$fetchTopicHistory) { // bydate filter must be without objection also
                             $topic->where('objector_nick_id', NULL);
                         }
-                       
+
                         if($asOf == 'default') {
                             $topic->where('go_live_time', '<=', time());
                         }
                         if($asOf == 'bydate') {
                             $topic->where('go_live_time', '<=', $asOfTime);
                         }
-                        
+
         $liveTopic = $topic->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
-        
+
         return $liveTopic;
     }
 
@@ -72,12 +72,16 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default'){
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default')
+    {
 
         /** if filter param set then only get those topics which have score more than give filter */
-        $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
-                 TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof):
-                 TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
+        // $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
+        //          TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof):
+        //          TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
+
+        // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
+        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter);
 
         return $topicsWithScore;
     }
@@ -95,14 +99,18 @@ class TopicService
      * @return int $totalTrees
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default'){
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default')
+    {
 
         /** if filter param set then only get those topics which have score more than give filter */
-        $totalTopics = (isset($filter) && $filter!=null && $filter!='') ?
-                      TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof):
-                      TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search, $asof);
-        
-        $totalTopics = !is_string($totalTopics) ? count($totalTopics) : 0;
+        // $totalTopics = (isset($filter) && $filter != null && $filter != '') ?
+        //     TopicRepository::getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof) :
+        //     TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $search, $asof);
+
+        // $totalTopics = !is_string($totalTopics) ? count($totalTopics) : 0;
+
+        //Only getting the count of total latest topic from the MongoDB. #MongoDBRefactoring
+        $totalTopics = TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter);
 
         return $totalTopics;
     }
@@ -131,7 +139,7 @@ class TopicService
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
-                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);                        
+                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
@@ -141,7 +149,7 @@ class TopicService
                         $topics[$key]->tree_structure[1]['review_title'] = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
-                    
+
                 }
               // $topics = $topics->sortBy('score',SORT_REGULAR, true);
                 $topics = collect(collect($topics)->sortByDesc('score'))->values();
