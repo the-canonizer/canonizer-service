@@ -58,7 +58,7 @@ class TopicRepository implements TopicInterface
             }
 
             if (!empty($nickNameIds)) {
-                $match['submitter_nick_id'] = ['$in' => $nickNameIds];
+                $match['created_by_nick_id'] = ['$in' => $nickNameIds];
             }
 
             if (isset($search) && $search != '') {
@@ -214,8 +214,8 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
             if (isset($search) && $search != '') {
@@ -249,6 +249,7 @@ class TopicRepository implements TopicInterface
     public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asOf, $search = '', $filter = '')
     {
         try {
+
             // Track the execution time of the code.
             $start = microtime(true);
 
@@ -397,8 +398,8 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
             if (isset($search) && $search != '') {
