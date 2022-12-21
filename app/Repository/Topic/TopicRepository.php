@@ -57,7 +57,7 @@ class TopicRepository implements TopicInterface
             
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
             
             if (isset($search) && $search != '') {
@@ -115,7 +115,7 @@ class TopicRepository implements TopicInterface
             }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
             if (isset($search) && $search != '') {
@@ -169,7 +169,7 @@ class TopicRepository implements TopicInterface
               
             
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
             
             if (isset($search) && $search != '') {
@@ -220,7 +220,7 @@ class TopicRepository implements TopicInterface
             }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
    
             if (isset($search) && $search != '') {
