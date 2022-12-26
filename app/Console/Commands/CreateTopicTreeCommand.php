@@ -2,11 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Model\v1\CommandHistory;
 use Illuminate\Console\Command;
 use App\Model\v1\Namespaces;
 use App\Model\v1\Topic;
+use Carbon\Carbon;
+use Exception;
 use TreeService;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use UtilHelper;
 
 class CreateTopicTreeCommand extends Command
@@ -44,37 +48,51 @@ class CreateTopicTreeCommand extends Command
     {
         $asOfTime = $this->argument('asOfTime') ?? NULL;
         // check the argument of asOfTime with command / else use the current time.
-        if(!empty($asOfTime)) {
+        if (!empty($asOfTime)) {
             $asOfTime =  $asOfTime;
         } else {
             $asOfTime =  time();
         }
+
+        $commandHistory = (new CommandHistory())->create([
+            'name' => $this->signature,
+            'as_of_date' => $asOfTime,
+            'started_at' => Carbon::now()->timestamp,
+        ]);
 
         // If tree:all command is already running, don't execute command
         $commandStatement = "php artisan tree:all";
         $commandSignature = "tree:all";
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+        try {
+            if (!$commandStatus) {
+                //get all namespaces
+                $namespaces = Namespaces::all();
+                // $asOfTime =  time();
+                foreach ($namespaces as $value) {
+                    // get all topic associated with this namespace
+                    $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
+                        ->where(["namespace_id" => $value['id']])
+                        ->groupBy('topic_num')
+                        ->get();
+                    $this->createLess166Topics($topics, $asOfTime);
+                    $this->creategreater166Topics($topics, $asOfTime);
+                }
 
-        if(!$commandStatus) {
-            //get all namespaces
-            $namespaces = Namespaces::all();
-            // $asOfTime =  time();
-            foreach ($namespaces as $value) {
-                // get all topic associated with this namespace
-                $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
-                    ->where(["namespace_id" => $value['id']])
-                    ->groupBy('topic_num')
-                    ->get();
-                $this->createLess166Topics($topics, $asOfTime);
-                $this->creategreater166Topics($topics, $asOfTime);
+                // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
+                $this->call('tree:remove-duplicate', [
+                    'asOfTime' => $asOfTime
+                ]);
             }
-
-            // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
-            $this->call('tree:remove-duplicate', [
-                'asOfTime' => $asOfTime
-            ]);
+            // throw new Exception('Test');
+        } catch (Throwable $th) {
+            $commandHistory->error_output = json_encode($th);
+            $commandHistory->save();
         }
+
+        $commandHistory->finished_at = Carbon::now()->timestamp;
+        $commandHistory->save();
     }
 
     private function createLess166Topics($topics, $asOfTime)
