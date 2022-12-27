@@ -837,7 +837,7 @@ class CampService
         });
 
         $returnTopics->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-            $q->whereIn('topic.submitter_nick_id', $nickNameIds);
+            $q->whereIn('camp.submitter_nick_id', $nickNameIds);
         });
 
         /* if the search paramet is set then add search condition in the query */
