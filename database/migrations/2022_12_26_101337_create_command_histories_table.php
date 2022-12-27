@@ -16,7 +16,7 @@ class CreateCommandHistoriesTable extends Migration
         Schema::create('command_histories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->nullable()->comment('Name of command');
-            $table->integer('as_of_date')->default(0)->comment('Time given to command at calling.');
+            $table->json('parameters')->nullable()->comment('Parameters given to command at calling.');
             $table->longText('error_output')->nullable()->comment('Error of command failure in case of any.');
             $table->integer('started_at')->default(0)->comment('Start Time of Command');
             $table->integer('finished_at')->default(0)->comment('End Time of Command');

@@ -11,15 +11,15 @@ class CommandHistory extends Model
 
     protected $fillable = [
         'name',
-        'as_of_date',
+        'parameters',
         'error_output',
         'started_at',
         'finished_at',
     ];
 
     protected $casts = [
-        'as_of_date',
-        'started_at',
-        'finished_at',
+        'parameters' => 'array' ,
+        'started_at' => 'integer',
+        'finished_at' => 'integer',
     ];
 }

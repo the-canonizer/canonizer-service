@@ -56,7 +56,9 @@ class CreateTopicTreeCommand extends Command
 
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
-            'as_of_date' => $asOfTime,
+            'parameters' => [
+                'asOfTime' => $asOfTime
+            ],
             'started_at' => Carbon::now()->timestamp,
         ]);
 
@@ -66,7 +68,7 @@ class CreateTopicTreeCommand extends Command
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         try {
-            if (!$commandStatus) {
+            // if (!$commandStatus) {
                 //get all namespaces
                 $namespaces = Namespaces::all();
                 // $asOfTime =  time();
@@ -84,7 +86,7 @@ class CreateTopicTreeCommand extends Command
                 $this->call('tree:remove-duplicate', [
                     'asOfTime' => $asOfTime
                 ]);
-            }
+            // }
             // throw new Exception('Test');
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
