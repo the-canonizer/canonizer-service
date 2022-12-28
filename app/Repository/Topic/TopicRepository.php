@@ -76,6 +76,7 @@ class TopicRepository implements TopicInterface
             // all the fields required in the response
             $projection = [
                 '_id' => 0,
+                'id' => 1,
                 'topic_id' => 1,
                 'topic_score' => 1,
                 'topic_full_score' => 1,
@@ -99,6 +100,9 @@ class TopicRepository implements TopicInterface
                     // Stage 2: GroupBy topic_id, and filter specific fields with lastest record from each group
                     '$group' => [
                         '_id' => '$topic_id',
+                        'id' => [
+                            '$last' => '$_id'
+                        ],
                         'as_of_date' => [
                             '$last' => '$as_of_date'
                         ],
