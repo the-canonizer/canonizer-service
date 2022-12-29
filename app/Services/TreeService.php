@@ -90,7 +90,7 @@ class TreeService
 
     public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
     {
-
+       
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
         $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
@@ -98,9 +98,7 @@ class TreeService
         
         foreach ($algorithms as $algo) {
             try {
-
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                echo "<pre>"; print_r($tree); die;
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
