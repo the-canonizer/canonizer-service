@@ -361,8 +361,7 @@ class CampService
                     $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $parentSupportOrder, $multiSupport,$delegateArr, $asOfTime, $namespaceId);
                 }  
             }
-
-        return $array;
+            return self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
     }
 
     public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime){
@@ -398,7 +397,7 @@ class CampService
                     'nick_name_link' => Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum),
                     'delegates' => []    
                 ];
-
+           
             $currentCampSupport = 0;
             $supportPoint=0;
             $supportFullPoint=0;
@@ -430,8 +429,7 @@ class CampService
                        
             }
         }
-        $array = self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
-        return $array;
+        return self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
 
         }catch(CampTreeException $th){
             throw new CampTreeException("Support Tree Exception");
