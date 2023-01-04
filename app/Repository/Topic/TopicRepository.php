@@ -57,7 +57,7 @@ class TopicRepository implements TopicInterface
             
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
             
             if (isset($search) && $search != '') {
@@ -72,7 +72,7 @@ class TopicRepository implements TopicInterface
                 
             return $record;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            throw $th;
         }
     }
 
@@ -115,7 +115,7 @@ class TopicRepository implements TopicInterface
             }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
             if (isset($search) && $search != '') {
@@ -129,7 +129,7 @@ class TopicRepository implements TopicInterface
                 ->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            throw $th;
         }
     }
 
@@ -169,7 +169,7 @@ class TopicRepository implements TopicInterface
               
             
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
             
             if (isset($search) && $search != '') {
@@ -179,7 +179,7 @@ class TopicRepository implements TopicInterface
             $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            throw $th;
         }
     }
 
@@ -220,7 +220,7 @@ class TopicRepository implements TopicInterface
             }
 
             $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-                $q->whereIn('submitter_nick_id', $nickNameIds);
+                $q->whereIn('created_by_nick_id', $nickNameIds);
             });
    
             if (isset($search) && $search != '') {
@@ -230,7 +230,7 @@ class TopicRepository implements TopicInterface
             $record = $record->get(['topic_id', 'topic_score', 'topic_full_score', 'topic_name', 'as_of_date', 'tree_structure.1.review_title']);
             return $record;
         } catch (\Throwable $th) {
-            return $th->getMessage();
+            throw $th;
         }
     }
 }

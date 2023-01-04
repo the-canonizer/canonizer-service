@@ -123,6 +123,38 @@ class Topic extends Model {
         }
     }
 
+    // public static function getLiveTopic($topicnum, $filter = array()) {
+    //     if ((!isset($_REQUEST['asof']) && !Session::has('asofDefault')) || (isset($_REQUEST['asof']) && $_REQUEST['asof'] == "default")  || (Session::has('asofDefault') && Session::get('asofDefault') == 'default' && !isset($_REQUEST['asof']))) {
+
+    //         return self::where('topic_num', $topicnum)
+    //                         ->where('objector_nick_id', '=', NULL)
+    //                         ->where('go_live_time', '<=', time())
+    //                         ->latest('submit_time')->first();
+    //     } else {
+
+    //         if ((isset($_REQUEST['asof']) && $_REQUEST['asof'] == "review") || (Session::get('asofDefault')=="review" && !isset($_REQUEST['asof']))) {
+
+    //             return self::where('topic_num', $topicnum)
+    //                             ->where('objector_nick_id', '=', NULL)
+    //                             ->latest('submit_time')->first();
+    //         } else if ((isset($_REQUEST['asof']) && $_REQUEST['asof'] == "bydate")  || (Session::has('asofDefault') && Session::get('asofDefault') == 'bydate' && !isset($_REQUEST['asof']))) {
+    //             if(isset($_REQUEST['asof']) && $_REQUEST['asof'] == "bydate"){
+    //                 $asofdate = strtotime(date('Y-m-d H:i:s', strtotime($_REQUEST['asofdate'])));
+    //             }else if(Session::has('asofdateDefault') && Session::get('asofdateDefault') && !isset($_REQUEST['asof'])){
+    //                 $asofdate = strtotime(Session::get('asofdateDefault'));
+    //             }
+    //             if(isset($filter['nofilter']) && $filter['nofilter']){
+    //                 $asofdate  = time();
+    //             }
+
+    //             return self::where('topic_num', $topicnum)
+    //                             ->where('objector_nick_id', '=', NULL)
+    //                             ->where('go_live_time', '<=', $asofdate)
+    //                             ->latest('submit_time')->first();
+    //         }
+    //     }
+    // }
+
 
     public static function checkDateNotEql($d1, $d2) {
         $date1 = Carbon::createFromTimestamp($d1);

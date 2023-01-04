@@ -28,7 +28,7 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
@@ -49,7 +49,8 @@ class TreeService
         "topic_score" => $topicScore,
         "topic_full_score" => $topicFullScore,
         "as_of_date" => $asOfDate,
-        "submitter_nick_id" =>$submitter_nick_id
+        "submitter_nick_id" =>$submitter_nick_id,
+        "created_by_nick_id"=>$topicCreatedByNickId
         ];
 
         return $mongoArr;
@@ -89,21 +90,20 @@ class TreeService
 
     public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
     {
-
+       
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
         $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
+        $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
         
         foreach ($algorithms as $algo) {
             try {
-
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
