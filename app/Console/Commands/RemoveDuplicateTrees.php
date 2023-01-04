@@ -44,7 +44,7 @@ class RemoveDuplicateTrees extends Command
      */
     public function handle()
     {
-        Log::info('Remove Duplication Command Started....');
+        Log::info('Remove duplication command started...');
         $start = microtime(true);
 
         $asOfTime = $this->argument('asOfTime') ?? NULL;
@@ -102,8 +102,8 @@ class RemoveDuplicateTrees extends Command
             }
             // }
             $time_elapsed_secs = microtime(true) - $start;
-            $this->info('Total Execution Time: ' . $time_elapsed_secs);
-            Log::info('Remove Duplication Command Ended....');
+            $this->info('tree:remove-duplicate execution time: ' . $time_elapsed_secs);
+            Log::info('Remove duplication command ended...');
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();

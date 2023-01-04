@@ -68,6 +68,9 @@ class CreateTopicTreeCommand extends Command
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         try {
+            Log::info('tree:all command started....');
+            $start = microtime(true);
+
             // if (!$commandStatus) {
                 //get all namespaces
                 $namespaces = Namespaces::all();
@@ -87,7 +90,10 @@ class CreateTopicTreeCommand extends Command
                     'asOfTime' => $asOfTime
                 ]);
             // }
-            // throw new Exception('Test');
+            
+            $time_elapsed_secs = microtime(true) - $start;
+            $this->info('tree:all execution time: ' . $time_elapsed_secs);
+            Log::info('tree:all command ended....');
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();
