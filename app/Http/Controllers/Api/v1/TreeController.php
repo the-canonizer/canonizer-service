@@ -360,17 +360,29 @@ class TreeController extends Controller
                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 } else {
                     if (($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
-                        #MongoDBRefactoring
+                        #MongoDBRefactoring -- Find the latest tree in mongo
                         $mongoTree = TreeRepository::findLatestTree($conditions);
-
-                        if ($asOfDate < $mongoTree[0]->as_of_date) {
-                            // First check the topic exist in database, then we can run upsertTree.
-                            $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
-                            if ($topicExistInMySql) {
-                                $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                            }
-                        }
+                       
                         if ($mongoTree && count($mongoTree)) {
+
+                            // If requested asOfDate < The latest version asOfDate of tree in Mongo... 
+                            if ($asOfDate < $mongoTree[0]->as_of_date) {
+
+                                // Now check the tree exists in mongo for requested asOfDate..
+                                $mongoTree = TreeRepository::findTree($conditions);
+                                
+                                /* If the tree is not in mongo for that asOfDate, then create in mongo and 
+                                return the tree */
+                                if((!$mongoTree || !count($mongoTree))) {
+                                    // First check the topic exist in database, then we can run upsertTree.
+                                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
+                                    
+                                    if ($topicExistInMySql) {
+                                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                    }
+                                }
+                            }
+
                             $tree = collect([$mongoTree[0]['tree_structure']]);
                             if (!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
                                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));

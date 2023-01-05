@@ -86,4 +86,24 @@ class TreeRepository implements TreeInterface
         }
     }
 
+    /**
+     * find a tree.
+     *
+     * @param  array $conditions | assocative array
+     *
+     * @return array Response
+     */
+
+    public function findTree($conditions)
+    {
+        try {
+
+            $record = Tree::where($conditions)->get();
+            return $record;
+
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
 }
