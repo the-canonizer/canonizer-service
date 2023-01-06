@@ -11,6 +11,8 @@ use App\Exceptions\Camp\CampURLException;
 use App\Exceptions\Camp\AgreementCampsException;
 use App\Model\v1\Camp;
 use App\Model\v1\Support;
+use App\Model\v1\Topic;
+use App\Model\v1\Nickname;
 use App\Model\v1\TopicSupport;
 use App\Model\v1\CampSubscription;
 use DB;
@@ -124,8 +126,12 @@ class CampService
             $tree[$startCamp]['is_disabled'] = $isDisabled;
             $tree[$startCamp]['is_one_level'] = $isOneLevel;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
+           
+            $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
+            
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
+           
         } catch (CampTreeException $th) {
             throw new CampTreeException("Prepare Camp Tree Exception");
         }
@@ -329,6 +335,160 @@ class CampService
             throw new CampDetailsException("Review Camp Details Exception");
         }
     }
+
+    public function traverseChildTree($algorithm, $topicNum, $campNum, $delegateNickId, $parentSupportOrder, $multiSupport, $delegateTree = [], $asOfTime, $namespaceId = 1)
+    {
+        $delegatedSupports = Support::where('topic_num', '=', $topicNum)
+                    ->join("nick_name","nick_name.id", "=", "support.nick_name_id")
+                    ->where('delegate_nick_name_id', '=', $delegateNickId)
+                    ->where('camp_num', '=', $campNum)
+                    ->whereRaw("(start <= $asOfTime) and ((end = 0) or (end > $asOfTime))")
+                    ->orderBy('camp_num','ASC')->orderBy('support_order','ASC')
+                    ->select(['nick_name_id', 'delegate_nick_name_id', 'support_order', 'topic_num', 'camp_num', 'nick_name'])
+                    ->get();
+        
+        $array = [];
+        foreach($delegatedSupports as $support){ 
+            if($support->camp_num == $campNum){ 
+                    $array[$support->nick_name_id]['score'] =$delegateTree[$support->nick_name_id]['score'];
+                    $array[$support->nick_name_id]['full_score'] =$delegateTree[$support->nick_name_id]['full_score'];
+                    $array[$support->nick_name_id]['support_order'] = $support->support_order;
+                    $array[$support->nick_name_id]['nick_name'] = $support->nick_name;
+                    $array[$support->nick_name_id]['nick_name_id'] = $support->nick_name_id;
+                    $array[$support->nick_name_id]['nick_name_link'] = Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum);
+                    $array[$support->nick_name_id]['delegate_nick_name_id'] = $support->delegate_nick_name_id;
+                    $delegateArr = $delegateTree[$support->nick_name_id]['delegates'];
+                    $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $parentSupportOrder, $multiSupport,$delegateArr, $asOfTime, $namespaceId);
+                }  
+            }
+            return self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
+    }
+
+    public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime){
+        try{
+
+            if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNum}_{$algorithm}"))
+            {
+                $score_tree = $this->getCampAndNickNameWiseSupportTree($algorithm, $topicNum, $asOfTime);
+                $this->sessionTempArray["score_tree_{$topicNum}_{$algorithm}"] = $score_tree;        
+            }else{
+                $score_tree = $this->sessionTempArray["score_tree_{$topicNum}_{$algorithm}"];
+            }
+        
+        $supports = Support::where('topic_num', '=', $topicNum)
+                    ->join("nick_name","nick_name.id", "=", "support.nick_name_id")
+                    ->where('delegate_nick_name_id', 0)
+                    ->where('camp_num', '=', $campNum)
+                    ->whereRaw("(start <= $asOfTime) and ((end = 0) or (end > $asOfTime))")
+                    ->orderBy('camp_num','ASC')->orderBy('support_order','ASC')
+                    ->select(['nick_name_id', 'delegate_nick_name_id', 'support_order', 'topic_num', 'camp_num', 'nick_name'])
+                    ->get();
+
+        $array = [];
+        
+        $liveTopic = TopicService::getLiveTopic($topicNum,$asOfTime, ['nofilter'=>true]);
+        $namespaceId = (isset($liveTopic->namespace_id) && $liveTopic->namespace_id ) ? $liveTopic->namespace_id : 1; 
+        foreach($supports as $key =>$support){            
+            $array[$support->nick_name_id] = [
+                    'score' => 0,
+                    'support_order' => $support->support_order,
+                    'nick_name' => $support->nick_name,
+                    'nick_name_id' => $support->nick_name_id,
+                    'nick_name_link' => Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum),
+                    'delegates' => []    
+                ];
+           
+            $currentCampSupport = 0;
+            $supportPoint=0;
+            $supportFullPoint=0;
+            $multiSupport = false;
+            $supportOrder = 0;
+            
+            if(array_key_exists('nick_name_wise_tree',$score_tree) && count($score_tree['nick_name_wise_tree'][$support->nick_name_id]) > 0){
+                $multiSupport = count($score_tree['nick_name_wise_tree'][$support->nick_name_id]) > 1 ? true: false;
+                foreach($score_tree['nick_name_wise_tree'][$support->nick_name_id] as $supp_order=>$tree_node){
+                    if(count($tree_node) > 0){
+                        foreach($tree_node as $camp_num=>$camp_score){                          
+                            if($camp_num == $campNum){
+                                $currentCampSupport = 1;
+                                $supportOrder = $supp_order;
+                                $delegateTree = $camp_score['delegates'];               
+                                $supportPoint = $supportPoint + $camp_score['score'];
+                                $supportFullPoint = $supportFullPoint + $camp_score['full_score'];
+                                break; 
+                            }
+                        }
+                    }
+                }
+            }
+           
+            if($currentCampSupport){
+                $array[$support->nick_name_id]['score'] = $supportPoint;
+                $array[$support->nick_name_id]['full_score'] = $supportFullPoint;
+                $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $supportOrder, $multiSupport, $delegateTree, $asOfTime, $namespaceId);
+                       
+            }
+        }
+        return self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
+
+        }catch(CampTreeException $th){
+            throw new CampTreeException("Support Tree Exception");
+        }
+        
+    }
+
+    /**
+     * this calculate the score with delegates and sumup score added back to parent
+    */
+
+    public static function sumTranversedArraySupportCount($traversedTreeArray=array())
+    {
+        if(isset($traversedTreeArray) && is_array($traversedTreeArray)) {
+            foreach($traversedTreeArray as $key => $array){
+                
+                $traversedTreeArray[$key]['score'] = self::reducedSum($array);            
+                $traversedTreeArray[$key]['delegates']=self::sumTranversedArraySupportCount($array['delegates']);
+            }         
+        }
+       
+        if(is_array($traversedTreeArray)) 
+        {          
+                uasort($traversedTreeArray, function($a, $b) {
+                    return $a['score'] < $b['score'];
+                });
+        }       
+        return $traversedTreeArray;
+     }
+
+     public static function reducedSum($array = []){
+        $sum = $array['score'];
+        try{
+		  if(isset($array['delegates']) && is_array($array['delegates'])) {	
+			foreach($array['delegates'] as $arr){
+					$sum=$sum + self::reducedSum($arr);
+			}
+		  }
+        }catch(\Exception $e){
+            return $sum;
+        }
+		
+        return $sum;
+    }
+
+    public static function sortTraversedSupportCountTreeArray($traversedTreeArray = array())
+    {
+        $array = array_values($traversedTreeArray);
+        usort($array,'self::sortByOrder');
+        return $array;
+    }
+
+    public static function sortByOrder($a, $b)
+	{
+        $a = $a['score'];
+        $b = $b['score'];
+        if ($a == $b) return 0;
+        return ($a > $b) ? -1 : 1;
+	}
 
     /**
      * Get the camp support count.
@@ -560,8 +720,8 @@ class CampService
      * @return array $array
      */
     public function traverseCampTree($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default', & $lastArray)
-    {
-        try {
+    {  
+         try {
             $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
             if (in_array($key, $this->traversetempArray)) {
                 return;
@@ -571,6 +731,7 @@ class CampService
             $childs = $this->campChildrens($topicNumber, $parentCamp);
 
             $array = [];
+            
             foreach ($childs as $key => $child) {
                 $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime, $asOf);
                 $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
@@ -593,8 +754,8 @@ class CampService
                 $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                $array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
-
                 if($child->parent_camp_num == 1) {
                     $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 } else {

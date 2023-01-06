@@ -52,6 +52,10 @@ class Nickname extends Model {
         return $userNickname;
     }
 
+    public static function getNickNameLink($userId, $namespaceId, $topicNum='', $campNum=''){
+        return config('global.APP_URL_FRONT_END') . ('/user/supports/'.$userId .'?topicnum='.$topicNum . '&campnum='.$campNum .'&namespace='.$namespaceId);
+    }
+
     public function getSupportCampListNames($supported_camp = [],$topic_num){
         $returnHtml = '';
         if(sizeof($supported_camp) > 0){
