@@ -97,64 +97,68 @@ class TopicRepository implements TopicInterface
                     ]
                 ],
                 [
-                    // Stage 2: GroupBy topic_id, and filter specific fields with lastest record from each group
+                    // Stage 2: Sort all the topic by as_of_date in descending order to get latest
+                    '$sort' => ['as_of_date' =>  -1]
+                ],
+                [
+                    // Stage 3: GroupBy topic_id, and filter specific fields with lastest record from each group
                     '$group' => [
                         '_id' => '$topic_id',
                         'id' => [
-                            '$last' => '$_id'
+                            '$first' => '$_id'
                         ],
                         'as_of_date' => [
-                            '$last' => '$as_of_date'
+                            '$first' => '$as_of_date'
                         ],
                         'topic_score' => [
-                            '$last' => '$topic_score'
+                            '$first' => '$topic_score'
                         ],
                         'topic_full_score' => [
-                            '$last' => '$topic_full_score'
+                            '$first' => '$topic_full_score'
                         ],
                         'topic_name' => [
-                            '$last' => '$topic_name'
+                            '$first' => '$topic_name'
                         ],
                         'topic_id' => [
-                            '$last' => '$topic_id'
+                            '$first' => '$topic_id'
                         ],
                         'namespace_id' => [
-                            '$last' => '$namespace_id'
+                            '$first' => '$namespace_id'
                         ],
                         'review_namespace_id' => [
-                            '$last' => '$review_namespace_id'
+                            '$first' => '$review_namespace_id'
                         ],
                         'algorithm_id' => [
-                            '$last' => '$algorithm_id'
+                            '$first' => '$algorithm_id'
                         ],
                         'tree_structure' => [
-                            '$last' => '$tree_structure'
+                            '$first' => '$tree_structure'
                         ],
                         'submitter_nick_id' => [
-                            '$last' => '$submitter_nick_id'
+                            '$first' => '$submitter_nick_id'
                         ],
                     ]
                 ],
                 [
-                    // Stage 3: Apply further filters to the grouped records
+                    // Stage 4: Apply further filters to the grouped records
                     '$match' => $match,
                 ],
                 [
-                    // Stage 4: Only get required keys from the grouped records
+                    // Stage 5: Only get required keys from the grouped records
                     '$project' => $projection
                 ],
                 [
-                    // Stage 5: Sort the record in descending order by topic_score
+                    // Stage 6: Sort the record in descending order by topic_score
                     '$sort' => [
                         'topic_score' => -1
                     ]
                 ],
                 [
-                    // Stage 6: Skip certain records
+                    // Stage 7: Skip certain records
                     '$skip' => $skip,
                 ],
                 [
-                    // Stage 7: Limit the records.
+                    // Stage 8: Limit the records.
                     '$limit' => $pageSize,
                 ]
             ];
@@ -291,47 +295,54 @@ class TopicRepository implements TopicInterface
                     ]
                 ],
                 [
-                    // Stage 2: GroupBy topic_id, and filter specific fields with lastest record from each group
+                    // Stage 2: Sort all the topic by as_of_date in descending order to get latest
+                    '$sort' => ['as_of_date' =>  -1]
+                ],
+                [
+                    // Stage 3: GroupBy topic_id, and filter specific fields with lastest record from each group
                     '$group' => [
                         '_id' => '$topic_id',
+                        'id' => [
+                            '$first' => '$_id'
+                        ],
                         'as_of_date' => [
-                            '$last' => '$as_of_date'
+                            '$first' => '$as_of_date'
                         ],
                         'topic_score' => [
-                            '$last' => '$topic_score'
+                            '$first' => '$topic_score'
                         ],
                         'topic_full_score' => [
-                            '$last' => '$topic_full_score'
+                            '$first' => '$topic_full_score'
                         ],
                         'topic_name' => [
-                            '$last' => '$topic_name'
+                            '$first' => '$topic_name'
                         ],
                         'topic_id' => [
-                            '$last' => '$topic_id'
+                            '$first' => '$topic_id'
                         ],
                         'namespace_id' => [
-                            '$last' => '$namespace_id'
+                            '$first' => '$namespace_id'
                         ],
                         'review_namespace_id' => [
-                            '$last' => '$review_namespace_id'
+                            '$first' => '$review_namespace_id'
                         ],
                         'algorithm_id' => [
-                            '$last' => '$algorithm_id'
+                            '$first' => '$algorithm_id'
                         ],
                         'tree_structure' => [
-                            '$last' => '$tree_structure'
+                            '$first' => '$tree_structure'
                         ],
                         'submitter_nick_id' => [
-                            '$last' => '$submitter_nick_id'
+                            '$first' => '$submitter_nick_id'
                         ],
                     ]
                 ],
                 [
-                    // Stage 3: Apply further filters to the grouped records
+                    // Stage 4: Apply further filters to the grouped records
                     '$match' => $match,
                 ],
                 [
-                    // Stage 4: Count the filtered record and stored into record_count variable.
+                    // Stage 5: Count the filtered record and stored into record_count variable.
                     '$count' => "record_count"
                 ]
             ];
