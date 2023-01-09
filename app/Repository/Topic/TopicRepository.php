@@ -272,7 +272,7 @@ class TopicRepository implements TopicInterface
             }
 
             if (!empty($nickNameIds)) {
-                $match['submitter_nick_id'] = ['$in' => $nickNameIds];
+                $match['created_by_nick_id'] = ['$in' => $nickNameIds];
             }
 
             if (isset($search) && $search != '') {
