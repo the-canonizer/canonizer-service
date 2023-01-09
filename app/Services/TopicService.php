@@ -199,7 +199,7 @@ class TopicService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function checkTopicInMySql($topicNumber) {
+    public static function checkTopicInMySql($topicNumber) {
         return Topic::where('topic_num', $topicNumber)->first();
     }
 
