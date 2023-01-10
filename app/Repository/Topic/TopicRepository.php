@@ -58,7 +58,7 @@ class TopicRepository implements TopicInterface
             }
 
             if (!empty($nickNameIds)) {
-                $match['created_by_nick_id'] = ['$in' => $nickNameIds];
+                $match['created_by_nick_id'] = ['$in' => [644]];
             }
 
             if (isset($search) && $search != '') {
@@ -199,7 +199,7 @@ class TopicRepository implements TopicInterface
      *
      * @return array Response
      */
-    // No Need Now. Because this code is already merged in getTopicsWithPagination(...$params) at line 48.
+    // No Need Now. Because this code is already merged in getTopicsWithPagination(...$params).
     public function getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
@@ -386,7 +386,7 @@ class TopicRepository implements TopicInterface
      *
      * @return array Response
      */
-    // No Need Now. Because this code is already merged in getTotalTopics(...$params) at line 240.
+    // No Need Now. Because this code is already merged in getTotalTopics(...$params).
     public function getTotalTopicsWithFilter($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search = '', $asOf)
     {
         try {
