@@ -179,8 +179,6 @@ class TopicController extends Controller
 
             $skip = ($pageNumber - 1) * $pageSize;
 
-            $applyPagination = !is_null($request->post('pagination')) && !$request->post('pagination') ? false : true;
-
             if (in_array($algorithm, ['blind_popularity', 'mind_experts'])) {
 
                 // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring

@@ -85,6 +85,7 @@ class TopicRepository implements TopicInterface
                 'namespace_id' => 1,
                 'algorithm_id' => 1,
                 'submitter_nick_id' => 1,
+                'created_by_nick_id' => 1,
                 'tree_structure.1.review_title' => 1
             ];
 
@@ -136,6 +137,9 @@ class TopicRepository implements TopicInterface
                         ],
                         'submitter_nick_id' => [
                             '$first' => '$submitter_nick_id'
+                        ],
+                        'created_by_nick_id' => [
+                            '$first' => '$created_by_nick_id'
                         ],
                     ]
                 ],
@@ -340,6 +344,9 @@ class TopicRepository implements TopicInterface
                         ],
                         'submitter_nick_id' => [
                             '$first' => '$submitter_nick_id'
+                        ],
+                        'created_by_nick_id' => [
+                            '$first' => '$created_by_nick_id'
                         ],
                     ]
                 ],
