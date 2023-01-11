@@ -179,7 +179,18 @@ class TopicController extends Controller
 
             $skip = ($pageNumber - 1) * $pageSize;
 
-            if (in_array($algorithm, ['blind_popularity', 'mind_experts'])) {
+            /**
+             * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
+             * Check if tree:all command is running in background
+             * Then command is in process of creating all topics trees in Mongo database (Mongo is not updated)
+             * Fetch topics from MySQL (updated database)
+             */
+            $commandStatement = "php artisan tree:all";
+            $commandSignature = "tree:all";
+
+            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+
+            if (in_array($algorithm, ['blind_popularity', 'mind_experts']) && !$commandStatus) {
 
                 // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
                 if ($asofdate >= $today) {
