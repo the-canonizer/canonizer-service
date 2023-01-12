@@ -31,6 +31,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('truncate:trees')->daily();
+        // $schedule->command('truncate:trees')->daily();
+        $schedule->command('tree:remove-non-latest')->monthly();
     }
 }

@@ -6,3 +6,4 @@ Homestead.yaml
 .env
 .phpunit.result.cache
 composer.lock
+.vscode
