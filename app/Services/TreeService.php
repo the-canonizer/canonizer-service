@@ -90,12 +90,12 @@ class TreeService
 
     public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
     {
-       
+
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
         $rootUrl =  $this->getRootUrl($request);
         $startCamp = 1;
         $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
-        
+        $rtnTree = '';
         foreach ($algorithms as $algo) {
             try {
                 $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
@@ -111,12 +111,15 @@ class TreeService
             }
 
             $tree = TreeRepository::upsertTree($mongoArr, $conditions);
+            if ($algorithm == $algo) {
+                $rtnTree = $tree;
+            }
         }
 
-        return $tree;
+        return $rtnTree;
     }
-    
-    
+
+
     /**
      * Get Topic tree from mysql if it is not exist in mongodb
      *
