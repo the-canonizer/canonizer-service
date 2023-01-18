@@ -93,12 +93,13 @@ class TreeService
 
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
         $rootUrl =  $this->getRootUrl($request);
+        $asOf = $request['asOf'] ?? 'default';
         $startCamp = 1;
         $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
         $rtnTree = '';
         foreach ($algorithms as $algo) {
             try {
-                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl, null, $asOf);
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
