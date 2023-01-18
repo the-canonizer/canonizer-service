@@ -199,8 +199,8 @@ class TopicService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public static function checkTopicInMySql($topicNumber) {
-        return Topic::where('topic_num', $topicNumber)->first();
+    public static function checkTopicInMySql($topicNumber, $asOfTime) {
+        return Topic::where('topic_num', $topicNumber)->where('submit_time', '<=', $asOfTime)->first();
     }
 
     /**
