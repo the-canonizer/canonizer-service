@@ -337,7 +337,13 @@ class TreeController extends Controller
             // get the tree from mongoDb
             $start = microtime(true);
 
-            if (in_array($algorithm, ['blind_popularity', 'mind_experts'])) {
+            // If tree:all command is running, fetch tree from MySQL
+            $commandStatement = "php artisan tree:all";
+            $commandSignature = "tree:all";
+
+            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+
+            if (in_array($algorithm, ['blind_popularity', 'mind_experts']) && !($fetchTopicHistory) && !$commandStatus) {
 
                 $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
