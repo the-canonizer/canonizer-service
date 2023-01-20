@@ -23,6 +23,9 @@
   <summary>Table of Contents</summary>
   <ol>
     <li>
+      <a href="#objective">Objective</a>
+    </li>
+    <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
         <li><a href="#built-with">Built With</a></li>
@@ -48,6 +51,9 @@
     <li><a href="#contact">Contact</a></li>
   </ol>
 </details>
+
+## Objective
+The objective of this repo is to provide the core building block for (https://canonizer.com/). This repo is responsible for managing initial data for canonizer by linkup with Canonizer3.0(https://github.com/the-canonizer/canonizer-3.0-api) and responsible to store data mongodb.
 
 <!-- ABOUT THE PROJECT -->
 
@@ -133,6 +139,11 @@ Don't forget to give the project a star! Thanks again!
 Fork this repository by clicking on the fork button on the top of this page.
 This will create a copy of this repository in your account.
 
+### Branch Naming Conventions
+
+To contribute on it for any issue you can check the rules/example for naming the branches.
+(https://docs.google.com/document/d/1qm5hqWfayHczDWOe74t-cLG7ovEJVa_jLhjICkaIjv8/)
+
 ### Create a branch
 
 1. `git checkout master` from any folder in your local `canonizer-service` repository
@@ -179,7 +190,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Contact
 
-Brent Allsop - [@Brent's_twitter](https://twitter.com/your_username) - brent.allsop@gmail.com
+Brent Allsop - [@Brent's_twitter](https://twitter.com/Brent_Allsop) - brent.allsop@gmail.com
 
 Project Link: [https://canonizer.com](https://canonizer.com)
 
