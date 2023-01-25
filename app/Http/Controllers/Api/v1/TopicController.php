@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
+use App\Services\AlgorithmService;
 use App\Model\v1\Tree;
 use App\Model\v1\Nickname;
 use CampService;
@@ -190,8 +191,8 @@ class TopicController extends Controller
         $commandSignature = "tree:all";
         
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-
-        if (($asofdate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !$commandStatus) {
+        $algorithms =  AlgorithmService::getAlgorithmKeyList();
+        if (($asofdate >= $cronDate) && in_array($algorithm,$algorithms) && !$commandStatus) {
             
             $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof);
             $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
