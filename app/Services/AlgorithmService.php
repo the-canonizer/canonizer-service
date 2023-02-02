@@ -21,7 +21,7 @@ class AlgorithmService
     /**
     @return all the available algorithm key values used in Canonizer Service
      */
-    public function getAlgorithmKeyList()
+    public static function getAlgorithmKeyList()
     {
         //return array('mind_experts');
         return array('blind_popularity', 'mind_experts','computer_science_experts');
@@ -423,15 +423,35 @@ class AlgorithmService
                     $sumOfShares = $s->share_value; //$sumOfShares + $s->share_value;
                     $sumOfSqrtShares = number_format(sqrt($s->share_value), 2); //$sumOfSqrtShares+ number_format(sqrt($s->share_value),2);
                 }
+            }else{
+                 // get the last month shares added for user as current share #1055
+                $latestRecord = SharesAlgorithm::where('nick_name_id',$nickNameId)->orderBy('as_of_date','desc')->first();
+                if(isset($latestRecord) && isset($latestRecord->as_of_date)){
+                    $as_of_time = strtotime($latestRecord->as_of_date); 
+                    $year = date('Y', $as_of_time);
+                    $month = date('m', $as_of_time);
+        
+                    $shares = SharesAlgorithm::whereYear('as_of_date', '=', $year)
+                        ->whereMonth('as_of_date', '<=', $month)
+                        ->where('nick_name_id', $nickNameId)
+                        ->orderBy('as_of_date', 'ASC')
+                        ->get(); 
+                    if (count($shares)) {
+                        foreach ($shares as $s) {
+                            $sumOfShares = $s->share_value; //$sumOfShares + $s->share_value;
+                            $sumOfSqrtShares = number_format(sqrt($s->share_value), 2); //$sumOfSqrtShares+ number_format(sqrt($s->share_value),2);
+                        }
+                    }
+                }
             }
 
-            $condition = "topic_num = $topicNumber and camp_num = $campNumber";
-            $sql = "select count(*) as countTotal,support_order,camp_num from support where nick_name_id = $nickNameId and (" . $condition . ")";
-            $sql2 = "and ((start < $asOfTime) and ((end = 0) or (end > $asOfTime)))";
+            // $condition = "topic_num = $topicNumber and camp_num = $campNumber";
+            // $sql = "select count(*) as countTotal,support_order,camp_num from support where nick_name_id = $nickNameId and (" . $condition . ")";
+            // $sql2 = "and ((start < $asOfTime) and ((end = 0) or (end > $asOfTime)))";
 
-            $result = Cache::remember("$sql $sql2", 2, function () use ($sql, $sql2) {
-                return DB::select("$sql $sql2");
-            });
+            // $result = Cache::remember("$sql $sql2", 2, function () use ($sql, $sql2) {
+            //     return DB::select("$sql $sql2");
+            // });
 
             $total = 0;
             if ($algo == 'shares') {
@@ -443,7 +463,6 @@ class AlgorithmService
             }
 
             $returnShares = $total;
-
             return ($returnShares > 0) ? $returnShares : 0;
         } catch (ShareAlgorithmException $th) {
             throw new ShareAlgorithmException($th->getMessage(), 403);
