@@ -215,17 +215,4 @@ class TopicService
         return Topic::where('topic_num', $topicNumber)->pluck('submitter_nick_id')
         ->first();
     }
-
-    /**
-     * Check topic created by in MySql .
-     *
-     * @param Illuminate\Database\Eloquent\Collection
-     *
-     * @return Illuminate\Database\Eloquent\Collection;
-     */
-
-    public function getTopicAuthor($topicNumber) {
-        return Topic::where('topic_num', $topicNumber)->pluck('submitter_nick_id')
-        ->first();
-    }
 }
