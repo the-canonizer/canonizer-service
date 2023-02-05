@@ -361,7 +361,7 @@ class CampService
                     $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $parentSupportOrder, $multiSupport,$delegateArr, $asOfTime, $namespaceId);
                 }  
             }
-            return self::sortTraversedSupportCountTreeArray(self::sumTranversedArraySupportCount($array));
+            return $array;
     }
 
     public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime){
