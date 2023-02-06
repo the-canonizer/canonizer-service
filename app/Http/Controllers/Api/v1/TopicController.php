@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
@@ -238,7 +239,7 @@ class TopicController extends Controller
             }
 
             return new TopicResource($topics, $numberOfPages);
-        } catch (\Throwable $th) {
+        } catch (Throwable $th) {
             $errorResponse = UtilHelper::exceptionResponse($th, $request->input('tracing') ?? false);
             return response()->json($errorResponse, 500);
         }
