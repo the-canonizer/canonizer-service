@@ -322,7 +322,7 @@ class TreeController extends Controller
         /* get input params from request */
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime = (int) $request->input('asofdate');
+        $asOfTime = ceil($request->input('asofdate'));
         $asOf = $request->input('asOf');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
