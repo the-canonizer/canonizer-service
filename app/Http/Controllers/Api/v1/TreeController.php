@@ -367,25 +367,31 @@ class TreeController extends Controller
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
             if($isLastJobPending || $asOf == "review") {
+                Log::info("DB Case");
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
+                Log::info("Mongo Case");
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                     $mongoTree = TreeRepository::findTree($conditions);
                     // First check the topic exist in database, then we can run upsertTree.
                     $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
                     
                     if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+                        Log::info("Mongo Case true");
                         $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                     if($mongoTree && count($mongoTree)) {
                         $tree = collect([$mongoTree[0]['tree_structure']]);
                         if(!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
+                            Log::info("DB Case 1");
                             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                         }
                     } else {
+                        Log::info("DB Case 2");
                         $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                 } else {
+                    Log::info("DB Case 3");
                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 }
             }
