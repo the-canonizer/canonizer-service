@@ -367,7 +367,6 @@ class TreeController extends Controller
             $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
             if($isLastJobPending || $asOf == "review") {
-                echo 'here';
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
