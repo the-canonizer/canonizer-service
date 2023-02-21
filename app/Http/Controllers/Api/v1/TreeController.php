@@ -18,6 +18,7 @@ use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
+use App\Services\AlgorithmService;
 
 class TreeController extends Controller
 {
@@ -341,9 +342,11 @@ class TreeController extends Controller
             $commandStatement = "php artisan tree:all";
             $commandSignature = "tree:all";
 
+            $algorithms =  AlgorithmService::getAlgorithmKeyList();
+
             $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
-            if (in_array($algorithm, ['blind_popularity', 'mind_experts']) && !($fetchTopicHistory) && !$commandStatus) {
+            if (in_array($algorithm, $algorithms) && !($fetchTopicHistory) && !$commandStatus) {
 
                 $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
 
