@@ -185,7 +185,7 @@ class TopicService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function getTopicCreatedDate($topicNumber){
+    public static function getTopicCreatedDate($topicNumber){
         return Topic::where('topic_num', $topicNumber)
                 ->pluck('submit_time')
                 ->first();
@@ -211,7 +211,7 @@ class TopicService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function getTopicAuthor($topicNumber) {
+    public static function getTopicAuthor($topicNumber) {
         return Topic::where('topic_num', $topicNumber)->pluck('submitter_nick_id')
         ->first();
     }
