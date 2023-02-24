@@ -144,11 +144,11 @@ class TimelineController extends Controller
         //new paramerter adding
         $message = $request->input('message');
         $type = $request->input('type');
-        $id = $request->input('id');
-        $old_parent_id = $request->input('old_parent_id');
-        $new_parent_id = $request->input('new_parent_id');
+        $id =  $request->input('primary_id');
+        $old_parent_id =  $request->input('old_parent_id');
+        $new_parent_id =  $request->input('new_parent_id');
         //end
-        Log::info(json_encode($request->input('id')));
+        Log::info(($request));
         $start = microtime(true);
         $currentTime = time();
 
@@ -334,7 +334,7 @@ class TimelineController extends Controller
         $asOf = $request->input('asOf');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
-        //$asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+        $asOfDate = $asOfTime;//DateTimeHelper::getAsOfDate($asOfTime);
         $campNumber = (int) $request->input('camp_num', 1);
         $topicId = $topicNumber. '_'. $campNumber;
         //new paramerter adding

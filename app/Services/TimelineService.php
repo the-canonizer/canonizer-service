@@ -28,7 +28,7 @@ class TimelineService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id, $old_parent_id, $new_parent_id)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id=null, $old_parent_id=null, $new_parent_id=null)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
