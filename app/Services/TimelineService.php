@@ -109,7 +109,7 @@ class TimelineService
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
-                $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+                $asOfDate = $asOfTime;//DateTimeHelper::getAsOfDate($asOfTime);
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 

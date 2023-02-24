@@ -148,6 +148,7 @@ class TimelineController extends Controller
         $old_parent_id = $request->input('old_parent_id');
         $new_parent_id = $request->input('new_parent_id');
         //end
+        Log::info(json_encode($request->input('id')));
         $start = microtime(true);
         $currentTime = time();
 
@@ -333,7 +334,7 @@ class TimelineController extends Controller
         $asOf = $request->input('asOf');
         $updateAll = (int) $request->input('update_all', 0);
         $fetchTopicHistory =  $request->input('fetch_topic_history');
-        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+        //$asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
         $campNumber = (int) $request->input('camp_num', 1);
         $topicId = $topicNumber. '_'. $campNumber;
         //new paramerter adding
@@ -355,12 +356,12 @@ class TimelineController extends Controller
          */
 
         // If tree:all command is running, fetch tree from MySQL
-        $commandStatement = "php artisan tree:all";
+        /*$commandStatement = "php artisan tree:all";
         $commandSignature = "tree:all";
 
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);*/
         
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) && !$commandStatus) {
+        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) ) { //&& !$commandStatus
             
             $conditions = TimelineService::getConditions($topicNumber, $algorithm, $asOfDate);
 
