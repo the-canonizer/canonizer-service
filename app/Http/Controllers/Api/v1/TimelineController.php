@@ -136,6 +136,8 @@ class TimelineController extends Controller
 
     public function store(TimelineStoreRequest $request)
     {
+        try{
+        Log::info(($request));
         /* get input params from request */
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
@@ -144,11 +146,11 @@ class TimelineController extends Controller
         //new paramerter adding
         $message = $request->input('message');
         $type = $request->input('type');
-        $id =  $request->input('primary_id');
+        $id =   $request->input('id');
         $old_parent_id =  $request->input('old_parent_id');
         $new_parent_id =  $request->input('new_parent_id');
         //end
-        Log::info(($request));
+
         $start = microtime(true);
         $currentTime = time();
 
@@ -209,6 +211,10 @@ class TimelineController extends Controller
         Log::info("Time via store method: " . $time);
 
         return new TimelineResource(array($timeline));
+    } catch (Throwable $e) {
+        $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+        return response()->json($errResponse, 500);
+    }
     }
 
     /**
@@ -360,7 +366,18 @@ class TimelineController extends Controller
         $commandSignature = "tree:all";
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);*/
+        $conditions = TimelineService::getConditions($topicNumber, $algorithm, $asOfDate);
+        $mongoTree = TimelineRepository::findTimeline($conditions);
+        // First check the topic exist in database, then we can run upsertTimeline.
+        $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
         
+        if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+            $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id));
+        }
+        if($mongoTree && count($mongoTree)) {
+            $tree = collect([$mongoTree[0]]);
+        }
+        /* dhiman ()
         if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) ) { //&& !$commandStatus
             
             $conditions = TimelineService::getConditions($topicNumber, $algorithm, $asOfDate);
@@ -376,11 +393,12 @@ class TimelineController extends Controller
              * If there is no processed job found for specific topic -- Get tree from Mongo
              */
 
-            $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
-            $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
+           // $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
+          //  $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
             
+
             // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
-            if($isLastJobPending || $asOf == "review") {
+            /*if($isLastJobPending || $asOf == "review") {
                 $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
             } else {
                 if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
@@ -406,7 +424,7 @@ class TimelineController extends Controller
         } else {
             //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
             $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
-        }
+        }*/
 
         $end = microtime(true);
         $time = $end - $start;
