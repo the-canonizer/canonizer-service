@@ -237,24 +237,10 @@ class TimelineController extends Controller
      *                     format="int32"
      *                 ),
      *                 @OA\Property(
-     *                     property="asofdate",
-     *                     description="Updated status of the pet",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
      *                     property="algorithm",
      *                     description="current selected algorithm",
      *                     required=true,
      *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="update_all",
-     *                     description="if update_all is 0 then tree will be created using algortihm which sends in api otherwise tree will be created for all the algorithms",
-     *                     required=false,
-     *                     type="integer",
-     *                     format="int32"
      *                 )
      *       )
      *   ),
@@ -336,115 +322,33 @@ class TimelineController extends Controller
         /* get input params from request */
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
-        $asOfTime = (int) $request->input('asofdate');
-        $asOf = $request->input('asOf');
-        $updateAll = (int) $request->input('update_all', 0);
-        $fetchTopicHistory =  $request->input('fetch_topic_history');
-        $asOfDate = $asOfTime;//DateTimeHelper::getAsOfDate($asOfTime);
-        $campNumber = (int) $request->input('camp_num', 1);
-        $topicId = $topicNumber. '_'. $campNumber;
-        //new paramerter adding
-        $message = $request->input('message');
-        $type = $request->input('type');
-        $id = $request->input('id');
-        $old_parent_id = $request->input('old_parent_id');
-        $new_parent_id = $request->input('new_parent_id');
-        //end
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
 
         // get the tree from mongoDb
         $start = microtime(true);
-
-        /* if $asofdate is greater then cron run date then get tree
-         * with score from mongodb instance else fetch tree with Score
-         * from Mysql
-         */
-
-        // If tree:all command is running, fetch tree from MySQL
-        /*$commandStatement = "php artisan tree:all";
-        $commandSignature = "tree:all";
-
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);*/
-        $conditions = TimelineService::getConditions($topicNumber, $algorithm, $asOfDate);
+        $conditions = TimelineService::getConditions($topicNumber, $algorithm);
         $mongoTree = TimelineRepository::findTimeline($conditions);
         // First check the topic exist in database, then we can run upsertTimeline.
-        $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
+        //$topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
         
-        if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+       /* if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
             $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id));
-        }
+        }*/
+       
         if($mongoTree && count($mongoTree)) {
             $tree = collect([$mongoTree[0]]);
         }
-        /* dhiman ()
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) ) { //&& !$commandStatus
-            
-            $conditions = TimelineService::getConditions($topicNumber, $algorithm, $asOfDate);
-
-            /**
-             * Fetch topic tree on the basis of jobs in queue or processed ones
-             * If there is any job exists in jobs table, either model_id has topic number (for 2.0) or unique id has topic number (for 3.0)
-             * then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
-             * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
-             * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
-             * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
-             * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
-             * If there is no processed job found for specific topic -- Get tree from Mongo
-             */
-
-           // $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
-          //  $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
-            
-
-            // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
-            /*if($isLastJobPending || $asOf == "review") {
-                $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-            } else {
-                if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
-                    $mongoTree = TimelineRepository::findTimeline($conditions);
-                    // First check the topic exist in database, then we can run upsertTimeline.
-                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
-                    
-                    if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-                        $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id));
-                    }
-                    if($mongoTree && count($mongoTree)) {
-                        $tree = collect([$mongoTree[0][$asOfDate]['payload_response']]); //asOfDate adding
-                        if(!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
-                            $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                        }
-                    } else {
-                        $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                    }
-                } else {
-                    $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                }
-            }
-        } else {
-            //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-            $tree = array(TimelineService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
-        }*/
-
+ 
         $end = microtime(true);
         $time = $end - $start;
 
         $response = new TimelineResource($tree);
         $collectionToJson = json_encode($response, true);
         $responseArray = json_decode($collectionToJson, true);
-
+        
         // Below code is for checking the requested camp number is created on the asOfTime.
-        if(array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf=='bydate' && $campNumber != 1) {
-            $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
-
-            if($asOfTime < $campCreatedDate) {
-                $campInfo = [
-                    'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
-                    'created_at' => $campCreatedDate
-                ];
-                array_push($responseArray['data'], $campInfo);
-            }
-
+        if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
             $response = $responseArray;
         }
         

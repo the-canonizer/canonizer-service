@@ -28,7 +28,7 @@ class TimelineStoreRequest extends FormRequest
             case 'POST': {
                     return [
                         'topic_num' => 'required|integer',
-                        'asofdate' => 'required',
+                        //'asofdate' => 'required',
                         'algorithm' => 'required|string',
                         'update_all' => 'in:0,1'
                     ];
@@ -37,7 +37,6 @@ class TimelineStoreRequest extends FormRequest
             case 'GET': {
                     return [
                         'topic_num' => 'required|integer',
-                        'asofdate' => 'required',
                         'algorithm' => 'required|string'
                     ];
                     break;

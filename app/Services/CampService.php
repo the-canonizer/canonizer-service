@@ -1449,40 +1449,22 @@ class CampService
             
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
-            $reviewTopic = TopicService::getReviewTopic($topicNumber);
+           
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
-            $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
             $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
-            $isDisabled = 0;
-            $isOneLevel = 0;
-            if (!empty($agreementCamp)) {
-                $isDisabled = $agreementCamp->is_disabled ?? 0;
-                $isOneLevel = $agreementCamp->is_one_level ?? 0;
-            }
             $tree = [];
             $level = 1;
             $tree[$startCamp]['topic_id'] = $topicNumber;
             $tree[$startCamp]['level'] = $level;
             $tree[$startCamp]['camp_id'] = $startCamp;
+            $tree[$startCamp]['camp_name'] = (isset($agreementCamp) && isset($agreementCamp->camp_name)) ? $agreementCamp->camp_name : '';
             $tree[$startCamp]['title'] = $topicName;
-            $tree[$startCamp]['review_title'] = $reviewTopicName;
-            $tree[$startCamp]['link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime);
-            $tree[$startCamp]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($topicNumber, $startCamp, $asOfTime, true);
             $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
             $tree[$startCamp]['full_score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId,true);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
-            
-            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
-            $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
-            $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
-            $tree[$startCamp]['is_disabled'] = $isDisabled;
-            $tree[$startCamp]['is_one_level'] = $isOneLevel;
-            $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
-           
-            //$tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
             $tree[$startCamp]['children'] = $this->traverseCampTimeline($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree,$level);
 
             return $reducedTree = TopicSupport::sumTranversedArraySupportCountp($tree);
@@ -1526,33 +1508,11 @@ class CampService
                 $array[$child->camp_num]['topic_id'] = $topicNumber;
                 $array[$child->camp_num]['level'] = $level;
                 $array[$child->camp_num]['camp_id'] = $child->camp_num;
+                $array[$child->camp_num]['camp_name'] = $child->camp_name;
                 $array[$child->camp_num]['title'] = $title;
-                $array[$child->camp_num]['review_title'] = $reviewCampName;
-
-                $queryString = (app('request')->getQueryString()) ? '?' . app('request')->getQueryString() : "";
-                $array[$child->camp_num]['link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime) . $queryString . '#statement';
-                $array[$child->camp_num]['review_link'] = $rootUrl . '/' . $this->getTopicCampUrl($child->topic_num, $child->camp_num, $asOfTime, true) . $queryString . '#statement';
                 $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['full_score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime,null,true);
                 $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
-                $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
-                $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
-                $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
-                //$array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
-                $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
-                if($child->parent_camp_num == 1) {
-                    $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
-                } else {
-                    $parentCamp = $this->getLiveCamp($child->topic_num, $child->parent_camp_num, ['nofilter' => true], $asOfTime, $asOf);
-                }
-                
-                // Set the implicit subscription of the parent camp.
-                $implicitParentSubscriptionArray = $this->changeArrayExplicity($array[$child->camp_num]['subscribed_users'], $title, $child->camp_num);
-                $lastArray[$child->parent_camp_num]['subscribed_users'] = $lastArray[$child->parent_camp_num]['subscribed_users'] + $implicitParentSubscriptionArray;
-                
-                $array[$child->camp_num]['parent_camp_is_disabled'] = $parentCamp->is_disabled ?? 0;
-                $array[$child->camp_num]['parent_camp_is_one_level'] = $parentCamp->is_one_level ?? 0;
-                
                 $children = $this->traverseCampTimeline($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf, $array,$level);
 
                 $array[$child->camp_num]['children'] = is_array($children) ? $children : [];

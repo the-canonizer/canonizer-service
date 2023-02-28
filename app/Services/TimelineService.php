@@ -39,7 +39,7 @@ class TimelineService
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
         $mongoArr = [
-            "$asOfDate" => array(
+            "asoftime_".$asOfDate => array(
                 "event" => array(
                     'message'=>$message,
                     'type'=> $type,
@@ -47,16 +47,15 @@ class TimelineService
                     'old_parent_id'=> $old_parent_id,
                     'new_parent_id'=> $new_parent_id,
                     'nickname_id'=>$topicCreatedByNickId,
-                    "topic_id" => $topicNumber,
+                    /*"topic_id" => $topicNumber,
                     "topic_name" => $topicTitle,
                     "algorithm_id" => $algorithm,
                     "namespace_id" => $namespaceId,
-                    "review_namespace_id" => $reviewNamespaceId,
                     "topic_score" => $topicScore,
                     "topic_full_score" => $topicFullScore,
                     "as_of_date" => $asOfDate,
                     "submitter_nick_id" =>$submitter_nick_id,
-                    "created_by_nick_id"=>$topicCreatedByNickId
+                    "created_by_nick_id"=>$topicCreatedByNickId*/
                 ),
                 "payload_response" => $this->array_single_dimensional($tree)
             ),  
@@ -74,12 +73,11 @@ class TimelineService
      * @return array $conditions
      */
 
-    public function getConditions($topicNumber, $algorithm, $asOfDate)
+    public function getConditions($topicNumber, $algorithm)
     {
         return [
             'topic_id' => $topicNumber,
-            'algorithm_id' => $algorithm,
-            'as_of_date' => $asOfDate
+            'algorithm_id' => $algorithm
         ];
     }
 
@@ -109,9 +107,9 @@ class TimelineService
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
-                $asOfDate = $asOfTime;//DateTimeHelper::getAsOfDate($asOfTime);
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id);
-                $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
+                $asOfDate = $asOfTime;
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfTime, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id);
+                $conditions = $this->getConditions($topicNumber, $algo, $asOfTime);
 
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
