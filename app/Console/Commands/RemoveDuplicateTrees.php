@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Model\v1\CommandHistory;
 use App\Model\v1\Tree;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -43,7 +44,7 @@ class RemoveDuplicateTrees extends Command
      */
     public function handle()
     {
-        Log::info('Remove Duplication Command Started....');
+        Log::info('Remove duplication command started...');
         $start = microtime(true);
 
         $asOfTime = $this->argument('asOfTime') ?? NULL;
@@ -56,14 +57,24 @@ class RemoveDuplicateTrees extends Command
             $asOfTime = time();
         }
 
-        $startOfTheDay = Carbon::parse($asOfTime)->startOfDay();
-        // If tree:remove-duplicate command is already running, don't execute command
-        $commandStatement = "php artisan tree:remove-duplicate";
-        $commandSignature = "tree:remove-duplicate";
+        $commandHistory = (new CommandHistory())->create([
+            'name' => $this->signature,
+            'parameters' => [
+                'asOfTime' => $asOfTime,
+                '{--do-not-delete}' => $doNotDelete
+            ],
+            'started_at' => Carbon::now()->timestamp,
+        ]);
 
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+        try {
+            $startOfTheDay = Carbon::parse($asOfTime)->startOfDay();
+            // If tree:remove-duplicate command is already running, don't execute command
+            $commandStatement = "php artisan tree:remove-duplicate";
+            $commandSignature = "tree:remove-duplicate";
 
-        // if (!$commandStatus) {
+            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+
+            // if (!$commandStatus) {
 
             $algorithmes = $this->getDistinctTreeAlgorithm();
 
@@ -89,10 +100,17 @@ class RemoveDuplicateTrees extends Command
             } else {
                 $this->info('Duplicated data logged.');
             }
-        // }
-        $time_elapsed_secs = microtime(true) - $start;
-        $this->info('Total Execution Time: ' . $time_elapsed_secs);
-        Log::info('Remove Duplication Command Ended....');
+            // }
+            $time_elapsed_secs = microtime(true) - $start;
+            $this->info('tree:remove-duplicate execution time: ' . $time_elapsed_secs);
+            Log::info('Remove duplication command ended...');
+        } catch (Throwable $th) {
+            $commandHistory->error_output = json_encode($th);
+            $commandHistory->save();
+        }
+
+        $commandHistory->finished_at = Carbon::now()->timestamp;
+        $commandHistory->save();
     }
 
     private function getDistinctTreeAlgorithm()
