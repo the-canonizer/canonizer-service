@@ -5,14 +5,13 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": "^7.3|^8.0",
-        "anik/form-request": "^4.3",
-        "flipbox/lumen-generator": "^8.2",
-        "illuminate/session": "^8.74",
-        "jenssegers/mongodb": "*",
-        "laravel/lumen-framework": "^8.3.1",
-        "mongodb/mongodb": "^1.10",
-        "zircote/swagger-php": "^4.2"
+        "php": "^8.0|^8.1",	
+        "anik/form-request": "^4.5",	
+        "flipbox/lumen-generator": "^9.2",
+        "jenssegers/mongodb": "^3.9",	
+        "laravel/lumen-framework": "^9.0",	
+        "mongodb/mongodb": "^1.15",	
+        "zircote/swagger-php": "^4.7"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9.1",
