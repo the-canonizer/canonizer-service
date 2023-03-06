@@ -342,13 +342,21 @@ class TimelineController extends Controller
  
         $end = microtime(true);
         $time = $end - $start;
-
         $response = new TimelineResource($tree);
         $collectionToJson = json_encode($response, true);
         $responseArray = json_decode($collectionToJson, true);
-        
         // Below code is for checking the requested camp number is created on the asOfTime.
         if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
+            // loop through array
+            foreach($responseArray['data'] as $key => $item){
+                // unset them
+                unset($item["_id"]);
+                unset($item["topic_id"]);
+                unset($item["algorithm_id"]);
+                unset($item["updated_at"]);
+                unset($item["created_at"]);
+                $responseArray['data']=$item;
+            }
             $response = $responseArray;
         }
         

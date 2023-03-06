@@ -39,27 +39,19 @@ class TimelineService
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
         $mongoArr = [
-            "asoftime_".$asOfDate => array(
-                "event" => array(
-                    'message'=>$message,
-                    'type'=> $type,
-                    'id'=> $id,
-                    'old_parent_id'=> $old_parent_id,
-                    'new_parent_id'=> $new_parent_id,
-                    'nickname_id'=>$topicCreatedByNickId,
-                    /*"topic_id" => $topicNumber,
-                    "topic_name" => $topicTitle,
-                    "algorithm_id" => $algorithm,
-                    "namespace_id" => $namespaceId,
-                    "topic_score" => $topicScore,
-                    "topic_full_score" => $topicFullScore,
-                    "as_of_date" => $asOfDate,
-                    "submitter_nick_id" =>$submitter_nick_id,
-                    "created_by_nick_id"=>$topicCreatedByNickId*/
-                ),
-                "payload_response" => $this->array_single_dimensional($tree)
-            ),  
+                "asoftime_".$asOfDate => array(
+                    "event" => array(
+                        'message'=>$message,
+                        'type'=> $type,
+                        'id'=> $id,
+                        'old_parent_id'=> $old_parent_id,
+                        'new_parent_id'=> $new_parent_id,
+                        'nickname_id'=>$topicCreatedByNickId
+                    ),
+                    "payload_response" => $this->array_single_dimensional($tree)
+                ), 
         ];
+        
         return $mongoArr;
     }
 
