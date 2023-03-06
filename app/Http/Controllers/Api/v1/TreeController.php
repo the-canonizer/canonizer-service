@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
@@ -17,6 +18,7 @@ use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
+use App\Services\AlgorithmService;
 
 class TreeController extends Controller
 {
@@ -148,29 +150,29 @@ class TreeController extends Controller
          * Update each topic grace period where grace period duration is completed
          */
         $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($topics->count() > 0) {
-            foreach($topics as $topic) {
+
+        if ($topics->count() > 0) {
+            foreach ($topics as $topic) {
                 $submittedTime = $topic->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
+                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                if ($currentTime > $gracePeriodEndTime) {
                     $topic->grace_period = 0;
                     $topic->update();
                 }
             }
         }
-        
+
 
         /**
          * Update each camp grace period where grace period duration is completed
          */
         $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($camps->count() > 0) {
-            foreach($camps as $camp) {
+
+        if ($camps->count() > 0) {
+            foreach ($camps as $camp) {
                 $submittedTime = $camp->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
+                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                if ($currentTime > $gracePeriodEndTime) {
                     $camp->grace_period = 0;
                     $camp->update();
                 }
@@ -181,12 +183,12 @@ class TreeController extends Controller
          * Update each statement grace period where grace period duration is completed
          */
         $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($statements->count() > 0) {
-            foreach($statements as $statement) {
+
+        if ($statements->count() > 0) {
+            foreach ($statements as $statement) {
                 $submittedTime = $statement->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
+                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                if ($currentTime > $gracePeriodEndTime) {
                     $statement->grace_period = 0;
                     $statement->update();
                 }
@@ -318,113 +320,124 @@ class TreeController extends Controller
 
     public function find(TreeStoreRequest $request)
     {
-        try{
-        /* get input params from request */
-        $topicNumber = (int) $request->input('topic_num');
-        $algorithm = $request->input('algorithm');
-        $asOfTime = ceil($request->input('asofdate'));
-        $asOf = $request->input('asOf');
-        $updateAll = (int) $request->input('update_all', 0);
-        $fetchTopicHistory =  $request->input('fetch_topic_history');
-        $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-        $campNumber = (int) $request->input('camp_num', 1);
-        $topicId = $topicNumber. '_'. $campNumber;
-        
-        /** Get Cron Run date from .env file and make timestring */
-        $cronDate = UtilHelper::getCronRunDateString();
+        try {
+            /* get input params from request */
+            $topicNumber = (int) $request->input('topic_num');
+            $algorithm = $request->input('algorithm');
 
-        // get the tree from mongoDb
-        $start = microtime(true);
+            $asOfTime = ceil($request->input('asofdate'));
+            $asOf = $request->input('asOf');
+            $updateAll = (int) $request->input('update_all', 0);
+            $fetchTopicHistory =  $request->input('fetch_topic_history');
 
-        /* if $asofdate is greater then cron run date then get tree
-         * with score from mongodb instance else fetch tree with Score
-         * from Mysql
-         */
+            $asOfDate = Helpers::getStartOfTheDay($asOfTime);
 
-        // If tree:all command is running, fetch tree from MySQL
-        $commandStatement = "php artisan tree:all";
-        $commandSignature = "tree:all";
+            $campNumber = (int) $request->input('camp_num', 1);
+            $topicId = $topicNumber . '_' . $campNumber;
 
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-        
-        if (($asOfDate >= $cronDate) && ($algorithm == 'blind_popularity' || $algorithm == "mind_experts") && !($fetchTopicHistory) && !$commandStatus) {
-            
-            $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
+            // get the tree from mongoDb
+            $start = microtime(true);
 
-            /**
-             * Fetch topic tree on the basis of jobs in queue or processed ones
-             * If there is any job exists in jobs table, either model_id has topic number (for 2.0) or unique id has topic number (for 3.0)
-             * then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
-             * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
-             * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
-             * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
-             * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
-             * If there is no processed job found for specific topic -- Get tree from Mongo
-             */
+            // If tree:all command is running, fetch tree from MySQL
+            $commandStatement = "php artisan tree:all";
+            $commandSignature = "tree:all";
 
-            $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
-            
-            $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
-            // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
-            if($isLastJobPending || $asOf == "review") {
-                Log::info("DB Case");
-                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-            } else {
-                Log::info("Mongo Case");
-                if(($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
-                    $mongoTree = TreeRepository::findTree($conditions);
-                    // First check the topic exist in database, then we can run upsertTree.
-                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
-                    
-                    if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-                        Log::info("Mongo Case true");
-                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                    }
-                    if($mongoTree && count($mongoTree)) {
-                        $tree = collect([$mongoTree[0]['tree_structure']]);
-                        if(!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
-                            Log::info("DB Case 1");
+            $algorithms =  AlgorithmService::getAlgorithmKeyList();
+
+            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+
+            if (in_array($algorithm, $algorithms) && !($fetchTopicHistory) && !$commandStatus) {
+
+                $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
+
+                /**
+                 * Fetch topic tree on the basis of jobs in queue or processed ones
+                 * If there is any job exists in jobs table, either model_id has topic number (for 2.0) or unique id has topic number (for 3.0)
+                 * then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+                 * If there is not job exists in jobs table, then there is no pending jobs -- need to check latest processed job status
+                 * If latest processed job status is failed, then topic tree isn't updated in Mongo yet -- Get tree from MySQL Database
+                 * If latest processed job status is success, and tree found, then topic tree has been updated in Mongo -- Get tree from Mongo Database
+                 * If latest processed job status is success, and tree not found, then topic tree hasn't been updated in Mongo -- Get tree from MySQL Database
+                 * If there is no processed job found for specific topic -- Get tree from Mongo
+                 */
+
+                $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
+                $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
+
+                // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
+                if ($isLastJobPending || $asOf == "review") {
+                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                } else {
+                    if (($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
+                        #MongoDBRefactoring -- Find the latest tree in mongo
+                        $mongoTree = TreeRepository::findLatestTree($conditions);
+
+                        if ($mongoTree && count($mongoTree)) {
+
+                            // If requested asOfDate < The latest version asOfDate of tree in Mongo...
+                            if ($asOfDate < $mongoTree[0]->as_of_date) {
+
+                                // Now check the tree exists in mongo for requested asOfDate..
+                                $mongoTree = TreeRepository::findTree($conditions);
+
+                                /* If the tree is not in mongo for that asOfDate, then create in mongo and
+                                return the tree */
+                                if ((!$mongoTree || !count($mongoTree))) {
+                                    // First check the topic exist in database, then we can run upsertTree.
+                                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber, $asOfTime);
+
+                                    if ($topicExistInMySql) {
+                                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                    }
+                                }
+                            }
+
+                            if ($mongoTree && count($mongoTree)) {
+                                $tree = collect([$mongoTree[0]['tree_structure']]);
+                                if (!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
+                                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                }
+                            } else {
+                                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                            }
+                        } else {
                             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                         }
                     } else {
                         Log::info("DB Case 2");
                         $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
-                } else {
-                    Log::info("DB Case 3");
-                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 }
-            }
-        } else {
-            //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
-        }
-
-        $end = microtime(true);
-        $time = $end - $start;
-
-        $response = new TreeResource($tree);
-        $collectionToJson = json_encode($response, true);
-        $responseArray = json_decode($collectionToJson, true);
-
-        // Below code is for checking the requested camp number is created on the asOfTime.
-        if(array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf=='bydate' && $campNumber != 1) {
-            $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
-
-            if($asOfTime < $campCreatedDate) {
-                $campInfo = [
-                    'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
-                    'created_at' => $campCreatedDate
-                ];
-                array_push($responseArray['data'], $campInfo);
+            } else {
+                //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
+                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
             }
 
-            $response = $responseArray;
-        }
-        
-        Log::info("Time via find method: " . $time);
+            $end = microtime(true);
+            $time = $end - $start;
 
-        return $response;
+            $response = new TreeResource($tree);
+            $collectionToJson = json_encode($response, true);
+            $responseArray = json_decode($collectionToJson, true);
+
+            // Below code is for checking the requested camp number is created on the asOfTime.
+            if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate' && $campNumber != 1) {
+                $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+
+                if ($asOfTime < $campCreatedDate) {
+                    $campInfo = [
+                        'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
+                        'created_at' => $campCreatedDate
+                    ];
+                    array_push($responseArray['data'], $campInfo);
+                }
+
+                $response = $responseArray;
+            }
+
+            Log::info("Time via find method: " . $time);
+
+            return $response;
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);

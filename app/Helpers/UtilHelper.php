@@ -18,12 +18,16 @@ class UtilHelper
 
     public function getNumberOfPages($totalCount, $pageSize)
     {
-        $numberOfPages = $totalCount / $pageSize;
-        $expArr = explode('.', $numberOfPages);
-        $fractionalDigit = isset($expArr[1]) && $expArr[1] > 0 ? 1 : 0;
-        $numberOfPages = $expArr[0] + $fractionalDigit;
-
-        return $numberOfPages;
+        try {
+            $numberOfPages = $totalCount / $pageSize;
+            $expArr = explode('.', $numberOfPages);
+            $fractionalDigit = isset($expArr[1]) && $expArr[1] > 0 ? 1 : 0;
+            $numberOfPages = $expArr[0] + $fractionalDigit;
+            
+            return $numberOfPages;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
     }
 
      /**
