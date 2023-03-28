@@ -334,7 +334,8 @@ class TimelineController extends Controller
         $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
        
         if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-            $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null));
+            TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
+            $mongoTree = TimelineRepository::findTimeline($conditions);
         }
        
         if($mongoTree && count($mongoTree)) {
