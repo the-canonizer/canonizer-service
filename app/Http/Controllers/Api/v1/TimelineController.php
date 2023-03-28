@@ -263,7 +263,7 @@ class TimelineController extends Controller
      *                                 )
      *                            )
      *
-     *   @OA\Response(response=401, description="Exception occurs during tree calculation",
+     *   @OA\Response(response=401, description="Exception occurs during timeline calculation",
      *                             @OA\JsonContent(
      *                                 type="array",
      *                                 @OA\Items(
@@ -285,7 +285,7 @@ class TimelineController extends Controller
      *                                 )
      *                             )
      *   @OA\Response(response=404,
-     *                description="Tree not found",
+     *                description="Timeline Tree not found",
      *                @OA\JsonContent(
      *                                 type="array",
      *                                 @OA\Items(
@@ -310,7 +310,7 @@ class TimelineController extends Controller
      */
 
     /**
-     * get a tree.
+     * get a timeline tree.
      *
      * @param  TimelineStoreRequest  $request
      * @return Response
@@ -325,19 +325,23 @@ class TimelineController extends Controller
         /** Get Cron Run date from .env file and make timestring */
         $cronDate = UtilHelper::getCronRunDateString();
 
-        // get the tree from mongoDb
+        // get the timeline tree from mongoDb
         $start = microtime(true);
         $conditions = TimelineService::getConditions($topicNumber, $algorithm);
         $mongoTree = TimelineRepository::findTimeline($conditions);
         // First check the topic exist in database, then we can run upsertTimeline.
-        //$topicExistInMySql = TopicService::checkTopicInMySql($topicNumber);
-        
-       /* if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-            $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id));
-        }*/
+        $asOfTime= time();
+        $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
+       
+        if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+            $mongoTree = array(TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null));
+        }
        
         if($mongoTree && count($mongoTree)) {
             $tree = collect([$mongoTree[0]]);
+        }
+        else{
+            $tree =[];
         }
  
         $end = microtime(true);
