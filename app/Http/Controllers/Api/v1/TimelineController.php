@@ -137,84 +137,84 @@ class TimelineController extends Controller
     public function store(TimelineStoreRequest $request)
     {
         try{
-        Log::info(($request));
-        /* get input params from request */
-        $topicNumber = (int) $request->input('topic_num');
-        $algorithm = $request->input('algorithm');
-        $asOfTime = (int) $request->input('asofdate');
-        $updateAll = (int) $request->input('update_all', 0);
-        //new paramerter adding
-        $message = $request->input('message');
-        $type = $request->input('type');
-        $id =   $request->input('id');
-        $old_parent_id =  $request->input('old_parent_id');
-        $new_parent_id =  $request->input('new_parent_id');
-        //end
+            Log::info(($request));
+            /* get input params from request */
+            $topicNumber = (int) $request->input('topic_num');
+            $algorithm = $request->input('algorithm');
+            $asOfTime = (int) $request->input('asofdate');
+            $updateAll = (int) $request->input('update_all', 0);
+            //new paramerter adding
+            $message = $request->input('message');
+            $type = $request->input('type');
+            $id =   $request->input('id');
+            $old_parent_id =  $request->input('old_parent_id');
+            $new_parent_id =  $request->input('new_parent_id');
+            //end
 
-        $start = microtime(true);
-        $currentTime = time();
+            $start = microtime(true);
+            $currentTime = time();
 
-        /**
-         * Update each topic grace period where grace period duration is completed
-         */
-        $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($topics->count() > 0) {
-            foreach($topics as $topic) {
-                $submittedTime = $topic->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
-                    $topic->grace_period = 0;
-                    $topic->update();
+            /**
+             * Update each topic grace period where grace period duration is completed
+             */
+            $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+            
+            if($topics->count() > 0) {
+                foreach($topics as $topic) {
+                    $submittedTime = $topic->submit_time;
+                    $gracePeriodEndTime = $submittedTime + (60*60);
+                    if($currentTime > $gracePeriodEndTime) {
+                        $topic->grace_period = 0;
+                        $topic->update();
+                    }
                 }
             }
-        }
         
 
-        /**
-         * Update each camp grace period where grace period duration is completed
-         */
-        $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($camps->count() > 0) {
-            foreach($camps as $camp) {
-                $submittedTime = $camp->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
-                    $camp->grace_period = 0;
-                    $camp->update();
+            /**
+             * Update each camp grace period where grace period duration is completed
+            */
+            $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+            
+            if($camps->count() > 0) {
+                foreach($camps as $camp) {
+                    $submittedTime = $camp->submit_time;
+                    $gracePeriodEndTime = $submittedTime + (60*60);
+                    if($currentTime > $gracePeriodEndTime) {
+                        $camp->grace_period = 0;
+                        $camp->update();
+                    }
                 }
             }
-        }
 
-        /**
-         * Update each statement grace period where grace period duration is completed
-         */
-        $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
-        
-        if($statements->count() > 0) {
-            foreach($statements as $statement) {
-                $submittedTime = $statement->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60*60);
-                if($currentTime > $gracePeriodEndTime) {
-                    $statement->grace_period = 0;
-                    $statement->update();
+            /**
+             * Update each statement grace period where grace period duration is completed
+            */
+            $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+            
+            if($statements->count() > 0) {
+                foreach($statements as $statement) {
+                    $submittedTime = $statement->submit_time;
+                    $gracePeriodEndTime = $submittedTime + (60*60);
+                    if($currentTime > $gracePeriodEndTime) {
+                        $statement->grace_period = 0;
+                        $statement->update();
+                    }
                 }
             }
+
+            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id);
+
+            $end = microtime(true);
+            $time = $end - $start;
+
+            Log::info("Time via store method: " . $time);
+
+            return new TimelineResource(array($timeline));
+        } catch (Throwable $e) {
+            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            return response()->json($errResponse, 500);
         }
-
-        $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id);
-
-        $end = microtime(true);
-        $time = $end - $start;
-
-        Log::info("Time via store method: " . $time);
-
-        return new TimelineResource(array($timeline));
-    } catch (Throwable $e) {
-        $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
-        return response()->json($errResponse, 500);
-    }
     }
 
     /**
@@ -314,61 +314,64 @@ class TimelineController extends Controller
      *
      * @param  TimelineStoreRequest  $request
      * @return Response
-     */
+    */
 
     public function find(TimelineStoreRequest $request)
     {
         try{
-        /* get input params from request */
-        $topicNumber = (int) $request->input('topic_num');
-        $algorithm = $request->input('algorithm');
-        /** Get Cron Run date from .env file and make timestring */
-        $cronDate = UtilHelper::getCronRunDateString();
+            /* get input params from request */
+            $topicNumber = (int) $request->input('topic_num');
+            $algorithm = $request->input('algorithm');
+            /** Get Cron Run date from .env file and make timestring */
+            $cronDate = UtilHelper::getCronRunDateString();
 
-        // get the timeline tree from mongoDb
-        $start = microtime(true);
-        $conditions = TimelineService::getConditions($topicNumber, $algorithm);
-        $mongoTree = TimelineRepository::findTimeline($conditions);
-        // First check the topic exist in database, then we can run upsertTimeline.
-        $asOfTime= time();
-        $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
-       
-        if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-            TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
+            // get the timeline tree from mongoDb
+            $start = microtime(true);
+            $conditions = TimelineService::getConditions($topicNumber, $algorithm);
             $mongoTree = TimelineRepository::findTimeline($conditions);
-        }
-       
-        if($mongoTree && count($mongoTree)) {
-            $tree = collect([$mongoTree[0]]);
-        }
-        else{
-            $tree =[];
-        }
- 
-        $end = microtime(true);
-        $time = $end - $start;
-        $response = new TimelineResource($tree);
-        $collectionToJson = json_encode($response, true);
-        $responseArray = json_decode($collectionToJson, true);
-        // Below code is for checking the requested camp number is created on the asOfTime.
-        if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
-            // loop through array
-            foreach($responseArray['data'] as $key => $item){
-                // unset them
-                unset($item["_id"]);
-                unset($item["topic_id"]);
-                unset($item["algorithm_id"]);
-                unset($item["updated_at"]);
-                unset($item["created_at"]);
-                $responseArray['data']=$item;
-            }
-            $response = $responseArray;
-        }
+            // First check the topic exist in database, then we can run upsertTimeline.
+            $asOfTime= time();
+            $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
         
-        Log::info("Time via find method: " . $time);
+            if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+                TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
+                $mongoTree = TimelineRepository::findTimeline($conditions);
+            }
+       
+            if($mongoTree && count($mongoTree)) {
+                $tree = collect([$mongoTree[0]]);
+            }
+            else{
+                $tree =[];
+            }
+ 
+            $end = microtime(true);
+            $time = $end - $start;
+            $response = new TimelineResource($tree);
+            $collectionToJson = json_encode($response, true);
+            $responseArray = json_decode($collectionToJson, true);
+            // Below code is for checking the requested camp number is created on the asOfTime.
+            if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
+                // loop through array
+                foreach($responseArray['data'] as $key => $item){
+                    // unset them
+                    unset($item["_id"]);
+                    unset($item["topic_id"]);
+                    unset($item["algorithm_id"]);
+                    unset($item["updated_at"]);
+                    unset($item["created_at"]);
+                    $responseArray['data']=$item;
+                }
+              // sort($responseArray['data'],SORT_STRING);
+                $response = $responseArray;
+                
+            }
+        
+            Log::info("Time via find method: " . $time);
 
-        return $response;
-        } catch (Throwable $e) {
+            return $response;
+        } 
+        catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
