@@ -12,7 +12,7 @@ use App\Exceptions\Camp\CampURLException;
 use App\Exceptions\Camp\CampDetailsException;
 use App\Exceptions\Camp\CampSupportCountException;
 use App\Exceptions\Camp\CampTreeCountException;
-
+use Illuminate\Support\Facades\Log;
 
 
 class TimelineService
@@ -86,17 +86,29 @@ class TimelineService
      * @return array $array
      */
 
-    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id)
+    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="")
     {
        
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
-        $rootUrl =  $this->getRootUrl($request);
+        if($timelineType=="history"){
+            $rootUrl =  $this->getRootUrlHistory($request);
+        }
+        else{
+            $rootUrl =  $this->getRootUrl($request);
+        }
         $startCamp = 1;
         $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
         foreach ($algorithms as $algo) {
             try {
-                $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                
+                if($timelineType=="history"){
+                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
+                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
+                }
+                else{
+                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                }
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
@@ -147,7 +159,7 @@ class TimelineService
      * @param Illuminate\Http\Request
      *
      * @return string $rootUrl
-     */
+    */
     public function getRootUrl($request){
 
          $url = request()->headers->get('referer');
@@ -162,10 +174,9 @@ class TimelineService
      *
      * @param  array tree
      * @return array $singleDimensional
-     */
-
-     public function array_single_dimensional($tree)
-     {
+    */
+    public function array_single_dimensional($tree)
+    {
         $singleDimensional = [];
         foreach ($tree as $item) {
             $children =  isset($item['children']) ? $item['children'] : null; //temporarily store children if set
@@ -182,6 +193,16 @@ class TimelineService
         return $singleDimensional;
     }
 
-   
+    /**
+        * Get root url
+        *
+        * @param Illuminate\Http\Request
+        *
+        * @return string $rootUrl
+    */
+    public function getRootUrlHistory($request){
+        $rootUrl = env('REFERER_URL');
+        return $rootUrl;
+    }
 
 }

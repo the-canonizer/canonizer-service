@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use TopicService;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class CampService.
@@ -253,9 +254,6 @@ class CampService
             if ($isReview) {
                 $ReviewTopic = TopicService::getReviewTopic($topicNumber, $asOfTime, ['nofilter' => true]);
                 $ReviewCamp = $this->getReviewCamp($topicNumber, $campNumber);
-
-                // Log::info("Log".$ReviewCamp);
-
                 if ($ReviewTopic && isset($ReviewTopic->topic_name)) {
                     $topic_name = ($ReviewTopic->topic_name != '') ? $ReviewTopic->topic_name : $ReviewTopic->title;
                 }
@@ -1473,7 +1471,8 @@ class CampService
             throw new CampTreeException("Prepare Camp Timeline Exception");
         }
     }
-     /**
+
+    /**
      * Get the camp timeline of given topic.
      *
      * @param string $algorithm

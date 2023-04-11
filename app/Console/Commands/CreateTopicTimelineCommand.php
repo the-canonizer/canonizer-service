@@ -12,6 +12,8 @@ use TimelineService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use UtilHelper;
+use App\Model\v1\Camp;
+use App\Model\v1\Nickname;
 
 class CreateTopicTimelineCommand extends Command
 {
@@ -81,8 +83,8 @@ class CreateTopicTimelineCommand extends Command
                         ->where(["namespace_id" => $value['id']])
                         ->groupBy('topic_num')
                         ->get();
-                    $this->createLess166Topics($topics, $asOfTime);
-                    $this->creategreater166Topics($topics, $asOfTime);
+                    $this->createTopicTimelines($topics, $asOfTime);
+                    $this->createTopicTimelinesDesc($topics, $asOfTime); 
                 }
 
                 // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
@@ -103,35 +105,58 @@ class CreateTopicTimelineCommand extends Command
         $commandHistory->save();
     }
 
-    private function createLess166Topics($topics, $asOfTime)
+    private function createTopicTimelines($topics, $asOfTime)
     {
+        
         if (count($topics)) {
             // create the timeline for every topic
-            foreach ($topics  as $key => $value) {
-
-                $topic_num = $value['topic_num'];
-                $updateAll = 1;
-
-                if ($value['topic_num'] < 166) {
-                    $tree =  TimelineService::upsertTimeline($topic_num, "blind_popularity", $asOfTime, $updateAll, $request = [], $message="latest timeline created", $type="event_timeline", $id=$value['id'], $old_parent_id=null, $new_parent_id=null);
-                    Log::info($tree);
+            foreach ($topics  as $key => $value) 
+            {
+                $camps_info = Camp::select(['topic_num', 'id','go_live_time','camp_name','submitter_nick_id'])
+                                ->where('topic_num', '=',$value['topic_num'])
+                                //->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->orderBy('id', 'asc') //desc
+                                ->get();  
+                if(!empty($camps_info)){
+                    foreach($camps_info as $camp){
+                        $asOfTime = (int) $camp['go_live_time'];
+                        //timeline start
+                        $nickName = Nickname::getNickName($camp->submitter_nick_id)->nick_name;
+                        $timelineMessage = $nickName . " create Camp ". $camp['camp_name'];
+                        
+                        $tree =  TimelineService::upsertTimeline($topic_num=$camp['topic_num'], "blind_popularity", $asOfTime, $updateAll=1, $request = [], $message=$timelineMessage, $type="create_camp", $id=$value['id'], $old_parent_id=null, $new_parent_id=null,$timelineType="history");
+                    }
                 }
+                //Log::info($tree);
             }
         }
     }
-    private function creategreater166Topics($topics, $asOfTime)
+    private function createTopicTimelinesDesc($topics, $asOfTime)
     {
+        
         if (count($topics)) {
             // create the timeline for every topic
-            foreach ($topics  as $key => $value) {
-
-                $topic_num = $value['topic_num'];
-                $updateAll = 1;
-
-                if ($value['topic_num'] >= 166) {
-                    $tree =  TimelineService::upsertTimeline($topic_num, "blind_popularity", $asOfTime, $updateAll, $request = [], $message="latest timeline created", $type="event_timeline", $id=$value['id'], $old_parent_id=null, $new_parent_id=null);
-                    Log::info($tree);
+            foreach ($topics  as $key => $value) 
+            {
+              
+                $camps_info = Camp::select(['topic_num', 'id','go_live_time','camp_name','submitter_nick_id'])
+                                ->where('topic_num', '=',$value['topic_num'])
+                                //->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->orderBy('id', 'desc') //desc
+                                ->get();  
+                if(!empty($camps_info)){
+                    foreach($camps_info as $camp){
+                        $asOfTime = (int) $camp['go_live_time'];
+                        //timeline start
+                        $nickName = Nickname::getNickName($camp->submitter_nick_id)->nick_name;
+                        $timelineMessage = $nickName . " create Camp ". $camp['camp_name'];
+                        
+                        $tree =  TimelineService::upsertTimeline($topic_num=$camp['topic_num'], "blind_popularity", $asOfTime, $updateAll=1, $request = [], $message=$timelineMessage, $type="create_camp", $id=$value['id'], $old_parent_id=null, $new_parent_id=null,$timelineType="history");
+                    }
                 }
+                //Log::info($tree);
             }
         }
     }
