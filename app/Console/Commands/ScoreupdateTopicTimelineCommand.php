@@ -15,21 +15,21 @@ use UtilHelper;
 use App\Model\v1\Camp;
 use App\Model\v1\Nickname;
 
-class CreateTopicTimelineCommand extends Command
+class ScoreupdateTopicTimelineCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'timeline:all {asOfTime?}';
+    protected $signature = 'timeline:score';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'This commnad will create the tree timeline of all topics';
+    protected $description = 'This commnad will update scroe of timeline of all topics';
 
     /**
      * Create a new command instance.
@@ -48,29 +48,18 @@ class CreateTopicTimelineCommand extends Command
      */
     public function handle()
     {
-        $asOfTime = $this->argument('asOfTime') ?? NULL;
-        // check the argument of asOfTime with command / else use the current time.
-        if (!empty($asOfTime)) {
-            $asOfTime =  $asOfTime;
-        } else {
-            $asOfTime =  time();
-        }
-
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
-            'parameters' => [
-                'asOfTime' => $asOfTime
-            ],
             'started_at' => Carbon::now()->timestamp,
         ]);
 
-        // If timeline:all command is already running, don't execute command
-        $commandStatement = "php artisan timeline:all";
-        $commandSignature = "timeline:all";
+        // If timeline:score command is already running, don't execute command
+        $commandStatement = "php artisan timeline:score";
+        $commandSignature = "timeline:score";
 
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         try {
-            Log::info('timeline:all command started....');
+            Log::info('timeline:score command started....');
             $start = microtime(true);
             $namespaces = Namespaces::all();
             $asOfTime =  time();
@@ -80,22 +69,12 @@ class CreateTopicTimelineCommand extends Command
                     ->where(["namespace_id" => $value['id']])
                     ->groupBy('topic_num')
                     ->get();
-                $this->createTopicTimelines($topics, $asOfTime);
+                $this->createTopicTimelinesDesc($topics); 
             }
-            Log::info('timeline:all command ended....');
-           /* Log::info('timeline:all command started 2....');
-            foreach ($namespaces as $value) {
-                // get all topic associated with this namespace
-                $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
-                    ->where(["namespace_id" => $value['id']])
-                    ->groupBy('topic_num')
-                    ->get();
-                $this->createTopicTimelinesDesc($topics, $asOfTime); 
-            }
-            Log::info('timeline:all command ended 2....');*/
+            Log::info('timeline:score command ended ....');
             
             $time_elapsed_secs = microtime(true) - $start;
-            $this->info('timeline:all execution time: ' . $time_elapsed_secs);
+            $this->info('timeline:score execution time: ' . $time_elapsed_secs);
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();
@@ -105,32 +84,8 @@ class CreateTopicTimelineCommand extends Command
         $commandHistory->save();
     }
 
-    private function createTopicTimelines($topics, $asOfTime)
-    {
-        
-        if (count($topics)) {
-            // create the timeline for every topic
-            foreach ($topics  as $key => $value) 
-            {
-                $camps_info = Camp::select(['topic_num', 'id','go_live_time','camp_name','submitter_nick_id'])
-                                ->where('topic_num', '=',$value['topic_num'])
-                                //->where('camp_name', '!=', 'Agreement')
-                                ->where('objector_nick_id', '=', null)
-                                ->orderBy('id', 'asc') //desc
-                                ->get();  
-                if(!empty($camps_info)){
-                    foreach($camps_info as $camp){
-                        $asOfTime = (int) $camp['go_live_time'];
-                        //timeline start
-                        $nickName = Nickname::getNickName($camp->submitter_nick_id)->nick_name;
-                        $timelineMessage = $nickName . " create Camp ". $camp['camp_name'];
-                        $tree =  TimelineService::upsertTimeline($topic_num=$camp['topic_num'], "blind_popularity", $asOfTime, $updateAll=1, $request = [], $message=$timelineMessage, $type="create_camp", $id=$value['id'], $old_parent_id=null, $new_parent_id=null,$timelineType="history");
-                    }
-                }
-            }
-        }
-    }
-    private function createTopicTimelinesDesc($topics, $asOfTime)
+   
+    private function createTopicTimelinesDesc($topics)
     {
         
         if (count($topics)) {
