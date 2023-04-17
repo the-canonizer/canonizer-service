@@ -9,6 +9,7 @@ use App\Console\Commands\RemoveDuplicateTrees;
 use App\Console\Commands\RemoveNonLatestTreesCommand;
 use App\Console\Commands\TruncateOldTrees;
 use App\Console\Commands\CreateTopicTimelineCommand;
+use App\Console\Commands\ScoreupdateTopicTimelineCommand;
 
 class Kernel extends ConsoleKernel
 {
@@ -23,6 +24,7 @@ class Kernel extends ConsoleKernel
         RemoveDuplicateTrees::class,
         RemoveNonLatestTreesCommand::class,
         CreateTopicTimelineCommand::class,
+        ScoreupdateTopicTimelineCommand::class,
     ];
 
     /**
