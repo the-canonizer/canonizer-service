@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
@@ -165,43 +166,62 @@ class TopicController extends Controller
     public function getAll(TopicRequest $request)
     {
         try {
-        /* get input params from request */
-        $pageNumber = $request->input('page_number');
-        $pageSize = $request->input('page_size');
-        $namespaceId = $request->input('namespace_id') !== "" ? (int) $request->input('namespace_id') : $request->input('namespace_id');
-        $asofdateTime = (int) $request->input('asofdate');
-        $algorithm = $request->input('algorithm');
-        $search = $request->input('search');
-        $asof = $request->input('asof');
-        $filter = (float) $request->input('filter') ?? null;
-        $nickNameIds= $request->input('user_email') ? Nickname::personNicknameIdsByEmail($request->input('user_email')) : [];
-        $asofdate = DateTimeHelper::getAsOfDate($asofdateTime);
-        $skip = ($pageNumber - 1) * $pageSize;
+            /* get input params from request */
+            $pageNumber = $request->input('page_number');
+            $pageSize = $request->input('page_size');
 
-        /** Get Cron Run date from .env file and make timestring */
-        $cronDate = UtilHelper::getCronRunDateString();
+            $namespaceId = $request->input('namespace_id') !== "" ? (int) $request->input('namespace_id') : $request->input('namespace_id');
+            $asofdateTime = (int) $request->input('asofdate'); // Store actual date time in this variable
 
-        /**
-         * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
-         * Check if tree:all command is running in background
-         * Then command is in process of creating all topics trees in Mongo database (Mongo is not updated)
-         * Fetch topics from MySQL (updated database)
-         */
-        $commandStatement = "php artisan tree:all";
-        $commandSignature = "tree:all";
-        
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-        $algorithms =  AlgorithmService::getAlgorithmKeyList();
-        if (($asofdate >= $cronDate) && in_array($algorithm,$algorithms) && !$commandStatus) {
-            
-            $totalTopics = TopicService::getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof);
-            $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-            $topics = TopicService::getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
+            $algorithm = $request->input('algorithm');
+            $search = $request->input('search');
+
+            $asof = $request->input('asof');
+            $filter = (float) $request->input('filter') ?? null;
+
+            $nickNameIds = $request->input('user_email') ? Helpers::getNickNamesByEmail($request->input('user_email')) : [];
+            $asofdate = $asofdateTime; // Store start of the day in this variable
+            $today = Helpers::getStartOfTheDay(time()); // Store start of today in this variable
+
+            $skip = ($pageNumber - 1) * $pageSize;
 
             /**
-             * If no topics found in Mongo database, fetch data from MySQL 
+             * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
+             * Check if tree:all command is running in background
+             * Then command is in process of creating all topics trees in Mongo database (Mongo is not updated)
+             * Fetch topics from MySQL (updated database)
              */
-            if(!$topics->count()) {
+            $commandStatement = "php artisan tree:all";
+            $commandSignature = "tree:all";
+
+            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+            $algorithms =  AlgorithmService::getAlgorithmKeyList();
+
+            if (in_array($algorithm, $algorithms) && !$commandStatus) {
+
+                // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
+                if ($asofdate >= $today) {
+                    $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof);
+                    $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+                    $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
+                } else {
+                    /*  search & filter functionality */
+                    $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
+                    $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+                    $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
+
+                    /** filter the collection if filter parameter */
+                    if (isset($filter) && $filter != '' && $filter != null) {
+                        $topics = TopicService::filterTopicCollection($topics, $filter);
+                        /* We will count the filtered topic here, because the above totalTopics is without filter */
+                        $totalTopics = $topics->count();
+                    }
+
+                    /** total pages */
+                    $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+                }
+            } else {
+
                 /*  search & filter functionality */
                 $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
                 $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
@@ -217,28 +237,11 @@ class TopicController extends Controller
                 /** total pages */
                 $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             }
-        } else {
-            
-            /*  search & filter functionality */
-            $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
-            $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-            $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
-            
-            /** filter the collection if filter parameter */
-            if (isset($filter) && $filter != '' && $filter != null) {
-               $topics = TopicService::filterTopicCollection($topics, $filter);
-               /* We will count the filtered topic here, because the above totalTopics is without filter */
-               $totalTopics = $topics->count();
-            }
 
-            /** total pages */
-            $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-        }
-
-        return new TopicResource($topics, $numberOfPages);
-        } catch (Throwable $e) {
-            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
-            return response()->json($errResponse, 500);
+            return new TopicResource($topics, $numberOfPages);
+        } catch (Throwable $th) {
+            $errorResponse = UtilHelper::exceptionResponse($th, $request->input('tracing') ?? false);
+            return response()->json($errorResponse, 500);
         }
     }
 }

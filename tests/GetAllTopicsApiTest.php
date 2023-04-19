@@ -51,6 +51,15 @@ class GetAllTopicsApiTest extends TestCase
         $this->assertEquals(200, $response->status());
     }
 
+    /**
+     * Check Api by passing search as integer values
+     */
+    public function testSearchWithNumericValue()
+    {
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof'=>'default','page_number'=>1,'page_size'=>20,'algorithm'=>'blind_popularity','namespace_id'=>1, 'asofdate'=>time(),'search'=>4645, 'filter'=>1.7,'user_email'=>'']);
+        $this->assertEquals("The search must be a string.", $response["errors"]["errors"]["search"][0]);
+    }
+
      /**
      * Check Api with correct values without search and filter
      */

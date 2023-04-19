@@ -321,4 +321,30 @@ class TopicSupport extends Model {
     }
 
 
+    public static function sumTranversedArraySupportCountP($traversedTreeArray=array()){
+        if(isset($traversedTreeArray) && is_array($traversedTreeArray)) {
+ 
+         foreach($traversedTreeArray as $key => $array){
+ 
+            $traversedTreeArray[$key]['score']=self::reducedSum($array);
+ 
+            $traversedTreeArray[$key]['full_score']=self::reducedSum($array,true);
+ 
+            $traversedTreeArray[$key]['children']=self::sumTranversedArraySupportCountp($array['children']);
+         }
+ 
+        }
+ 
+       if(is_array($traversedTreeArray)) {
+ 
+        uasort($traversedTreeArray, function($a, $b) {
+             return $a['score'] < $b['score'];
+        });
+       }
+ 
+         return $traversedTreeArray;
+ 
+     }
+
+
 }

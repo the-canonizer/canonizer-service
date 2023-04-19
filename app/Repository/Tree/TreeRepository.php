@@ -66,6 +66,33 @@ class TreeRepository implements TreeInterface
      *
      * @return array Response
      */
+    // Find latest topic from MongoDB. #MongoDBRefactoring
+    public function findLatestTree($conditions)
+    {
+        try {
+
+            $start = microtime(true);
+
+            // unset as_of_date condition because we have to find latest topic. #MongoDBRefactoring
+            unset($conditions['as_of_date']);
+
+            $record = Tree::where($conditions)->orderBy('as_of_date', 'desc')->limit(1)->get();
+
+            $time_elapsed_secs = microtime(true) - $start;
+
+            return $record;
+        } catch (\Throwable $th) {
+            throw $th;
+        }
+    }
+
+    /**
+     * find a tree.
+     *
+     * @param  array $conditions | assocative array
+     *
+     * @return array Response
+     */
 
     public function findTree($conditions)
     {

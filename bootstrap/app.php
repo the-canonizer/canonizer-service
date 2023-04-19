@@ -50,8 +50,10 @@ $app->withFacades(true, [
     'App\Facades\Services\AlgorithmServiceFacade' => "AlgorithmService",
     'App\Facades\Services\TreeServiceFacade' => "TreeService",
     'App\Facades\Services\TopicServiceFacade' => "TopicService",
+    'App\Facades\Services\TimelineServiceFacade' => "TimelineService",
     'App\Facades\Repositories\TreeRepositoryFacade' => "TreeRepository",
     'App\Facades\Repositories\TopicRepositoryFacade' => "TopicRepository",
+    'App\Facades\Repositories\TimelineRepositoryFacade' => "TimelineRepository",
     'App\Facades\Helpers\DateTimeHelperFacade' => "DateTimeHelper",
     'App\Facades\Helpers\UtilHelperFacade' => "UtilHelper",
 ]);
