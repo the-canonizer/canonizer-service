@@ -109,6 +109,8 @@ class CampService
             if (!empty($agreementCamp)) {
                 $isDisabled =    $agreementCamp->is_disabled ?? 0;
                 $isOneLevel =    $agreementCamp->is_one_level ?? 0;
+                $isArchive  =    $agreementCamp->is_archive ?? 0;
+                $directArchive = $agreementCamp->direct_archive ?? 0;
             }
             $tree = [];
             $tree[$startCamp]['topic_id'] = $topicNumber;
@@ -126,6 +128,8 @@ class CampService
             $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
             $tree[$startCamp]['is_disabled'] = $isDisabled;
             $tree[$startCamp]['is_one_level'] = $isOneLevel;
+            $tree[$startCamp]['is_archive'] = $isArchive;
+            $tree[$startCamp]['direct_archive'] = $directArchive;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
            
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
@@ -753,6 +757,8 @@ class CampService
                 $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                $array[$child->camp_num]['is_archive'] = $child->is_archive ?? 0;
+                $array[$child->camp_num]['direct_archive'] = $child->direct_archive ?? 0;
                 $array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
                 if($child->parent_camp_num == 1) {
