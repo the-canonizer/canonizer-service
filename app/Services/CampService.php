@@ -917,6 +917,7 @@ class CampService
         /* Common conditions in all queries */
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
+            ->where('is_archive', '=', 0)
             ->where('topic.objector_nick_id', '=', null);
 
         $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {
