@@ -104,8 +104,6 @@ class CampService
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
             $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
-            $isDisabled = 0;
-            $isOneLevel = 0;
             if (!empty($agreementCamp)) {
                 $isDisabled =    $agreementCamp->is_disabled ?? 0;
                 $isOneLevel =    $agreementCamp->is_one_level ?? 0;
@@ -126,10 +124,10 @@ class CampService
             $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
             $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
             $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
-            $tree[$startCamp]['is_disabled'] = $isDisabled;
-            $tree[$startCamp]['is_one_level'] = $isOneLevel;
-            $tree[$startCamp]['is_archive'] = $isArchive;
-            $tree[$startCamp]['direct_archive'] = $directArchive;
+            $tree[$startCamp]['is_disabled'] = $isDisabled ?? 0;
+            $tree[$startCamp]['is_one_level'] = $isOneLevel ?? 0;
+            $tree[$startCamp]['is_archive'] = $isArchive ?? 0;
+            $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
            
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
