@@ -156,6 +156,8 @@ class TreeController extends Controller
                 $submittedTime = $topic->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $topic->submit_time = time();
+                    $topic->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $topic->grace_period = 0;
                     $topic->update();
                 }
@@ -173,6 +175,8 @@ class TreeController extends Controller
                 $submittedTime = $camp->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $camp->submit_time = time();
+                    $camp->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $camp->grace_period = 0;
                     $camp->update();
                 }
@@ -189,6 +193,8 @@ class TreeController extends Controller
                 $submittedTime = $statement->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $statement->submit_time = time();
+                    $statement->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $statement->grace_period = 0;
                     $statement->update();
                 }
