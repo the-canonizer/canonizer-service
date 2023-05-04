@@ -194,7 +194,7 @@ class CampService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function getCampCreatedDate($campNumber, $topicNumber){
+    public static function getCampCreatedDate($campNumber, $topicNumber) {
         return Camp::where('topic_num', $topicNumber)->where('camp_num', $campNumber)
                 ->pluck('submit_time')
                 ->first();
