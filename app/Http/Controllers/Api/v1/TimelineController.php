@@ -18,6 +18,7 @@ use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
+use App\Model\v1\Nickname;
 
 class TimelineController extends Controller
 {
@@ -334,7 +335,23 @@ class TimelineController extends Controller
             $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
         
             if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-                TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
+                // create the timeline for every topic
+                $camps_info = Camp::select(['topic_num', 'id','go_live_time','camp_name','submitter_nick_id'])
+                            ->where('topic_num', '=',$topicNumber)
+                            //->where('camp_name', '!=', 'Agreement')
+                            ->where('objector_nick_id', '=', null)
+                            ->orderBy('id', 'asc') //desc
+                            ->get();  
+                if(!empty($camps_info)){
+                    foreach($camps_info as $camp){
+                        $asOfTime = (int) $camp['go_live_time'];
+                        //timeline start
+                        $nickName = Nickname::getNickName($camp->submitter_nick_id)->nick_name;
+                        $timelineMessage = $nickName . " created a new camp ". $camp['camp_name'];
+                        TimelineService::upsertTimeline($topic_num=$camp['topic_num'],  "blind_popularity", $asOfTime, $updateAll=1, $request = [], $message=$timelineMessage, $type="create_camp", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null,$timelineType="history");
+                    }
+                }
+                //TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
                 $mongoTree = TimelineRepository::findTimeline($conditions);
             }
        
