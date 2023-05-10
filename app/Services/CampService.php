@@ -104,11 +104,11 @@ class CampService
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
             $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
-            $isDisabled = 0;
-            $isOneLevel = 0;
             if (!empty($agreementCamp)) {
-                $isDisabled = $agreementCamp->is_disabled ?? 0;
-                $isOneLevel = $agreementCamp->is_one_level ?? 0;
+                $isDisabled =    $agreementCamp->is_disabled ?? 0;
+                $isOneLevel =    $agreementCamp->is_one_level ?? 0;
+                $isArchive  =    $agreementCamp->is_archive ?? 0;
+                $directArchive = $agreementCamp->direct_archive ?? 0;
             }
             $tree = [];
             $tree[$startCamp]['topic_id'] = $topicNumber;
@@ -124,8 +124,10 @@ class CampService
             $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
             $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
             $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
-            $tree[$startCamp]['is_disabled'] = $isDisabled;
-            $tree[$startCamp]['is_one_level'] = $isOneLevel;
+            $tree[$startCamp]['is_disabled'] = $isDisabled ?? 0;
+            $tree[$startCamp]['is_one_level'] = $isOneLevel ?? 0;
+            $tree[$startCamp]['is_archive'] = $isArchive ?? 0;
+            $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
            
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
@@ -192,7 +194,7 @@ class CampService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function getCampCreatedDate($campNumber, $topicNumber){
+    public static function getCampCreatedDate($campNumber, $topicNumber) {
         return Camp::where('topic_num', $topicNumber)->where('camp_num', $campNumber)
                 ->pluck('submit_time')
                 ->first();
@@ -753,6 +755,8 @@ class CampService
                 $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                $array[$child->camp_num]['is_archive'] = $child->is_archive ?? 0;
+                $array[$child->camp_num]['direct_archive'] = $child->direct_archive ?? 0;
                 $array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
                 if($child->parent_camp_num == 1) {
@@ -911,6 +915,7 @@ class CampService
         /* Common conditions in all queries */
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
+            ->where('is_archive', '=', 0)
             ->where('topic.objector_nick_id', '=', null);
 
         $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {
