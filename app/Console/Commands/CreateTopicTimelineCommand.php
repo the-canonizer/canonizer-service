@@ -125,7 +125,7 @@ class CreateTopicTimelineCommand extends Command
                 }
                 $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);
                 
-                //$data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
+                $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
 
                 $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
             }
