@@ -25,7 +25,7 @@ class CreateTopicTimelineCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'timeline:all';
+    protected $signature = 'timeline:all {topic_num?}';
 
     /**
      * The console command description.
@@ -53,6 +53,7 @@ class CreateTopicTimelineCommand extends Command
     {
         $data = [];
         $asOfTime =  time();
+        $topic_num = $this->argument('topic_num') ?? NULL;
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
             'parameters' => [
@@ -62,85 +63,64 @@ class CreateTopicTimelineCommand extends Command
         ]);
 
         // If timeline:all command is already running, don't execute command
-        $commandStatement = "php artisan timeline:all";
-        $commandSignature = "timeline:all";
+        $commandStatement = "php artisan timeline:all {topic_num?}";
+        $commandSignature = "timeline:all {topic_num?}";
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         //First Deleted all old topic Timeline related records.
         $algorithms = (new AlgorithmService())->getAlgorithmKeyList();
         foreach ($algorithms as $algorithm) {
-            $del = Timeline::where('algorithm_id', $algorithm)->delete();
+            // Check the argument of id with command / else use the all.
+            if (!empty($topic_num)) {
+                $del = Timeline::where('algorithm_id', $algorithm)->where('topic_num', $topic_num)->delete();
+            }
+            else{
+                $del = Timeline::where('algorithm_id', $algorithm)->delete();
+            }
         }
 
         try {
             Log::info('timeline:all command started....');
             $start = microtime(true);
             $asOfTime =  time();
-            // get all topic associated with this namespace
-            $topics = Topic::select(['topic_num'])
-                            ->groupBy('topic_num')
-                            ->get();
+            if (!empty($topic_num)) {
+                // get all topic associated with this namespace
+                $topics = Topic::select(['topic_num'])->where('topic_num', $topic_num)->groupBy('topic_num')->get();
+            }
+            else{
+                // get all topic associated with this namespace
+                $topics = Topic::select(['topic_num'])->groupBy('topic_num')->get();
+            }
+           
             foreach ($topics  as $key => $topic) 
             {
-                $topic_information = DB::select('SELECT	
-                    a.id, 
-                    topic_num, 
-                    topic_name, 
-                    go_live_time, 
-                    previous_topic_name, 
-                    submitter_nick_id,
-                    nick_name,
-                    STRCMP(topic_name, previous_topic_name),
-                    CASE 
-                        WHEN STRCMP(topic_name, previous_topic_name) = 0 THEN "same_topic_name"
-                        WHEN STRCMP(topic_name, previous_topic_name) IS NULL THEN "same_topic_name"
-                    ELSE "change_in_topic_name"
-                        END AS String_comparison
-                    FROM
-                    (
-                        SELECT 
-                        id, 
-                        topic_num, 
-                        topic_name, 
-                        go_live_time, 
-                        submitter_nick_id,
-                        LAG(topic_name) OVER(ORDER BY go_live_time) AS previous_topic_name FROM topic
-                        WHERE topic_num = '.$topic->topic_num.'  AND objector_nick_id IS NULL ORDER BY go_live_time
-                    ) a, nick_name b
-                    WHERE a.submitter_nick_id = b.id');
-                if(!empty($topic_information)){
-                    $same_topic_name =true;
-                    foreach($topic_information as $info){
-                        if($info->String_comparison=="same_topic_name" && $info->previous_topic_name==NULL){
-                            $timelineMessage = $info->nick_name . " created a new topic ". $info->topic_name;
-                            $type="create_topic";
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null);   
-                        }
-                        else if($info->String_comparison=="change_in_topic_name"){
-                            $timelineMessage = $info->nick_name . " updated the topic ". $info->topic_name;
-                            $type="Update_topic";
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null);   
-                        }
-                    }
-                }
+                
+                $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
+                
                 $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);
                 
                 $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
 
                 $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
-            }
-            $key_values = array_column($data, 'asOfTime'); 
-            array_multisort($key_values, SORT_ASC, $data); //SORT_ASC
-            if(!empty($data)){
-                foreach($data as $result){
-                    $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], "blind_popularity", $asOfTime=$result['asOfTime'], $updateAll=1, $request = [], $message=$result['message'], $type, $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history");            
+               Log::info("before sorting --- ");
+                Log::info($data);
+                $key_values = array_column($data, 'asOfTime'); 
+                array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
+                Log::info("after sorting --- ");
+                Log::info($data);
+                if(!empty($data)){
+                    foreach($data as $result){
+                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], "blind_popularity", $asOfTime=$result['asOfTime'], $updateAll=1, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history");            
 
-                }
+                    }
 
-            }    
+                } 
+                $data = [];
+               
+            }   
             Log::info('timeline:all command ended....');
             $time_elapsed_secs = microtime(true) - $start;
-            $this->info('timeline:all execution time: ' . $time_elapsed_secs);
+            $this->info("timeline:all execution time : " .  date("H:i:s",$time_elapsed_secs));
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();
@@ -148,6 +128,54 @@ class CreateTopicTimelineCommand extends Command
 
         $commandHistory->finished_at = Carbon::now()->timestamp;
         $commandHistory->save();
+    }
+
+    
+    private function getTopicHistory($topic_num,$data)
+    {
+        $topic_information = DB::select('SELECT	
+            a.id, 
+            topic_num, 
+            topic_name, 
+            submit_time, 
+            previous_topic_name, 
+            submitter_nick_id,
+            nick_name,
+            STRCMP(topic_name, previous_topic_name),
+            CASE 
+                WHEN STRCMP(topic_name, previous_topic_name) = 0 THEN "same_topic_name"
+                WHEN STRCMP(topic_name, previous_topic_name) IS NULL THEN "same_topic_name"
+            ELSE "change_in_topic_name"
+                END AS String_comparison
+            FROM
+            (
+                SELECT 
+                id, 
+                topic_num, 
+                topic_name, 
+                submit_time, 
+                submitter_nick_id,
+                LAG(topic_name) OVER(ORDER BY submit_time) AS previous_topic_name FROM topic
+                WHERE topic_num = '.$topic_num.'  ORDER BY submit_time 
+            ) a, nick_name b
+            WHERE a.submitter_nick_id = b.id'); //AND objector_nick_id IS NULL
+           
+        if(!empty($topic_information)){
+
+            foreach($topic_information as $info){
+                if($info->String_comparison=="same_topic_name" && ($info->previous_topic_name=="" || $info->previous_topic_name==NULL)){
+                    $timelineMessage = $info->nick_name . " created a new topic ". $info->topic_name;
+                    $type="create_topic";
+                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null);   
+                }
+                else if($info->String_comparison=="change_in_topic_name"){
+                    $timelineMessage = $info->nick_name . " updated the topic ". $info->topic_name;
+                    $type="Update_topic";
+                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null);   
+                }
+            }
+        }
+        return $data;  
     }
 
     private function getCampHistory($topic_num,$data)
@@ -170,57 +198,69 @@ class CreateTopicTimelineCommand extends Command
                 nick_name,
                 previous_camp_name,
                 CASE
-                    WHEN STRCMP (camp_name, previous_camp_name) = 0
-                    THEN "same_camp_name"
-                    WHEN STRCMP (camp_name, previous_camp_name) IS NULL
-                    THEN "same_camp_name"
-                    ELSE "change_in_camp_name"
+                  WHEN STRCMP (camp_name, previous_camp_name) = 0
+                  THEN "same_camp_name"
+                  WHEN STRCMP (camp_name, previous_camp_name) IS NULL
+                  THEN "camp_created"
+                  ELSE "change_in_camp_name"
                 END AS camp_name_comparison,
                 CASE
-                    WHEN parent_camp_num = previous_parent_camp_num
-                    THEN "same_parent_camp_num"
-                    WHEN STRCMP (parent_camp_num, previous_parent_camp_num) IS NULL
-                    THEN "same_parent_camp_num"
-                    ELSE "change_in_parent_camp_num"
+                  WHEN parent_camp_num = previous_parent_camp_num
+                  THEN "same_parent_camp_num"
+                  WHEN STRCMP (
+                    parent_camp_num,
+                    previous_parent_camp_num
+                  ) IS NULL
+                  THEN "same_parent_camp_num"
+                  ELSE "change_in_parent_camp_num"
                 END AS parent_camp_num_comparison
+              FROM
+                (SELECT
+                  a.topic_num,
+                  a.parent_camp_num,
+                  a.camp_num,
+                  a.camp_name,
+                  a.go_live_time,
+                  a.submitter_nick_id,
+                  LAG(a.camp_name) OVER(
+                ORDER BY a.topic_num,
+                  a.parent_camp_num,
+                  a.camp_num,
+                  a.go_live_time
+                ) AS previous_camp_name,
+                LAG(a.parent_camp_num) OVER(
+                ORDER BY a.topic_num,
+                  a.parent_camp_num,
+                  a.camp_num,
+                  a.go_live_time
+                ) AS previous_parent_camp_num
                 FROM
-                (
-                SELECT
-                    a.topic_num,
-                    a.parent_camp_num,
-                    a.camp_num,
-                    a.camp_name,
-                    a.go_live_time,
-                    a.submitter_nick_id,
-                    LAG(a.camp_name) OVER(ORDER BY a.topic_num, a.parent_camp_num, a.camp_num, a.go_live_time) AS previous_camp_name,
-                    LAG(a.parent_camp_num) OVER(ORDER BY a.topic_num, a.parent_camp_num, a.camp_num, a.go_live_time) AS previous_parent_camp_num
-                FROM
-                (SELECT 
+                  (SELECT
                     topic_num,
                     parent_camp_num,
                     camp_num,
                     camp_name,
                     go_live_time,
                     submitter_nick_id
-                    FROM camp
-                    WHERE topic_num = '.$topic_num.'
-                    AND camp_num = '.$camp['camp_num'].'
-                    AND camp_num != 1
+                  FROM
+                    camp
+                WHERE topic_num = '.$topic_num.'
+                 AND camp_num = '.$camp['camp_num'].'
                     ) a,
-                (SELECT
+                  (SELECT
                     topic_num,
                     parent_camp_num,
                     camp_num,
                     COUNT(camp_num) OVER(PARTITION BY camp_num) AS camp_count
-                FROM
+                  FROM
                     camp
-                    WHERE topic_num = '.$topic_num.'
-                    AND camp_num = '.$camp['camp_num'].'
-                AND camp_num != 1
-                ) b
+                  WHERE topic_num = '.$topic_num.'
+                  AND camp_num = '.$camp['camp_num'].'
+                    ) b
                 WHERE a.topic_num = b.topic_num
-                AND a.camp_num = b.camp_num
-                AND a.parent_camp_num = b.parent_camp_num) a, nick_name b
+                  AND a.camp_num = b.camp_num
+                  AND a.parent_camp_num = b.parent_camp_num) a,
+                nick_name b
                 WHERE a.submitter_nick_id = b.id');
                 if(!empty($camp_information)){
                     foreach($camp_information as $info){
@@ -233,7 +273,7 @@ class CreateTopicTimelineCommand extends Command
                             $old_parent_id = $info->camp_num;
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
                         }
-                        else if($info->camp_name_comparison=="same_camp_name"){
+                        else if($info->camp_name_comparison=="camp_created"){ // create
                             $timelineMessage = $info->nick_name . " created a new camp ". $info->camp_name;
                             $type="create_camp";
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
@@ -260,10 +300,11 @@ class CreateTopicTimelineCommand extends Command
             a.nick_name_id,
             b.nick_name,
             `start` AS 'date',
-            'direct_support_start'
+            'direct_support_start'  
             FROM
             support a, nick_name b, camp c
             WHERE a.nick_name_id = b.id 
+            AND a.topic_num = c.topic_num
             AND a.camp_num = c.camp_num
             AND a.topic_num = ".$topic_num."
             AND delegate_nick_name_id = 0
@@ -279,10 +320,12 @@ class CreateTopicTimelineCommand extends Command
             FROM
             support a, nick_name b, camp c
             WHERE a.nick_name_id = b.id 
+            AND a.topic_num = c.topic_num
             AND a.camp_num = c.camp_num
-            AND a.topic_num = ".$topic_num."
+            AND a.topic_num = 1
             AND `end` != 0
             AND delegate_nick_name_id = 0");
+
         if(!empty($support_info))
         {
             foreach($support_info as $info) {
