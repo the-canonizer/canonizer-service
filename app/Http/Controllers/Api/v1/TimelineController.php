@@ -18,6 +18,8 @@ use App\Model\v1\Statement;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
+use App\Model\v1\Nickname;
+use Illuminate\Support\Facades\Artisan;
 
 class TimelineController extends Controller
 {
@@ -334,8 +336,11 @@ class TimelineController extends Controller
             $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
         
             if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
-                TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll=1, $request = [], $message="latest timeline created", $type="event_timeline", $id=$topicNumber, $old_parent_id=null, $new_parent_id=null);
-                $mongoTree = TimelineRepository::findTimeline($conditions);
+
+                /* php artisan cache:clear */
+                if(Artisan::call('timeline:all '.$topicNumber)){
+                    $mongoTree = TimelineRepository::findTimeline($conditions);
+                }             
             }
        
             if($mongoTree && count($mongoTree)) {
@@ -352,6 +357,12 @@ class TimelineController extends Controller
             $responseArray = json_decode($collectionToJson, true);
             // Below code is for checking the requested camp number is created on the asOfTime.
             if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
+                // sorting arraY
+                uksort($responseArray, function($a, $b) {
+                    $aTime = str_replace('asoftime_', '', $a);
+                    $bTime = str_replace('asoftime_', '', $b);
+                    return $aTime <=> $bTime;
+                });
                 // loop through array
                 foreach($responseArray['data'] as $key => $item){
                     // unset them
@@ -362,13 +373,12 @@ class TimelineController extends Controller
                     unset($item["created_at"]);
                     $responseArray['data']=$item;
                 }
-              // sort($responseArray['data'],SORT_STRING);
                 $response = $responseArray;
                 
             }
         
             Log::info("Time via find method: " . $time);
-
+            //Log::info($response);die;
             return $response;
         } 
         catch (Throwable $e) {
