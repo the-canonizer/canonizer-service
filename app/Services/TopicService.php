@@ -81,7 +81,7 @@ class TopicService
         //          TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
 
         // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
-        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, '', $archive);
+        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive);
 
         return $topicsWithScore;
     }
