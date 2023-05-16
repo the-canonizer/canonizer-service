@@ -883,7 +883,7 @@ class CampService
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0)
     {
 
         $returnTopics = [];
@@ -912,10 +912,13 @@ class CampService
                 }
             }
 
+            if(isset($archive) &&  !$archive){
+                $returnTopics->where('is_archive', '=', 0);
+            }
+
         /* Common conditions in all queries */
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
-            ->where('is_archive', '=', 0)
             ->where('topic.objector_nick_id', '=', null);
 
         $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {
