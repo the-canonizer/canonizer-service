@@ -73,12 +73,14 @@ class CreateTopicTimelineCommand extends Command
         foreach ($algorithms as $algorithm) {
             // Check the argument of id with command / else use the all.
             if (!empty($topic_num)) {
-                $del = Timeline::where('algorithm_id', $algorithm)->where('topic_num', $topic_num)->delete();
+                $del = Timeline::where('algorithm_id', $algorithm)->where('topic_id','=', (int)$topic_num)->delete();
+               
             }
             else{
                 $del = Timeline::where('algorithm_id', $algorithm)->delete();
             }
         }
+        
         try {
             Log::info('timeline:all command started....');
             $start = microtime(true);
