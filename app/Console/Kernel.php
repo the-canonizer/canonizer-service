@@ -24,7 +24,6 @@ class Kernel extends ConsoleKernel
         RemoveDuplicateTrees::class,
         RemoveNonLatestTreesCommand::class,
         CreateTopicTimelineCommand::class,
-        ScoreupdateTopicTimelineCommand::class,
     ];
 
     /**

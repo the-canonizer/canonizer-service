@@ -53,6 +53,7 @@ class CreateTopicTimelineCommand extends Command
     {
         $data = [];
         $asOfTime =  time();
+        $count = 0;
         $topic_num = $this->argument('topic_num') ?? NULL;
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
@@ -78,7 +79,6 @@ class CreateTopicTimelineCommand extends Command
                 $del = Timeline::where('algorithm_id', $algorithm)->delete();
             }
         }
-
         try {
             Log::info('timeline:all command started....');
             $start = microtime(true);
@@ -98,29 +98,33 @@ class CreateTopicTimelineCommand extends Command
                 $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
                 
                 $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);
-                
+                   
                 $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
 
                 $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
-               Log::info("before sorting --- ");
-                Log::info($data);
+
                 $key_values = array_column($data, 'asOfTime'); 
                 array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
-                Log::info("after sorting --- ");
-                Log::info($data);
+                //Log::info("after sorting --- ");
+                //Log::info($data); 
                 if(!empty($data)){
-                    foreach($data as $result){
-                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], "blind_popularity", $asOfTime=$result['asOfTime'], $updateAll=1, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history");            
-
+                    foreach($data as $k=>$result){
+                       
+                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], "blind_popularity", $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history",$key=count($data)-$k);            
+                        
+                     
                     }
 
                 } 
+                $count =$count + count($data);
                 $data = [];
                
             }   
             Log::info('timeline:all command ended....');
             $time_elapsed_secs = microtime(true) - $start;
             $this->info("timeline:all execution time : " .  date("H:i:s",$time_elapsed_secs));
+            $this->info("total mongodb entry  : " .  $count);
+            
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();
@@ -180,12 +184,13 @@ class CreateTopicTimelineCommand extends Command
 
     private function getCampHistory($topic_num,$data)
     {               
-        $camps_info = Camp::select(['topic_num', 'id','go_live_time','camp_name','submitter_nick_id','camp_num'])
+        $camps_info = Camp::select(['id','camp_num'])
             ->where('topic_num', '=',$topic_num)
             ->where('camp_name', '!=', 'Agreement')
             ->where('objector_nick_id', '=', null)
             ->orderBy('id', 'asc')
-            ->get();  
+            ->groupBy('camp_num')
+            ->get(); 
         if(!empty($camps_info)) {
             foreach($camps_info as $camp){
                 $camp_information = DB::select('SELECT
@@ -274,12 +279,12 @@ class CreateTopicTimelineCommand extends Command
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
                         }
                         else if($info->camp_name_comparison=="camp_created"){ // create
-                            $timelineMessage = $info->nick_name . " created a new camp ". $info->camp_name;
+                            $timelineMessage = $info->nick_name . " created a new Camp ". $info->camp_name;
                             $type="create_camp";
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
                         }
-                        else if($info->camp_name_comparison=="change_in_camp_name" && $info->parent_camp_num_comparison=="same_parent_camp_num"){
-                            $timelineMessage = $info->nick_name . " updated the camp ". $info->camp_name;
+                        else if($info->camp_name_comparison=="change_in_camp_name"){
+                            $timelineMessage = $info->nick_name . " updated the Camp ". $info->camp_name;
                             $type="Update_camp";
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
                         }
@@ -294,37 +299,39 @@ class CreateTopicTimelineCommand extends Command
     private function getDirectSupportHistory($topic_num,$data) 
     {
         $support_info = DB::select("SELECT
-            a.topic_num,
-            a.camp_num,
-            c.camp_name,
-            a.nick_name_id,
-            b.nick_name,
-            `start` AS 'date',
-            'direct_support_start'  
+                a.topic_num,
+                a.camp_num,
+                c.camp_name,
+                a.nick_name_id,
+                b.nick_name,
+                `start` AS 'date',
+                'direct_support_start'  
             FROM
-            support a, nick_name b, camp c
+                support a, nick_name b, camp c
             WHERE a.nick_name_id = b.id 
-            AND a.topic_num = c.topic_num
-            AND a.camp_num = c.camp_num
-            AND a.topic_num = ".$topic_num."
-            AND delegate_nick_name_id = 0
+                AND a.topic_num = c.topic_num
+                AND a.camp_num = c.camp_num
+                AND a.topic_num = ".$topic_num." 
+                AND delegate_nick_name_id = 0
+                AND c.submit_time <= a.start 
             UNION
             SELECT
-            a.topic_num,
-            a.camp_num,
-            c.camp_name,
-            a.nick_name_id,
-            b.nick_name,
-            `end` AS 'date',
-            'direct_support_end'
+                a.topic_num,
+                a.camp_num,
+                c.camp_name,
+                a.nick_name_id,
+                b.nick_name,
+                `end` AS 'date',
+                'direct_support_end'
             FROM
-            support a, nick_name b, camp c
+                support a, nick_name b, camp c
             WHERE a.nick_name_id = b.id 
-            AND a.topic_num = c.topic_num
-            AND a.camp_num = c.camp_num
-            AND a.topic_num = 1
-            AND `end` != 0
-            AND delegate_nick_name_id = 0");
+                AND a.topic_num = c.topic_num
+                AND a.camp_num = c.camp_num
+                AND a.topic_num = ".$topic_num."  
+                AND `end` != 0
+                AND delegate_nick_name_id = 0
+                AND c.submit_time <= a.end");
 
         if(!empty($support_info))
         {
@@ -333,11 +340,11 @@ class CreateTopicTimelineCommand extends Command
                 $old_parent_id = null;
                 if($info->direct_support_start=="direct_support_start"){
                     $timelineMessage = $info->nick_name . " added their support on camp ". $info->camp_name;
-                    $type="direact_support_added";
+                    $type="direct_support_added";
                 }
                 else{
                     $timelineMessage = $info->nick_name . " removed their support from camp ". $info->camp_name;
-                    $type="direact_support_removed";
+                    $type="direct_support_removed";
                 }
                 $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->camp_num, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
             }
@@ -349,9 +356,10 @@ class CreateTopicTimelineCommand extends Command
     private function getDelegatedSupportHistory($topic_num,$data) 
     {
         $support_info = DB::select("SELECT
+            support_id,
             topic_num,
             camp_num,
-            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS direct_supporter,
+            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
                 delegate_nick_name_id,
                 nick_name,
                 `start` AS 'date',
@@ -359,13 +367,14 @@ class CreateTopicTimelineCommand extends Command
             FROM
             support a, nick_name b
             WHERE a.delegate_nick_name_id = b.id
-            AND topic_num = 1
+            AND topic_num = ".$topic_num." 
             AND delegate_nick_name_id != 0
             UNION
             SELECT
+            support_id,
             topic_num,
             camp_num,
-            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS direct_supporter,
+            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
             delegate_nick_name_id,
             nick_name,
             `end` AS 'date',
@@ -383,7 +392,7 @@ class CreateTopicTimelineCommand extends Command
                 $old_parent_id = null;
                 if($info->delegate_support_start=="delegate_support_start"){
                     $timelineMessage = $info->nick_name . " delegated t
-                    heir support to ". $info->direct_supporter;
+                    heir support to ". $info->delegate_supporter;
                     $type="delegate_support_added";
                 }
                 else{
@@ -391,7 +400,7 @@ class CreateTopicTimelineCommand extends Command
                     $type="delegate_support_removed";
                 }
                
-                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->camp_num, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
+                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->support_id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id);
             }
         }
         return $data;
