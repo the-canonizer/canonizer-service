@@ -428,9 +428,10 @@ class TreeController extends Controller
 
             // Below code is for checking the requested camp number is created on the asOfTime.
             if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate') {
-
+                $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
                 $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
-                $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $campCreatedDate ? true : false;
+
+                $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
 
                 if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
                     $campInfo = [
