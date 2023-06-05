@@ -28,7 +28,7 @@ class TimelineService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id=null, $old_parent_id=null, $new_parent_id=null)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id=null, $old_parent_id=null, $new_parent_id=null,$k=0)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
@@ -38,8 +38,9 @@ class TimelineService
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
+        $asOfDate =$asOfDate;
         $mongoArr = [
-                "asoftime_".$asOfDate => array(
+                "asoftime_".$asOfDate."_".$k => array(
                     "event" => array(
                         'message'=>$message,
                         'type'=> $type,
@@ -86,7 +87,7 @@ class TimelineService
      * @return array $array
      */
 
-    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="")
+    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="",$k=0)
     {
        
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
@@ -112,8 +113,8 @@ class TimelineService
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfTime, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id);
-                $conditions = $this->getConditions($topicNumber, $algo, $asOfTime);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id,$k);
+                $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

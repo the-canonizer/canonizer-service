@@ -1408,9 +1408,10 @@ class CampService
         try {
             
             $this->traversetempArray = [];
-
+            $this->sessionTempArray = [];
+            //Log::info("Time via6: " .$asOfTime );
             if (!Arr::exists($this->sessionTempArray, "topic-support-nickname-{$topicNumber}")) {
-
+               
                 $nickNameSupport = Support::where('topic_num', '=', $topicNumber)
                     ->where('delegate_nick_name_id', 0)
                     ->whereRaw("(start <= $asOfTime) and ((end = 0) or (end > $asOfTime))")
@@ -1418,7 +1419,7 @@ class CampService
                     ->groupBy('nick_name_id')
                     ->select(['nick_name_id', 'delegate_nick_name_id', 'support_order', 'topic_num', 'camp_num'])
                     ->get();
-
+                  
                 $this->sessionTempArray["topic-support-nickname-{$topicNumber}"] = $nickNameSupport;
             }
 

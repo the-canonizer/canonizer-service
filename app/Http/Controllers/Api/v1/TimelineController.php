@@ -331,13 +331,14 @@ class TimelineController extends Controller
             $start = microtime(true);
             $conditions = TimelineService::getConditions($topicNumber, $algorithm);
             $mongoTree = TimelineRepository::findTimeline($conditions);
-            // First check the topic exist in database, then we can run upsertTimeline.
+
+            // First check the topic exist in database
             $asOfTime= time();
             $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
-        
-            if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
 
-                /* php artisan cache:clear */
+            /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
+            if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
+                
                 if(Artisan::call('timeline:all '.$topicNumber)){
                     $mongoTree = TimelineRepository::findTimeline($conditions);
                 }             
@@ -358,10 +359,19 @@ class TimelineController extends Controller
             // Below code is for checking the requested camp number is created on the asOfTime.
             if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
                 // sorting arraY
-                uksort($responseArray, function($a, $b) {
+                /*uksort($responseArray, function($a, $b) {
                     $aTime = str_replace('asoftime_', '', $a);
                     $bTime = str_replace('asoftime_', '', $b);
                     return $aTime <=> $bTime;
+                });*/
+                uksort($responseArray, function($a, $b) {
+                    $aParts = explode('_', $a);
+                    $bParts = explode('_', $b);
+                    
+                    $aMiddle = isset($aParts[1]) ? $aParts[1] : '';
+                    $bMiddle = isset($bParts[1]) ? $bParts[1] : '';
+                
+                    return $aMiddle <=> $bMiddle;
                 });
                 // loop through array
                 foreach($responseArray['data'] as $key => $item){
@@ -371,6 +381,7 @@ class TimelineController extends Controller
                     unset($item["algorithm_id"]);
                     unset($item["updated_at"]);
                     unset($item["created_at"]);
+
                     $responseArray['data']=$item;
                 }
                 $response = $responseArray;
