@@ -79,7 +79,7 @@ class CampService
                 $topicChild = Camp::where('topic_num', '=', $topicNumber)
                                 ->where('camp_name', '!=', 'Agreement')
                                 ->where('objector_nick_id', '=', null)
-                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and grace_period = 0 group by camp_num)')
                                 ->groupBy('camp_num')
                                 ->orderBy('submit_time', 'desc')
                                 ->get();
