@@ -24,7 +24,7 @@ class AlgorithmService
     public static function getAlgorithmKeyList()
     {
         //return array('mind_experts');
-        return array('blind_popularity', 'mind_experts','computer_science_experts');
+        return array('blind_popularity', 'mind_experts','computer_science_experts','PhD','christian','secular','mormon','uu','atheist','transhumanist','united_utah','republican','forward_party','democrat','ether','shares','shares_sqrt','sandy_city','sandy_city_council');
     }
 
     /**
