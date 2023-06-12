@@ -156,6 +156,8 @@ class TreeController extends Controller
                 $submittedTime = $topic->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $topic->submit_time = time();
+                    $topic->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $topic->grace_period = 0;
                     $topic->update();
                 }
@@ -173,6 +175,8 @@ class TreeController extends Controller
                 $submittedTime = $camp->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $camp->submit_time = time();
+                    $camp->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $camp->grace_period = 0;
                     $camp->update();
                 }
@@ -189,6 +193,8 @@ class TreeController extends Controller
                 $submittedTime = $statement->submit_time;
                 $gracePeriodEndTime = $submittedTime + (60 * 60);
                 if ($currentTime > $gracePeriodEndTime) {
+                    $statement->submit_time = time();
+                    $statement->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
                     $statement->grace_period = 0;
                     $statement->update();
                 }
@@ -421,10 +427,13 @@ class TreeController extends Controller
             $responseArray = json_decode($collectionToJson, true);
 
             // Below code is for checking the requested camp number is created on the asOfTime.
-            if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate' && $campNumber != 1) {
+            if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate') {
+                $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
                 $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
 
-                if ($asOfTime < $campCreatedDate) {
+                $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
+
+                if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
                     $campInfo = [
                         'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
                         'created_at' => $campCreatedDate
@@ -435,9 +444,8 @@ class TreeController extends Controller
                 $response = $responseArray;
             }
 
-            Log::info("Time via find method: " . $time);
-
             return $response;
+            
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);

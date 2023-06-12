@@ -72,7 +72,7 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default')
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0)
     {
 
         /** if filter param set then only get those topics which have score more than give filter */
@@ -81,7 +81,7 @@ class TopicService
         //          TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
 
         // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
-        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter);
+        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive);
 
         return $topicsWithScore;
     }
@@ -99,7 +99,7 @@ class TopicService
      * @return int $totalTrees
      */
 
-    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default')
+    public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0)
     {
 
         /** if filter param set then only get those topics which have score more than give filter */
@@ -110,7 +110,7 @@ class TopicService
         // $totalTopics = !is_string($totalTopics) ? count($totalTopics) : 0;
 
         //Only getting the count of total latest topic from the MongoDB. #MongoDBRefactoring
-        $totalTopics = TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter);
+        $totalTopics = TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter, $archive);
 
         return $totalTopics;
     }

@@ -185,6 +185,7 @@ class TopicController extends Controller
 
             $skip = ($pageNumber - 1) * $pageSize;
 
+            $archive = ($request->has('archive')) ? $request->input('archive') : 0;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -201,14 +202,14 @@ class TopicController extends Controller
 
                 // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
                 if ($asofdate >= $today) {
-                    $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof);
+                    $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
                     $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-                    $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof);
+                    $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive);
                 } else {
                     /*  search & filter functionality */
-                    $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
+                    $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, '', $archive);
                     $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                    $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
+                    $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
 
                     /** filter the collection if filter parameter */
                     if (isset($filter) && $filter != '' && $filter != null) {
@@ -223,9 +224,9 @@ class TopicController extends Controller
             } else {
 
                 /*  search & filter functionality */
-                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search);
+                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search,'', $archive);
                 $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true);
+                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
 
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {

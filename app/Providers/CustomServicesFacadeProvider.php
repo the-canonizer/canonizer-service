@@ -7,6 +7,7 @@ use App\Services\CampService;
 use App\Services\AlgorithmService;
 use App\Services\TopicService;
 use App\Services\TreeService;
+use App\Services\TimelineService;
 
 class CustomServicesFacadeProvider extends ServiceProvider
 {
@@ -45,6 +46,11 @@ class CustomServicesFacadeProvider extends ServiceProvider
          /**  Bind TopicService Class */
          $this->app->bind('TopicService', function () {
             return new TopicService();
+        });
+
+        /**  Bind TimelineService Class */
+        $this->app->bind('TimelineService', function () {
+            return new TimelineService();
         });
     }
 }

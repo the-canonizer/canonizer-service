@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use TopicService;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class CampService.
@@ -78,7 +79,7 @@ class CampService
                 $topicChild = Camp::where('topic_num', '=', $topicNumber)
                                 ->where('camp_name', '!=', 'Agreement')
                                 ->where('objector_nick_id', '=', null)
-                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and grace_period = 0 group by camp_num)')
                                 ->groupBy('camp_num')
                                 ->orderBy('submit_time', 'desc')
                                 ->get();
@@ -103,11 +104,11 @@ class CampService
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
             $topic_id = $topicNumber . "-" . $title;
             $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
-            $isDisabled = 0;
-            $isOneLevel = 0;
             if (!empty($agreementCamp)) {
-                $isDisabled = $agreementCamp->is_disabled ?? 0;
-                $isOneLevel = $agreementCamp->is_one_level ?? 0;
+                $isDisabled =    $agreementCamp->is_disabled ?? 0;
+                $isOneLevel =    $agreementCamp->is_one_level ?? 0;
+                $isArchive  =    $agreementCamp->is_archive ?? 0;
+                $directArchive = $agreementCamp->direct_archive ?? 0;
             }
             $tree = [];
             $tree[$startCamp]['topic_id'] = $topicNumber;
@@ -123,8 +124,10 @@ class CampService
             $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
             $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
             $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
-            $tree[$startCamp]['is_disabled'] = $isDisabled;
-            $tree[$startCamp]['is_one_level'] = $isOneLevel;
+            $tree[$startCamp]['is_disabled'] = $isDisabled ?? 0;
+            $tree[$startCamp]['is_one_level'] = $isOneLevel ?? 0;
+            $tree[$startCamp]['is_archive'] = $isArchive ?? 0;
+            $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
            
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
@@ -191,7 +194,7 @@ class CampService
      * @return Illuminate\Database\Eloquent\Collection;
      */
 
-    public function getCampCreatedDate($campNumber, $topicNumber){
+    public static function getCampCreatedDate($campNumber, $topicNumber) {
         return Camp::where('topic_num', $topicNumber)->where('camp_num', $campNumber)
                 ->pluck('submit_time')
                 ->first();
@@ -253,9 +256,6 @@ class CampService
             if ($isReview) {
                 $ReviewTopic = TopicService::getReviewTopic($topicNumber, $asOfTime, ['nofilter' => true]);
                 $ReviewCamp = $this->getReviewCamp($topicNumber, $campNumber);
-
-                // Log::info("Log".$ReviewCamp);
-
                 if ($ReviewTopic && isset($ReviewTopic->topic_name)) {
                     $topic_name = ($ReviewTopic->topic_name != '') ? $ReviewTopic->topic_name : $ReviewTopic->title;
                 }
@@ -755,6 +755,8 @@ class CampService
                 $array[$child->camp_num]['created_date'] = $oneCamp->submit_time ?? 0;
                 $array[$child->camp_num]['is_disabled'] = $child->is_disabled ?? 0;
                 $array[$child->camp_num]['is_one_level'] = $child->is_one_level ?? 0;
+                $array[$child->camp_num]['is_archive'] = $child->is_archive ?? 0;
+                $array[$child->camp_num]['direct_archive'] = $child->direct_archive ?? 0;
                 $array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
                 if($child->parent_camp_num == 1) {
@@ -881,7 +883,7 @@ class CampService
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0)
     {
 
         $returnTopics = [];
@@ -908,6 +910,10 @@ class CampService
                         ->join('topic', 'topic.topic_num', '=', 'camp.topic_num')
                         ->where('camp.go_live_time', '<=', $asofdate);
                 }
+            }
+
+            if(isset($archive) &&  !$archive){
+                $returnTopics->where('is_archive', '=', 0);
             }
 
         /* Common conditions in all queries */
@@ -1384,5 +1390,144 @@ class CampService
             throw new CampTreeCountException("Camp Tree Count with Mind Expert Algorithm Exception");
         }
         
+    }
+
+    /**
+     * prepare Camp timeline based on algorithm.
+     *
+     * @param string $algorithm
+     * @param int $topicNumber
+     * @param int $asOfTime
+     * @param int $startCamp
+     *
+     * @return array $tree
+    */
+
+    public function prepareCampTimeline($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null, $asOf = 'default', $fetchTopicHistory = 0)
+    {
+        try {
+            
+            $this->traversetempArray = [];
+            $this->sessionTempArray = [];
+            //Log::info("Time via6: " .$asOfTime );
+            if (!Arr::exists($this->sessionTempArray, "topic-support-nickname-{$topicNumber}")) {
+               
+                $nickNameSupport = Support::where('topic_num', '=', $topicNumber)
+                    ->where('delegate_nick_name_id', 0)
+                    ->whereRaw("(start <= $asOfTime) and ((end = 0) or (end > $asOfTime))")
+                    ->orderBy('start', 'DESC')
+                    ->groupBy('nick_name_id')
+                    ->select(['nick_name_id', 'delegate_nick_name_id', 'support_order', 'topic_num', 'camp_num'])
+                    ->get();
+                  
+                $this->sessionTempArray["topic-support-nickname-{$topicNumber}"] = $nickNameSupport;
+            }
+
+            if (!Arr::exists($this->sessionTempArray, "topic-support-{$topicNumber}")) {
+
+                $topicSupport = Support::where('topic_num', '=', $topicNumber)
+                    ->whereRaw("(start <= $asOfTime) and ((end = 0) or (end > $asOfTime))")
+                    ->orderBy('start', 'DESC')
+                    ->select(['support_order', 'camp_num', 'nick_name_id', 'delegate_nick_name_id', 'topic_num'])
+                    ->get();
+
+                $this->sessionTempArray["topic-support-{$topicNumber}"] = $topicSupport;
+            }
+
+            if($asOf == 'review') {
+                $topicChild = Camp::where('topic_num', '=', $topicNumber)
+                                ->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null group by camp_num)')
+                                ->groupBy('camp_num')
+                                ->orderBy('submit_time', 'desc')
+                                ->get();
+
+            } else {
+                $topicChild = Camp::where('topic_num', '=', $topicNumber)
+                                ->where('camp_name', '!=', 'Agreement')
+                                ->where('objector_nick_id', '=', null)
+                                ->whereRaw('go_live_time in (select max(go_live_time) from camp where topic_num=' . $topicNumber . ' and objector_nick_id is null and go_live_time <= ' . $asOfTime . ' group by camp_num)')
+                                ->where('go_live_time', '<=', $asOfTime)
+                                ->groupBy('camp_num')
+                                ->orderBy('submit_time', 'desc')
+                                ->get();
+            }
+            
+            $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
+            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
+           
+            
+            $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
+            $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
+            $topic_id = $topicNumber . "-" . $title;
+            $agreementCamp = $this->getLiveCamp($topicNumber, 1, ['nofilter' => true], $asOfTime, $asOf);
+            $tree = [];
+            $level = 1;
+            $tree[$startCamp]['topic_id'] = $topicNumber;
+            $tree[$startCamp]['level'] = $level;
+            $tree[$startCamp]['camp_id'] = $startCamp;
+            $tree[$startCamp]['camp_name'] = (isset($agreementCamp) && isset($agreementCamp->camp_name)) ? $agreementCamp->camp_name : '';
+            $tree[$startCamp]['title'] = $topicName;
+            $tree[$startCamp]['score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId);
+            $tree[$startCamp]['full_score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId,true);
+            $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
+            $tree[$startCamp]['children'] = $this->traverseCampTimeline($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree,$level);
+
+            return $reducedTree = TopicSupport::sumTranversedArraySupportCountp($tree);
+        
+        } catch (CampTreeException $th) {
+            throw new CampTreeException("Prepare Camp Timeline Exception");
+        }
+    }
+
+    /**
+     * Get the camp timeline of given topic.
+     *
+     * @param string $algorithm
+     * @param int $topicNumber
+     * @param int $parentCamp
+     * @param int $lastparent
+     * @param int $asOfTime
+     *
+     * @return array $array
+     */
+    public function traverseCampTimeline($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default', & $lastArray, $level)
+    {  
+         try {
+            $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
+            if (in_array($key, $this->traversetempArray)) {
+                return;
+                /** Skip repeated recursions* */
+            }
+            $this->traversetempArray[] = $key;
+            $childs = $this->campChildrens($topicNumber, $parentCamp);
+
+            $array = [];
+            $level=$level +1;
+            foreach ($childs as $key => $child) {
+                $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime, $asOf);
+                $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
+                $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
+
+                $title = $oneCamp->camp_name; //preg_replace('/[^A-Za-z0-9\-]/', '-', $onecamp->camp_name);
+                $topic_id = $child->topic_num . "-" . $title;
+
+                $array[$child->camp_num]['topic_id'] = $topicNumber;
+                $array[$child->camp_num]['level'] = $level;
+                $array[$child->camp_num]['camp_id'] = $child->camp_num;
+                $array[$child->camp_num]['camp_name'] = $child->camp_name;
+                $array[$child->camp_num]['title'] = $title;
+                $array[$child->camp_num]['score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
+                $array[$child->camp_num]['full_score'] = $this->getCamptSupportCount($algorithm, $child->topic_num, $child->camp_num, $asOfTime,null,true);
+                $array[$child->camp_num]['submitter_nick_id'] = $child->submitter_nick_id ?? '';
+                $children = $this->traverseCampTimeline($algorithm, $child->topic_num, $child->camp_num, $child->parent_camp_num, $asOfTime, $rootUrl, $asOf, $array,$level);
+
+                $array[$child->camp_num]['children'] = is_array($children) ? $children : [];
+            }
+            return $array;
+        } catch (\Exception $th) {
+            abort(401, "Traverse Camp Timeline with Children Exception: " . $th->getMessage());
+        }
     }
 }

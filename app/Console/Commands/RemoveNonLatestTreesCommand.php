@@ -52,7 +52,7 @@ class RemoveNonLatestTreesCommand extends Command
 
         try {
 
-            Log::info($this->signature . ' command started....');
+            Log::info($this->signature . ' command started on..' . Carbon::now()->timestamp);
             $start = microtime(true);
 
             $algorithms = (new AlgorithmService())->getAlgorithmKeyList();
