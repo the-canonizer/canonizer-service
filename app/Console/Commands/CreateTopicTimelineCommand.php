@@ -69,7 +69,8 @@ class CreateTopicTimelineCommand extends Command
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         //First Deleted all old topic Timeline related records.
-        $algorithms = (new AlgorithmService())->getAlgorithmKeyList();
+        $algorithms = (new AlgorithmService())->getAlgorithmKeyList("timeline");
+
         foreach ($algorithms as $algorithm) {
             // Check the argument of id with command / else use the all.
             if (!empty($topic_num)) {
@@ -80,7 +81,7 @@ class CreateTopicTimelineCommand extends Command
                 $del = Timeline::where('algorithm_id', $algorithm)->delete();
             }
         }
-        
+
         try {
             Log::info('timeline:all command started....');
             $start = microtime(true);
@@ -93,35 +94,36 @@ class CreateTopicTimelineCommand extends Command
                 // get all topic associated with this namespace
                 $topics = Topic::select(['topic_num'])->groupBy('topic_num')->get();
             }
-           
-            foreach ($topics  as $key => $topic) 
-            {
-                
-                $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
-                
-                $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);
-                   
-                $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
+            foreach ($algorithms as $algorithm) {
+                foreach ($topics  as $key => $topic) 
+                {
+                    
+                    $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
+                    
+                    $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);
+                    
+                    $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
 
-                $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
+                    $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
 
-                $key_values = array_column($data, 'asOfTime'); 
-                array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
-                //Log::info("after sorting --- ");
-                //Log::info($data); 
-                if(!empty($data)){
-                    foreach($data as $k=>$result){
-                       
-                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], "blind_popularity", $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history",$key=count($data)-$k);            
+                    $key_values = array_column($data, 'asOfTime'); 
+                    array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
+                    //Log::info("after sorting --- ");
+                    //Log::info($data); 
+                    if(!empty($data)){
+                        foreach($data as $k=>$result){
                         
-                     
-                    }
+                            $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history",$key=count($data)-$k);            
+                            
+                        
+                        }
 
+                    } 
+                    $count =$count + count($data);
+                    $data = [];
+                
                 } 
-                $count =$count + count($data);
-                $data = [];
-               
-            }   
+            }  
             Log::info('timeline:all command ended....');
             $time_elapsed_secs = microtime(true) - $start;
             $this->info("timeline:all execution time : " .  date("H:i:s",$time_elapsed_secs));
