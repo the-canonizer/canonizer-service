@@ -196,7 +196,7 @@ class TopicController extends Controller
             $commandSignature = "tree:all";
 
             $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-            $algorithms =  AlgorithmService::getAlgorithmKeyList();
+            $algorithms =  AlgorithmService::getAlgorithmKeyList("tree");
 
             if (in_array($algorithm, $algorithms) && !$commandStatus) {
 

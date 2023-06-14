@@ -12,7 +12,7 @@ use App\Exceptions\Camp\CampURLException;
 use App\Exceptions\Camp\CampDetailsException;
 use App\Exceptions\Camp\CampSupportCountException;
 use App\Exceptions\Camp\CampTreeCountException;
-
+use Illuminate\Support\Facades\Log;
 
 
 class TreeService
@@ -91,7 +91,7 @@ class TreeService
     public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
     {
 
-        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm);
+        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm,"tree");
         $rootUrl =  $this->getRootUrl($request);
         $asOf = $request['asOf'] ?? 'default';
         $startCamp = 1;
