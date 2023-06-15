@@ -395,8 +395,7 @@ class CreateTopicTimelineCommand extends Command
                 $new_parent_id =null; 
                 $old_parent_id = null;
                 if($info->delegate_support_start=="delegate_support_start"){
-                    $timelineMessage = $info->nick_name . " delegated t
-                    heir support to ". $info->delegate_supporter;
+                    $timelineMessage = $info->nick_name . " delegated their support to ". $info->delegate_supporter;
                     $type="delegate_support_added";
                 }
                 else{
