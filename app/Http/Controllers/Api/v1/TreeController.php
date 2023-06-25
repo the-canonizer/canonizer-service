@@ -348,7 +348,7 @@ class TreeController extends Controller
             $commandStatement = "php artisan tree:all";
             $commandSignature = "tree:all";
 
-            $algorithms =  AlgorithmService::getAlgorithmKeyList();
+            $algorithms =  AlgorithmService::getAlgorithmKeyList("tree");
 
             $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 

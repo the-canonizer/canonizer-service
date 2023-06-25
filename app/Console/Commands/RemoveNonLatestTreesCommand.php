@@ -55,7 +55,7 @@ class RemoveNonLatestTreesCommand extends Command
             Log::info($this->signature . ' command started on..' . Carbon::now()->timestamp);
             $start = microtime(true);
 
-            $algorithms = (new AlgorithmService())->getAlgorithmKeyList();
+            $algorithms = (new AlgorithmService())->getAlgorithmKeyList("tree");
 
             foreach ($algorithms as $algorithm) {
                 // $topicsMongo = Tree::where('algorithm_id', $algorithm)->delete();
