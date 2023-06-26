@@ -185,7 +185,7 @@ class TopicController extends Controller
 
             $skip = ($pageNumber - 1) * $pageSize;
 
-            $archive = ($request->has('archive')) ? $request->input('archive') : 0;
+            $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
