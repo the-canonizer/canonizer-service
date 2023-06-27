@@ -28,7 +28,7 @@ class TimelineService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id=null, $old_parent_id=null, $new_parent_id=null,$k=0)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $message, $type, $id=null, $old_parent_id=null, $new_parent_id=null, $topic_name, $camp_num, $camp_name, $k,$rootUrl)
     {
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
@@ -47,7 +47,9 @@ class TimelineService
                         'id'=> $id,
                         'old_parent_id'=> $old_parent_id,
                         'new_parent_id'=> $new_parent_id,
-                        'nickname_id'=>$topicCreatedByNickId
+                        'nickname_id'=>$topicCreatedByNickId,
+                        'namespaceId' => $namespaceId,
+                        'url' =>$this->getTimelineUrl($topicNumber, $topic_name, $camp_num, $camp_name, $topicTitle, $type, $rootUrl,$namespaceId,$topicCreatedByNickId)
                     ),
                     "payload_response" => $this->array_single_dimensional($tree)
                 ), 
@@ -87,7 +89,7 @@ class TimelineService
      * @return array $array
      */
 
-    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="",$k=0)
+    public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name, $camp_num, $camp_name, $k=0)
     {
        
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm,"timeline");
@@ -99,8 +101,8 @@ class TimelineService
         }
         $startCamp = 1;
         $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
-        foreach ($algorithms as $algo) {
-            try {
+        foreach ($algorithms as $algo) { 
+            //try {
                 
                 if($timelineType=="history"){
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
@@ -113,12 +115,12 @@ class TimelineService
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id,$k);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id, $topic_name, $camp_num, $camp_name, $k,$rootUrl);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
-            } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
-                return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
-            }
+           // } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
+               // return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
+            //}
 
             $tree = TimelineRepository::upsertTimeline($mongoArr, $conditions);
         }
@@ -184,6 +186,7 @@ class TimelineService
             unset($item['children']); //delete children before adding to new array
             $singleDimensional[] = $item; // add parent to new array
             if ( !empty($children) ){ // if has children
+
                 //convert children to single dimensional
                 $childrenSingleDimensional = $this->array_single_dimensional($children);
     
@@ -205,5 +208,50 @@ class TimelineService
         $rootUrl = env('REFERER_URL');
         return $rootUrl;
     }
+
+    /**
+     * Get the url.
+     *
+     * @param int $topicNumber
+     * @param int $campNumber
+     * @param int $asOfTime
+     * @param boolean $isReview
+     *
+     * @return string url
+     */
+
+     public function getTimelineUrl($topic_num, $topic_name, $camp_num, $camp_name, $topicTitle, $type, $rootUrl, $namespaceId, $topicCreatedByNickId)
+     {
+        try {
+            $topic_name =isset($topic_name)?$topic_name:$topicTitle;
+            $camp_num =isset($camp_num)?$camp_num:1;
+            $camp_name =isset($camp_name)?$camp_name:1;
+            if($type =="create_topic" || $type =="create_camp" || $type =="parent_change"){
+                $urlPortion =  '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
+
+            }
+            else if($type =="update_topic"){
+                $urlPortion =  '/topic/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name);
+
+            }
+            else if($type =="update_camp"){
+                $urlPortion =  '/camp/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
+
+            }
+            else{
+                $urlPortion = '/user/supports/' . $topicCreatedByNickId.'?topicnum='. $topic_num .'&campnum='. $camp_num .'&canon='.$namespaceId;
+
+            }
+            return $urlPortion;
+
+        } catch (CampURLException $th) {
+             throw new CampURLException("URL Exception");
+         }
+    }
+
+    public function replaceSpecialCharacters($info){
+        return preg_replace('/[^A-Za-z0-9\-]/', '-', $info);
+    }
+     
 
 }

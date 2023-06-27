@@ -205,7 +205,7 @@ class TimelineController extends Controller
                 }
             }
 
-            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id);
+            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name="", $camp_num=null, $camp_name="", $k=0);
 
             $end = microtime(true);
             $time = $end - $start;
