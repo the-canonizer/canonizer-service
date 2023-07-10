@@ -112,7 +112,7 @@ class CreateTopicTimelineCommand extends Command
                     //Log::info($data);
                     if(!empty($data)){
                         foreach($data as $k=>$result){
-                            $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k);            
+                            $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
                             
                         
                         }
@@ -425,7 +425,7 @@ class CreateTopicTimelineCommand extends Command
         try {
             $topic_name =isset($topic_name)?$topic_name:$topicTitle;
             $camp_num =isset($camp_num)?$camp_num:1;
-            $camp_name =isset($camp_name)?$camp_name:1;
+            $camp_name =isset($camp_name)?$camp_name:"Agreement";
             $rootUrl = env('REFERER_URL');
             if($type ="create_topic" || $type ="create_camp" || $type ="parent_change"){
                 $urlPortion = $rootUrl . '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);

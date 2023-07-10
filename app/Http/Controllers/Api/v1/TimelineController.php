@@ -151,6 +151,7 @@ class TimelineController extends Controller
             $id =   $request->input('id');
             $old_parent_id =  $request->input('old_parent_id');
             $new_parent_id =  $request->input('new_parent_id');
+            $url =  $request->input('url');
             //end
 
             $start = microtime(true);
@@ -204,8 +205,9 @@ class TimelineController extends Controller
                     }
                 }
             }
+            Log::info("check url: " . $url);
 
-            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name="", $camp_num=null, $camp_name="", $k=0);
+            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name="", $camp_num=null, $camp_name="", $k=0, $url);
 
             $end = microtime(true);
             $time = $end - $start;
