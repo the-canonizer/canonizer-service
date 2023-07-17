@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Library\General;
-use App\Model\v1\{Nickname, Person};
+use App\Model\v1\{Camp, Nickname, Person, Topic};
 use Carbon\Carbon;
 
 class Helpers
@@ -26,5 +26,21 @@ class Helpers
         } catch (\Throwable $th) {
             throw $th;
         }
+    }
+
+    public static function renderParentsCampTree($topic_num, $camp_num)
+    {
+        $camp = Camp::where([
+            'camp_num' => $camp_num,
+            'topic_num' => $topic_num,
+            'grace_period' => 0,
+            'objector_nick_id' => null,
+        ])->orderBy('submit_time', 'desc')->first();
+
+        if (is_null($camp->parent_camp_num) || $camp->parent_camp_num < 1) {
+            return [$camp->camp_num];
+        }
+
+        return array_merge([$camp->camp_num], self::renderParentsCampTree($topic_num, $camp->parent_camp_num));
     }
 }
