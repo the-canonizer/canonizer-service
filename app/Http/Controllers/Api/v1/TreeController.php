@@ -443,7 +443,7 @@ class TreeController extends Controller
                         array_push($responseArray['data'], $campInfo);
                     }
                 }
-                $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['exemptTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
+                $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['collapsedTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
             }
 
             $response = $responseArray;
