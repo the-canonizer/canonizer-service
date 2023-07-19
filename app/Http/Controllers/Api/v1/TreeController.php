@@ -427,25 +427,27 @@ class TreeController extends Controller
             $responseArray = json_decode($collectionToJson, true);
 
             // Below code is for checking the requested camp number is created on the asOfTime.
-            if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate') {
-                $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
-                $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+            if (array_key_exists('data', $responseArray) && count($responseArray['data'])) {
+                if ($asOf == 'bydate') {
 
-                $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
+                    $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+                    $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
 
-                if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
-                    $campInfo = [
-                        'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
-                        'created_at' => $campCreatedDate
-                    ];
-                    array_push($responseArray['data'], $campInfo);
+                    $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
+
+                    if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
+                        $campInfo = [
+                            'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
+                            'created_at' => $campCreatedDate
+                        ];
+                        array_push($responseArray['data'], $campInfo);
+                    }
                 }
-
-                $response = $responseArray;
+                $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['collapsedTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
             }
 
+            $response = $responseArray;
             return $response;
-            
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
