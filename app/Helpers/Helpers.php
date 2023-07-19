@@ -13,10 +13,11 @@ class Helpers
         return Carbon::parse($dateTime)->startOfDay()->timestamp;
     }
 
-    public static function getNickNamesByEmail($email) {
+    public static function getNickNamesByEmail($email)
+    {
         try {
             $user = (new Person())->where('email', $email)->first();
-            if (!empty($user))  {
+            if (!empty($user)) {
                 $encode = General::canon_encode($user->id);
                 $nicknames = (new Nickname())->where('owner_code', $encode)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
                 return $nicknames;
@@ -37,7 +38,11 @@ class Helpers
             'objector_nick_id' => null,
         ])->orderBy('submit_time', 'desc')->first();
 
-        if (is_null($camp->parent_camp_num) || $camp->parent_camp_num < 1) {
+        if (!$camp) {
+            return [];
+        }
+
+        if ($camp && is_null($camp->parent_camp_num)) {
             return [$camp->camp_num];
         }
 
