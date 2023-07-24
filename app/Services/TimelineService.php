@@ -49,7 +49,7 @@ class TimelineService
                         'new_parent_id'=> $new_parent_id,
                         'nickname_id'=>$topicCreatedByNickId,
                         'namespaceId' => $namespaceId,
-                        'url_new' =>$url,
+                        'camp_num' =>$camp_num,
                         'url' =>isset($url)? $url: $this->getTimelineUrl($topicNumber, $topic_name, $camp_num, $camp_name, $topicTitle, $type, $rootUrl,$namespaceId,$topicCreatedByNickId)
                     ),
                     "payload_response" => $this->array_single_dimensional($tree)
@@ -103,25 +103,26 @@ class TimelineService
         $startCamp = 1;
         $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
         foreach ($algorithms as $algo) { 
-            //try {
+            try {
                 
                 if($timelineType=="history"){
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
-                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
+                    //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
                 }
                 else{
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                    //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 }
+                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id, $topic_name, $camp_num, $camp_name, $k,$rootUrl,$url);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
-           // } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
-               // return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
-            //}
+            } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
+                return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
+            }
 
             $tree = TimelineRepository::upsertTimeline($mongoArr, $conditions);
         }
