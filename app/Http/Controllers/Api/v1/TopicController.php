@@ -203,7 +203,8 @@ class TopicController extends Controller
             if (in_array($algorithm, $algorithms) && !$commandStatus) {
 
                 // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
-                if ($asofdate >= $today) {
+                $topicsFoundInMongo = Tree::count();
+                if ($asofdate >= $today && $topicsFoundInMongo) {
                     $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
                     $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
                     $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive);
