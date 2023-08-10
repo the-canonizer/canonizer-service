@@ -93,7 +93,7 @@ class TimelineService
     public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name, $camp_num, $camp_name, $k=0, $url=null)
     {
        
-        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm,"timeline");
+        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm, "timeline");
         if($timelineType=="history"){
             $rootUrl =  $this->getRootUrlHistory($request);
         }
