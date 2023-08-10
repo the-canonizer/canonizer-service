@@ -341,7 +341,7 @@ class TimelineController extends Controller
             /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
             if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
                 
-                if(Artisan::call('timeline:all '.$topicNumber)){
+                if(Artisan::call('timeline:all '.$topicNumber.' '.$algorithm)){
                     $mongoTree = TimelineRepository::findTimeline($conditions);
                 }             
             }

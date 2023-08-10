@@ -25,7 +25,7 @@ class CreateTopicTimelineCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'timeline:all {topic_num?}';
+    protected $signature = 'timeline:all {topic_num?} {algorithm_id?}';
 
     /**
      * The console command description.
@@ -53,8 +53,8 @@ class CreateTopicTimelineCommand extends Command
     {
         $data = [];
         $asOfTime =  time();
-        $count = 0;
         $topic_num = $this->argument('topic_num') ?? NULL;
+        $algorithm_id = $this->argument('algorithm_id') ?? '';
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
             'parameters' => [
@@ -64,12 +64,12 @@ class CreateTopicTimelineCommand extends Command
         ]);
 
         // If timeline:all command is already running, don't execute command
-        $commandStatement = "php artisan timeline:all {topic_num?}";
-        $commandSignature = "timeline:all {topic_num?}";
+        $commandStatement = "php artisan timeline:all {topic_num?} {algorithm_id?}";
+        $commandSignature = "timeline:all {topic_num?} {algorithm_id?}";
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         //First Deleted all old topic Timeline related records.
-        $algorithms = (new AlgorithmService())->getAlgorithmKeyList("timeline");
+        $algorithms = (new AlgorithmService())->getAlgorithmKeyList("timeline",$algorithm_id);
 
         foreach ($algorithms as $algorithm) {
             // Check the argument of id with command / else use the all.
@@ -82,7 +82,7 @@ class CreateTopicTimelineCommand extends Command
             }
         }
 
-        //try {
+        try {
             Log::info('timeline:all command started....');
             $start = microtime(true);
             $asOfTime =  time();
@@ -94,7 +94,8 @@ class CreateTopicTimelineCommand extends Command
                 // get all topic associated with this namespace
                 $topics = Topic::select(['topic_num'])->groupBy('topic_num')->get();
             }
-            foreach ($algorithms as $algorithm) {
+           
+            //foreach ($algorithms as $algorithm) {
                 foreach ($topics  as $key => $topic) 
                 {
                     
@@ -108,30 +109,29 @@ class CreateTopicTimelineCommand extends Command
 
                     $key_values = array_column($data, 'asOfTime'); 
                     array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
-                    //Log::info("after sorting --- ");
+                   // Log::info("after sorting --- ");
                     //Log::info($data);
                     if(!empty($data)){
                         foreach($data as $k=>$result){
-                            $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
+                            $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm=$algorithm_id, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
                             
                         
                         }
 
                     } 
-                    $count =$count + count($data);
+                   
                     $data = [];
                 
                 } 
-            }  
+           // }  
             Log::info('timeline:all command ended....');
             $time_elapsed_secs = microtime(true) - $start;
             $this->info("timeline:all execution time : " .  date("H:i:s",$time_elapsed_secs));
-            $this->info("total mongodb entry  : " .  $count);
             
-        //} catch (Throwable $th) {
-          //  $commandHistory->error_output = json_encode($th);
-          //  $commandHistory->save();
-        //}
+        } catch (Throwable $th) {
+            $commandHistory->error_output = json_encode($th);
+            $commandHistory->save();
+        }
 
         $commandHistory->finished_at = Carbon::now()->timestamp;
         $commandHistory->save();

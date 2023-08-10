@@ -21,11 +21,15 @@ class AlgorithmService
     /**
     @return all the available algorithm key values used in Canonizer Service
      */
-    public static function getAlgorithmKeyList($default="timeline")
+    public static function getAlgorithmKeyList($default="timeline",$algo="")
     {
         //return array('mind_experts');
         if($default=="timeline"){
+            if($algo!="")
+              return array($algo);
+              
             return array('blind_popularity', 'mind_experts','computer_science_experts','PhD','christian','secular','mormon','uu','atheist','transhumanist','united_utah','republican','forward_party','democrat','ether','shares','shares_sqrt','sandy_city','sandy_city_council');
+        
         }
         else{
             return array('blind_popularity', 'mind_experts','computer_science_experts');
@@ -522,7 +526,7 @@ class AlgorithmService
     public function getCacheAlgorithms($updateAll, $algorithm,$default="tree")
     {
 
-        $algorithmArr = $this->getAlgorithmKeyList($default);
+        $algorithmArr = $this->getAlgorithmKeyList($default,$algorithm);
 
         if ($updateAll) {
             return $algorithmArr;
