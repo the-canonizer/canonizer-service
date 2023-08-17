@@ -107,13 +107,13 @@ class TimelineService
                 
                 if($timelineType=="history"){
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
-                    //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
+                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
                 }
                 else{
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                    //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 }
-                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
@@ -241,7 +241,9 @@ class TimelineService
 
             }
             else{
-                $urlPortion = '/user/supports/' . $topicCreatedByNickId.'?topicnum='. $topic_num .'&campnum='. $camp_num .'&canon='.$namespaceId;
+                //$urlPortion = '/user/supports/' . $topicCreatedByNickId.'?topicnum='. $topic_num .'&campnum='. $camp_num .'&canon='.$namespaceId;
+                $urlPortion =  '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . ($camp_name);
+
 
             }
             return $urlPortion;
