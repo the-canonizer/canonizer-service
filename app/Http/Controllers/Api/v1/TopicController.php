@@ -182,7 +182,7 @@ class TopicController extends Controller
             $filter = (float) $request->input('filter') ?? null;
 
             $nickNameIds = $request->input('user_email') ? Helpers::getNickNamesByEmail($request->input('user_email')) : [];
-            $asofdate = $asofdateTime; // Store start of the day in this variable
+
             $today = Helpers::getStartOfTheDay(time()); // Store start of today in this variable
 
             $skip = ($pageNumber - 1) * $pageSize;
@@ -200,49 +200,49 @@ class TopicController extends Controller
             $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
             $algorithms =  AlgorithmService::getAlgorithmKeyList("tree");
 
-            if (in_array($algorithm, $algorithms) && !$commandStatus) {
+            // if (in_array($algorithm, $algorithms) && !$commandStatus) {
 
-                // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
-                $topicsFoundInMongo = Tree::count();
-                if ($asofdate >= $today && $topicsFoundInMongo) {
-                    $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
-                    $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-                    $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive);
-                } else {
-                    /*  search & filter functionality */
-                    $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, '', $archive);
-                    $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                    $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
-
-                    /** filter the collection if filter parameter */
-                    if (isset($filter) && $filter != '' && $filter != null) {
-                        $topics = TopicService::filterTopicCollection($topics, $filter);
-                        /* We will count the filtered topic here, because the above totalTopics is without filter */
-                        $totalTopics = $topics->count();
-                    }
-
-                    /** total pages */
-                    $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-                }
+            // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
+            $topicsFoundInMongo = Tree::count();
+            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
+                // $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
+                // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+                $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive);
             } else {
 
                 /*  search & filter functionality */
-                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search,'', $archive);
+                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, '', $archive);
                 $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
+                // $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
 
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {
                     $topics = TopicService::filterTopicCollection($topics, $filter);
                     /* We will count the filtered topic here, because the above totalTopics is without filter */
-                    $totalTopics = $topics->count();
+                    // $totalTopics = $topics->count();
                 }
 
                 /** total pages */
-                $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+                // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             }
+            // } else {
+            //     /*  search & filter functionality */
+            //     $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search,'', $archive);
+            //     $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+            //     // $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
 
-            return new TopicResource($topics, $numberOfPages);
+            //     /** filter the collection if filter parameter */
+            //     if (isset($filter) && $filter != '' && $filter != null) {
+            //         $topics = TopicService::filterTopicCollection($topics, $filter);
+            //         /* We will count the filtered topic here, because the above totalTopics is without filter */
+            //         // $totalTopics = $topics->count();
+            //     }
+
+            //     /** total pages */
+            //     // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
+            // }
+
+            return new TopicResource($topics);
         } catch (Throwable $th) {
             $errorResponse = UtilHelper::exceptionResponse($th, $request->input('tracing') ?? false);
             return response()->json($errorResponse, 500);
