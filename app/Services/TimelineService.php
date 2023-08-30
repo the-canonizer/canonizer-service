@@ -225,8 +225,8 @@ class TimelineService
      public function getTimelineUrl($topic_num, $topic_name, $camp_num, $camp_name, $topicTitle, $type, $rootUrl, $namespaceId, $topicCreatedByNickId)
      {
         try {
-            $topic_name =isset($topic_name)?$topic_name:$topicTitle;
-            $camp_num =isset($camp_num)?$camp_num:1;
+            $$topic_name = isset($topic_name)?$topic_name:$topicTitle;
+            $camp_num = isset($camp_num)?$camp_num:1;
             $camp_name =isset($camp_name)?$camp_name:"Agreement";
             if($type =="create_topic" || $type =="create_camp" || $type =="parent_change"){
                 $urlPortion =  '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
@@ -242,7 +242,7 @@ class TimelineService
             }
             else{
                 //$urlPortion = '/user/supports/' . $topicCreatedByNickId.'?topicnum='. $topic_num .'&campnum='. $camp_num .'&canon='.$namespaceId;
-                $urlPortion =  '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . ($camp_name);
+                $urlPortion =  '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
 
             }
@@ -256,6 +256,21 @@ class TimelineService
     public function replaceSpecialCharacters($info){
         return preg_replace('/[^A-Za-z0-9\-]/', '-', $info);
     }
+
+    /**
+     * get upsert conditions to insert or create a timeline.
+     *
+     * @param  int topicNumber
+     *
+     * @return array $conditions
+     */
+
+     public function getTopicConditions($topicNumber)
+     {
+         return [
+             'topic_id' => $topicNumber
+         ];
+     }
      
 
 }
