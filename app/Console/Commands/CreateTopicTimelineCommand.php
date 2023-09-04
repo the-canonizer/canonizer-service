@@ -101,28 +101,36 @@ class CreateTopicTimelineCommand extends Command
                 $topics = Topic::select(['topic_num'])->orderBy('topic_num', 'ASC')->groupBy('topic_num')->get();
             }
 
-            $lastRecord = 0;
-            foreach ($topics  as $key => $topic) 
-            {
-                // get the timeline tree from mongoDb
-                $conditions = TimelineService::getTopicConditions($topic->topic_num);
-                $mongoTree = TimelineRepository::findTimeline($conditions);
-                /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
-                if ((!$mongoTree || !count($mongoTree)))
-                    break;
-                
-                $lastRecord =$topic->topic_num;
+            $lastRecord = 0; 
+            if(count($topics)>1) {
+                foreach ($topics  as $key => $topic) 
+                {
+                    // get the timeline tree from mongoDb
+                    $conditions = TimelineService::getTopicConditions($topic->topic_num);
+                    $mongoTree = TimelineRepository::findTimeline($conditions);
+                    /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
+                    if ((!$mongoTree || !count($mongoTree)))
+                        break;
+                    
+                    $lastRecord =$topic->topic_num;
+
+                }
+
+                if($lastRecord){
+                    // Delete specific topic
+                    $del = Timeline::where('topic_id','=', (int)$lastRecord)->delete();
+                }
 
             }
-
-            if($lastRecord){
-                // Delete specific topic
-                $del = Timeline::where('topic_id','=', (int)$lastRecord)->delete();
+            else {
+                    $lastRecord = $topic_num;
+                    if($algorithm_id!="")
+                        $del = Timeline::where('algorithm_id', $algorithm_id)->where('topic_id','=', (int)$topic_num)->delete();
             }
-            
-            
+
             foreach ($topics  as $key => $topic) 
             {
+                Log::info('Topic number start - '.$topic->topic_num);
                 // get the timeline tree from mongoDb
                 //$conditions = TimelineService::getTopicConditions($topic->topic_num);
                 //$mongoTree = TimelineRepository::findTimeline($conditions);
@@ -146,6 +154,7 @@ class CreateTopicTimelineCommand extends Command
 
                 } 
                 $data = [];
+                Log::info('Topic number end - '.$topic->topic_num. ' total time execution'. date("H:i:s",microtime(true) - $start) );
             }  
 
             Log::info('timeline:all command ended....');
@@ -312,7 +321,7 @@ class CreateTopicTimelineCommand extends Command
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                         else if($info->camp_name_comparison=="change_in_camp_name"){
-                            $timelineMessage = $info->nick_name . " updated the Camp name from ". $info->camp_name. " to". $info->camp_name;
+                            $timelineMessage = $info->nick_name . " updated the Camp name from ". $info->previous_camp_name. " to ". $info->camp_name;
                             
                             $type="update_camp"; 
                             $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
