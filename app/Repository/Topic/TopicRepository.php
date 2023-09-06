@@ -75,7 +75,7 @@ class TopicRepository implements TopicInterface
                 ];
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -229,7 +229,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -304,7 +304,7 @@ class TopicRepository implements TopicInterface
                 ];
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -422,7 +422,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -451,9 +451,10 @@ class TopicRepository implements TopicInterface
         return array_values($aggregate);
     }
 
-    private function escapeSpecialCharacters($inputString) {
-        $charactersToReplace = [    '(',   ')',   '{',   '}',   '[',   ']',   '$',   '^',   '&',   '*'];
-        $replacementCharacters = ['\\(', '\\)', '\\{', '\\}', '\\[', '\\]', '\\$', '\\^', '\\&', '\\*'];
+    private function escapeSpecialCharacters($inputString)
+    {
+        $charactersToReplace = [    '~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|'];
+        $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|'];
 
         return str_replace($charactersToReplace, $replacementCharacters, $inputString);
     }
