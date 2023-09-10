@@ -147,7 +147,7 @@ class CreateTopicTimelineCommand extends Command
                 if(!empty($data)){
                     foreach($data as $k=>$result){
                         $count =$count +1;
-                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm=$algorithm_id, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
+                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm=$algorithm_id, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'], $timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
                         
                     
                     }
@@ -178,7 +178,7 @@ class CreateTopicTimelineCommand extends Command
             a.id, 
             topic_num, 
             topic_name, 
-            submit_time, 
+            go_live_time,
             previous_topic_name, 
             submitter_nick_id,
             nick_name,
@@ -194,10 +194,10 @@ class CreateTopicTimelineCommand extends Command
                 id, 
                 topic_num, 
                 topic_name, 
-                submit_time, 
+                go_live_time,
                 submitter_nick_id,
-                LAG(topic_name) OVER(ORDER BY submit_time) AS previous_topic_name FROM topic
-                WHERE topic_num = '.$topic_num.'  ORDER BY submit_time 
+                LAG(topic_name) OVER(ORDER BY go_live_time) AS previous_topic_name FROM topic
+                WHERE topic_num = '.$topic_num.'  ORDER BY go_live_time 
             ) a, nick_name b
             WHERE a.submitter_nick_id = b.id'); //AND objector_nick_id IS NULL
            
@@ -207,15 +207,16 @@ class CreateTopicTimelineCommand extends Command
                 if($info->String_comparison=="same_topic_name" && ($info->previous_topic_name=="" || $info->previous_topic_name==NULL)){
                     $timelineMessage = $info->nick_name . " created a new topic ". $info->topic_name;
                     $type= "create_topic";
-                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");
+                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");
                 }
                 else if($info->String_comparison=="change_in_topic_name"){
                     $timelineMessage = $info->nick_name . " updated the topic name from ". $info->previous_topic_name. " to ". $info->topic_name;
                     $type="update_topic";
-                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");   
+                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");   
                 }
             }
         }
+        //print_r($data);die;
         return $data;  
     }
 
