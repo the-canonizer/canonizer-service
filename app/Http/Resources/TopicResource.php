@@ -16,10 +16,10 @@ class TopicResource extends ResourceCollection
      * @param  mixed  $resource
      * @return void
      */
-    public function __construct($resource, $numberOfPages)
+    public function __construct($resource)
     {
         $this->resource = $resource;
-        $this->numberOfPages = $numberOfPages;
+        // $this->numberOfPages = $numberOfPages;
     }
 
     /**
@@ -39,7 +39,7 @@ class TopicResource extends ResourceCollection
                 'error' => null,
                 'data' => [
                     'topic' => $this->resource,
-                    'number_of_pages' => $this->numberOfPages
+                    // 'number_of_pages' => $this->numberOfPages
                 ],
             ];
         } else if (count(array($this->resource)) <= 0) {
