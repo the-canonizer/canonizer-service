@@ -35,6 +35,8 @@ class TopicRepository implements TopicInterface
     // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
     public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0)
     {
+        $search = $this->escapeSpecialCharacters($search);
+
         try {
             // Track the execution time of the code.
             $start = microtime(true);
@@ -73,7 +75,7 @@ class TopicRepository implements TopicInterface
                 ];
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -227,7 +229,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -261,6 +263,8 @@ class TopicRepository implements TopicInterface
     // Get latest topic count from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
     public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asOf, $search = '', $filter = '', $archive = 0)
     {
+        $search = $this->escapeSpecialCharacters($search);
+
         try {
 
             // Track the execution time of the code.
@@ -300,7 +304,7 @@ class TopicRepository implements TopicInterface
                 ];
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -418,7 +422,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -445,5 +449,13 @@ class TopicRepository implements TopicInterface
         }
 
         return array_values($aggregate);
+    }
+
+    private function escapeSpecialCharacters($inputString)
+    {
+        $charactersToReplace = [    '~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|'];
+        $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|'];
+
+        return str_replace($charactersToReplace, $replacementCharacters, $inputString);
     }
 }
