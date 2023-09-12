@@ -6,6 +6,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
     // trees
     $router->group(['prefix' => 'tree'], function () use ($router) {
         $router->post('/store', ['middleware' => 'auth','uses' => 'TreeController@store']);
+        $router->post('/remove-sandbox-tree', ['middleware' => 'auth','uses' => 'TopicController@removeCacheSpecificTopics']);
         $router->post('/get', ['uses' => 'TreeController@find']);
         $router->get('/all', function () {
             ini_set('max_execution_time', 3000);

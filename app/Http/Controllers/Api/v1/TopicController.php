@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\RemoveTopicsRequest;
 use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
 use App\Services\AlgorithmService;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use TopicService;
 use UtilHelper;
 use Throwable;
+use Illuminate\Http\Response;
 
 class TopicController extends Controller
 {
@@ -185,7 +187,7 @@ class TopicController extends Controller
 
             $skip = ($pageNumber - 1) * $pageSize;
 
-            $archive = ($request->has('archive')) ? $request->input('archive') : 0;
+            $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -201,7 +203,8 @@ class TopicController extends Controller
             if (in_array($algorithm, $algorithms) && !$commandStatus) {
 
                 // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
-                if ($asofdate >= $today) {
+                $topicsFoundInMongo = Tree::count();
+                if ($asofdate >= $today && $topicsFoundInMongo) {
                     $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
                     $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
                     $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive);
@@ -244,5 +247,99 @@ class TopicController extends Controller
             $errorResponse = UtilHelper::exceptionResponse($th, $request->input('tracing') ?? false);
             return response()->json($errorResponse, 500);
         }
+    }
+
+    /**
+     * @OA\Post(path="/tree/remove-sandbox-tree",
+     *   tags={"trees"},
+     *   summary="Remove topics by ids",
+     *   description="This api is used to remove specific topic trees in cache",
+     *   operationId="removeCacheSpecificTopics",
+     *   @OA\RequestBody(
+     *       required=true,
+     *       description="Remove Topics",
+     *       @OA\MediaType(
+     *           mediaType="application/x-www-form-urlencoded",
+     *           @OA\Schema(
+     *                 @OA\Property(
+     *                     property="topic_numbers",
+     *                     required=true,
+     *                     type="integer|array",
+     *                 )
+     *         )
+     *   ),
+     *
+     *   @OA\Response(response=200,description="successful operation",
+     *                             @OA\JsonContent(
+     *                                 type="array",
+     *                                  @OA\Items(
+     *                                         name="status_code",
+     *                                         type="integer"
+     *                                    ),
+     *                                       @OA\Items(
+     *                                         name="message",
+     *                                         type="string"
+     *                                    )
+     *                                 )
+     *                            )
+     *
+     *   @OA\Response(response=500, description="Exception occurs while removing topics",
+     *                             @OA\JsonContent(
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                         name="status_code",
+     *                                         type="integer"
+     *                                    ),
+     *                                       @OA\Items(
+     *                                         name="message",
+     *                                         type="string"
+     *                                    )
+     *                                 )
+     *                             )
+     *   @OA\Response(response=404, description="Topics not found",
+     *                @OA\JsonContent(
+     *                                 type="array",
+     *                                 @OA\Items(
+     *                                         name="status_code",
+     *                                         type="integer"
+     *                                    ),
+     *                                       @OA\Items(
+     *                                         name="message",
+     *                                         type="string"
+     *                                    )
+     *                          )
+     *                  )
+     * )
+     */
+    /**
+     * Remove sandbox topics.
+     *
+     * @param  RemoveTopicsRequest  $request
+     * @return Response
+     */
+
+    public function removeCacheSpecificTopics(RemoveTopicsRequest $request)
+    {
+        try {
+            $response = [
+                'status_code' => 404,
+                'message' => 'Not found'
+            ];
+
+            if ($request->has('topic_numbers')) {
+                $getTopics = Tree::whereIn('topic_id', $request->topic_numbers)->delete();
+
+                if ($getTopics) {
+                    $response['status_code'] = 200;
+                    $response['message'] = 'Tree cache removed';
+                }
+            }
+        } catch (Throwable $th) {
+            $response['status_code'] = 500;
+            $response['message'] = $th->getMessage();
+        }
+
+        // Return JSON response with status_code
+        return response()->json($response, $response['status_code']);
     }
 }

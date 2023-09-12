@@ -19,6 +19,7 @@ use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
 use App\Services\AlgorithmService;
+use Exception;
 
 class TreeController extends Controller
 {
@@ -138,6 +139,7 @@ class TreeController extends Controller
     public function store(TreeStoreRequest $request)
     {
         /* get input params from request */
+
         $topicNumber = (int) $request->input('topic_num');
         $algorithm = $request->input('algorithm');
         $asOfTime = (int) $request->input('asofdate');
@@ -149,17 +151,21 @@ class TreeController extends Controller
         /**
          * Update each topic grace period where grace period duration is completed
          */
-        $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        $topics = Topic::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->orderBy('submit_time', 'asc')->get();
 
         if ($topics->count() > 0) {
             foreach ($topics as $topic) {
                 $submittedTime = $topic->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                $gracePeriodEndTime = $submittedTime + env('COMMIT_TIME_DELAY_IN_SECONDS');
                 if ($currentTime > $gracePeriodEndTime) {
-                    $topic->submit_time = time();
-                    $topic->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
-                    $topic->grace_period = 0;
-                    $topic->update();
+                    // $topic->submit_time = time();
+                    // $topic->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
+                    // $topic->grace_period = 0;
+                    // $topic->update();
+
+                    if(!self::commitTheChange($topic->id, 'topic')) {
+                        throw new Exception('Authentication Issue!', 401);
+                    }
                 }
             }
         }
@@ -168,17 +174,21 @@ class TreeController extends Controller
         /**
          * Update each camp grace period where grace period duration is completed
          */
-        $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        $camps = Camp::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->orderBy('submit_time', 'asc')->get();
 
         if ($camps->count() > 0) {
             foreach ($camps as $camp) {
                 $submittedTime = $camp->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                $gracePeriodEndTime = $submittedTime + env('COMMIT_TIME_DELAY_IN_SECONDS');
                 if ($currentTime > $gracePeriodEndTime) {
-                    $camp->submit_time = time();
-                    $camp->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
-                    $camp->grace_period = 0;
-                    $camp->update();
+                    // $camp->submit_time = time();
+                    // $camp->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
+                    // $camp->grace_period = 0;
+                    // $camp->update();
+
+                    if(!self::commitTheChange($camp->id, 'camp', $camp->old_parent_camp_num, $camp->parent_camp_num)) {
+                        throw new Exception('Authentication Issue!', 401);
+                    }
                 }
             }
         }
@@ -186,17 +196,21 @@ class TreeController extends Controller
         /**
          * Update each statement grace period where grace period duration is completed
          */
-        $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->get();
+        $statements = Statement::select('id', 'submit_time')->where('topic_num', $topicNumber)->where('grace_period', '1')->where('objector_nick_id', NULL)->orderBy('submit_time', 'asc')->get();
 
         if ($statements->count() > 0) {
             foreach ($statements as $statement) {
                 $submittedTime = $statement->submit_time;
-                $gracePeriodEndTime = $submittedTime + (60 * 60);
+                $gracePeriodEndTime = $submittedTime + env('COMMIT_TIME_DELAY_IN_SECONDS');
                 if ($currentTime > $gracePeriodEndTime) {
-                    $statement->submit_time = time();
-                    $statement->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
-                    $statement->grace_period = 0;
-                    $statement->update();
+                    // $statement->submit_time = time();
+                    // $statement->go_live_time = strtotime(date('Y-m-d H:i:s', strtotime('+1 days')));
+                    // $statement->grace_period = 0;
+                    // $statement->update();
+
+                    if(!self::commitTheChange($statement->id, 'statement')) {
+                        throw new Exception('Authentication Issue!', 401);
+                    }
                 }
             }
         }
@@ -209,6 +223,35 @@ class TreeController extends Controller
         Log::info("Time via store method: " . $time);
 
         return new TreeResource(array($tree));
+    }
+
+    private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null) {
+        $requestBody = [
+            "id" => $id,
+            "type" => $type,
+            "called_from_service" => true,
+            "old_parent_camp_num" => $oldParentCampNum,
+            "parent_camp_num" => $parentCampNum
+        ];
+
+        $endpoint = env('API_APP_URL') . "/" . env('API_COMMIT_CHANGE');
+
+        //$headers = array('Content-Type:multipart/form-data');
+        $headers = []; // Prepare headers for request
+        $headers[] = 'Content-Type:multipart/form-data';
+        $headers[] = 'Authorization:Bearer: ' . env('API_TOKEN') . '';
+
+        $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
+        if(isset($response)) {
+            $checkRes = json_decode($response, true);
+            Log::info('CommitTheChange => ' . json_encode($checkRes));
+            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+                Log::error("commitTheChange => Unauthorized action.");
+                throw new Exception('Authentication Issue!', 401);
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -427,25 +470,27 @@ class TreeController extends Controller
             $responseArray = json_decode($collectionToJson, true);
 
             // Below code is for checking the requested camp number is created on the asOfTime.
-            if (array_key_exists('data', $responseArray) && count($responseArray['data']) && $asOf == 'bydate') {
-                $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
-                $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+            if (array_key_exists('data', $responseArray) && count($responseArray['data'])) {
+                if ($asOf == 'bydate') {
 
-                $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
+                    $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+                    $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
 
-                if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
-                    $campInfo = [
-                        'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
-                        'created_at' => $campCreatedDate
-                    ];
-                    array_push($responseArray['data'], $campInfo);
+                    $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
+
+                    if ($campNumber != 1 && $asOfTime < $campCreatedDate) {
+                        $campInfo = [
+                            'camp_exist' => $asOfDate < $campCreatedDate ? false : true,
+                            'created_at' => $campCreatedDate
+                        ];
+                        array_push($responseArray['data'], $campInfo);
+                    }
                 }
-
-                $response = $responseArray;
+                $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['collapsedTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
             }
 
+            $response = $responseArray;
             return $response;
-            
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);

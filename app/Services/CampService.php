@@ -1455,8 +1455,7 @@ class CampService
             }
             
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
-           
+            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true], $asOf, $fetchTopicHistory);
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);
@@ -1507,10 +1506,10 @@ class CampService
             $level=$level +1;
             foreach ($childs as $key => $child) {
                 $oneCamp = $this->getLiveCamp($child->topic_num, $child->camp_num, ['nofilter' => true], $asOfTime, $asOf);
-                $reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
-                $reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
-
+                ////$reviewCamp = $this->getReviewCamp($child->topic_num, $child->camp_num);
+                ////$reviewCampName = (isset($reviewCamp) && isset($reviewCamp->camp_name)) ? $reviewCamp->camp_name : $oneCamp->camp_name;
                 $title = $oneCamp->camp_name; //preg_replace('/[^A-Za-z0-9\-]/', '-', $onecamp->camp_name);
+
                 $topic_id = $child->topic_num . "-" . $title;
 
                 $array[$child->camp_num]['topic_id'] = $topicNumber;
