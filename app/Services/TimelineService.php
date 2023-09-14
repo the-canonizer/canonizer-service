@@ -238,7 +238,7 @@ class TimelineService
                 $urlPortion =  '/topic/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name);
 
             }
-            else if($type =="update_camp"){
+            else if($type =="update_camp" || $type=="archive_camp" || $type=="unarchived_camp" ){
                 $urlPortion =  '/camp/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
             }

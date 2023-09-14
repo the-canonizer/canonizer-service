@@ -94,11 +94,11 @@ class CreateTopicTimelineCommand extends Command
             $asOfTime =  time();
             if (!empty($topic_num)) {
                 // get specific topic
-                $topics = Topic::select(['topic_num'])->where('topic_num', $topic_num)->groupBy('topic_num')->get();
+                $topics = Topic::select(['topic_num','topic_name'])->where('topic_num', $topic_num)->groupBy('topic_num')->get();
             }
             else{
                 // get all topic
-                $topics = Topic::select(['topic_num'])->orderBy('topic_num', 'ASC')->groupBy('topic_num')->get();
+                $topics = Topic::select(['topic_num','topic_name'])->orderBy('topic_num', 'ASC')->groupBy('topic_num')->get();
             }
 
             $lastRecord = 0; 
@@ -138,10 +138,10 @@ class CreateTopicTimelineCommand extends Command
                 //if ((!$mongoTree || !count($mongoTree))) {
                 if($topic->topic_num < $lastRecord)
                     continue;
-                $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
-                $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);                
-                $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
-                $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
+                $data = $this->getTopicHistory($topic,$data);
+                $data = $this->getCampHistory($topic,$data);                
+                $data = $this->getDirectSupportHistory($topic,$data);
+                $data = $this->getDelegatedSupportHistory($topic,$data);
                 $key_values = array_column($data, 'asOfTime'); 
                 array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
                 if(!empty($data)){
@@ -172,8 +172,9 @@ class CreateTopicTimelineCommand extends Command
     }
 
     
-    private function getTopicHistory($topic_num,$data)
+    private function getTopicHistory($topic,$data)
     {
+        $topic_num=$topic->topic_num;
         $topic_information = DB::select('SELECT	
             a.id, 
             topic_num, 
@@ -220,8 +221,9 @@ class CreateTopicTimelineCommand extends Command
         return $data;  
     }
 
-    private function getCampHistory($topic_num,$data)
-    {               
+    private function getCampHistory($topic,$data)
+    {        
+        $topic_num=$topic->topic_num;       
         $camps_info = Camp::select(['id','camp_num'])
             ->where('topic_num', '=',$topic_num)
             ->where('camp_name', '!=', 'Agreement')
@@ -314,18 +316,18 @@ class CreateTopicTimelineCommand extends Command
                             $type="parent_change";
                             $new_parent_id =$info->parent_camp_num; 
                             $old_parent_id = $info->camp_num;
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>$topic->topic_name, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                         else if($info->camp_name_comparison=="camp_created"){ // create
                             $timelineMessage = $info->nick_name . " created a new Camp ". $info->camp_name;
                             $type="create_camp";
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>$topic->topic_name, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                         else if($info->camp_name_comparison=="change_in_camp_name"){
                             $timelineMessage = $info->nick_name . " updated the Camp name from ". $info->previous_camp_name. " to ". $info->camp_name;
                             
                             $type="update_camp"; 
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>$topic->topic_name, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                     }
 
@@ -335,8 +337,9 @@ class CreateTopicTimelineCommand extends Command
         return $data;   
     }
 
-    private function getDirectSupportHistory($topic_num,$data) 
+    private function getDirectSupportHistory($topic,$data) 
     {
+        $topic_num=$topic->topic_num;
         $support_info = DB::select("SELECT
                 a.topic_num,
                 a.camp_num,
@@ -385,15 +388,16 @@ class CreateTopicTimelineCommand extends Command
                     $timelineMessage = $info->nick_name . " removed their support from camp ". $info->camp_name;
                     $type="direct_support_removed";
                 }
-                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->camp_num, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->camp_num, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>$topic->topic_name, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
             }
         }
         
         return $data;
     }
 
-    private function getDelegatedSupportHistory($topic_num,$data) 
+    private function getDelegatedSupportHistory($topic,$data) 
     {
+        $topic_num=$topic->topic_num;
         $support_info = DB::select("SELECT
             support_id,
             topic_num,
@@ -438,7 +442,7 @@ class CreateTopicTimelineCommand extends Command
                     $type="delegate_support_removed";
                 }
                
-                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->support_id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>null);
+                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->support_id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>$topic->topic_name, 'camp_num'=>$info->camp_num, 'camp_name'=>null);
             }
         }
         return $data;
