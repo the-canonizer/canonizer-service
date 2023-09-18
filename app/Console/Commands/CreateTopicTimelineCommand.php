@@ -268,16 +268,17 @@ class CreateTopicTimelineCommand extends Command
                   a.go_live_time,
                   a.submitter_nick_id,
                   LAG(a.camp_name) OVER(
-                ORDER BY a.topic_num,
+                ORDER BY 
+                  a.go_live_time,
+                  a.topic_num,
                   a.parent_camp_num,
-                  a.camp_num,
-                  a.go_live_time
+                  a.camp_num
                 ) AS previous_camp_name,
                 LAG(a.parent_camp_num) OVER(
-                ORDER BY a.topic_num,
+                ORDER BY  a.go_live_time,
+                  a.topic_num,
                   a.parent_camp_num,
-                  a.camp_num,
-                  a.go_live_time
+                  a.camp_num
                 ) AS previous_parent_camp_num
                 FROM
                   (SELECT
@@ -486,7 +487,7 @@ class CreateTopicTimelineCommand extends Command
 
         } catch (CampURLException $th) {
              throw new CampURLException("URL Exception");
-         }
+        }
     }
 
     public function replaceSpecialCharacters($info){
