@@ -160,7 +160,8 @@ class TopicRepository implements TopicInterface
                 [
                     // Stage 6: Sort the record in descending order by topic_score
                     '$sort' => [
-                        'topic_score' => -1
+                        'topic_score' => -1,
+                        'topic_name' => 1,
                     ]
                 ],
             ];
@@ -168,12 +169,12 @@ class TopicRepository implements TopicInterface
             if ($applyPagination) {
                 $aggregate = array_merge($aggregate, [
                     [
-                        // Stage 6: Skip certain records
-                        '$skip' => $skip,
+                        // Stage 7: Skip certain records
+                        '$skip' => 0,
                     ],
                     [
-                        // Stage 7: Limit the records.
-                        '$limit' => $pageSize,
+                        // Stage 8: Limit the records.
+                        '$limit' => $skip + $pageSize,
                     ]
                 ]);
             }
@@ -184,8 +185,9 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
+
             $time_elapsed_secs = microtime(true) - $start;
-            return $record;
+            return collect($record)->skip($skip)->all();
         } catch (\Throwable $th) {
             throw $th;
         }
