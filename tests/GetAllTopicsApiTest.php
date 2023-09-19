@@ -96,7 +96,45 @@ class GetAllTopicsApiTest extends TestCase
             'status_code',
             'message',
             'error',
-            'data' => ['topic'],
+            'data' => [
+                'topic' => [
+                    '*' => [
+                        "submitter_nick_id",
+                        "namespace_id",
+                        "topic_score",
+                        "topic_full_score",
+                        "topic_id",
+                        "topic_name",
+                        "tree_structure",
+                        "as_of_date",
+                    ]
+                ]
+            ],
+        ]);
+    }
+
+    public function testWithCorrectValuesForValidResponseStructureInDatabase()
+    {
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => Carbon::now()->subDays(2)->timestamp, 'user_email' => '']);
+        $response->assertJsonStructure([
+            'status_code',
+            'message',
+            'error',
+            'data' => [
+                'topic' => [
+                    '*' => [
+                        "submitter_nick_id",
+                        "namespace_id",
+                        "score",
+                        "topic_score",
+                        "topic_full_score",
+                        "topic_id",
+                        "topic_name",
+                        "tree_structure",
+                        "as_of_date",
+                    ]
+                ]
+            ],
         ]);
     }
 }

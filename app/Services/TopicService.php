@@ -149,7 +149,7 @@ class TopicService
                         $topics[$key]->tree_structure[1]['review_title'] = $value->title;
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }
-
+                    unset($topics[$key]->topic_num, $topics[$key]->camp_num, $topics[$key]->title, $topics[$key]->go_live_time, $topics[$key]->support);
                 }
               // $topics = $topics->sortBy('score',SORT_REGULAR, true);
                 $topics = collect(collect($topics)->sortByDesc('score'))->values();
