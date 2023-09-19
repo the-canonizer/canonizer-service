@@ -1493,7 +1493,7 @@ class CampService
      */
     public function traverseCampTimeline($algorithm, $topicNumber, $parentCamp, $lastparent = null, $asOfTime, $rootUrl, $asOf = 'default', & $lastArray, $level)
     {  
-         try {
+        try {
             $key = $topicNumber . '-' . $parentCamp . '-' . $lastparent;
             if (in_array($key, $this->traversetempArray)) {
                 return;
