@@ -52,6 +52,23 @@ class GetAllTopicsApiTest extends TestCase
     }
 
     /**
+     * Check Api with correct values with special characters in filter search
+     */
+    public function testWithCorrectValuesWithSpecialCharactersInFilterSearch()
+    {
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '!@#', 'filter' => 1.7, 'user_email' => '']);
+        $this->assertEquals(200, $response->status());
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '$%^', 'filter' => 1.7, 'user_email' => '']);
+        $this->assertEquals(200, $response->status());
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '&*(', 'filter' => 1.7, 'user_email' => '']);
+        $this->assertEquals(200, $response->status());
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => ')_+', 'filter' => 1.7, 'user_email' => '']);
+        $this->assertEquals(200, $response->status());
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => "[]%", 'filter' => 1.7, 'user_email' => '']);
+        $this->assertEquals(200, $response->status());
+    }
+
+    /**
      * Check Api by passing search as integer values
      */
     public function testSearchWithNumericValue()
