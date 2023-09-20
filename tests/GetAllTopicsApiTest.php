@@ -1,5 +1,7 @@
 <?php
 
+use Carbon\Carbon;
+
 class GetAllTopicsApiTest extends TestCase
 {
     /**
