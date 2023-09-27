@@ -35,6 +35,7 @@ class TopicRepository implements TopicInterface
     // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
     public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0)
     {
+        $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
 
         try {
@@ -74,7 +75,6 @@ class TopicRepository implements TopicInterface
                     '$options' => 'i'
                 ];
             }
-
             if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
@@ -455,8 +455,8 @@ class TopicRepository implements TopicInterface
 
     private function escapeSpecialCharacters($inputString)
     {
-        $charactersToReplace = [    '~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|', '\\'];
-        $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|', '\\\\'];
+        $charactersToReplace = ['~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|' ];
+        $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|'];
 
         return str_replace($charactersToReplace, $replacementCharacters, $inputString);
     }
