@@ -228,7 +228,8 @@ class TimelineService
             $$topic_name = isset($topic_name)?$topic_name:$topicTitle;
             $camp_num = isset($camp_num)?$camp_num:1;
             $camp_name =isset($camp_name)?$camp_name:"Agreement";
-            if($type =="create_topic" || $type =="create_camp" || $type =="parent_change"){
+            if($type =="create_topic" || $type =="create_camp" || $type=="archive_camp" || $type=="unarchived_camp" || $type=="direct_support_added" || $type=="direct_support_removed" || $type=="delegate_support_start" || $type=="delegate_support_removed"){
+
                 $urlPortion =  '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
             }
@@ -236,14 +237,14 @@ class TimelineService
                 $urlPortion =  '/topic/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name);
 
             }
-            else if($type =="update_camp"){
+            else if($type =="update_camp"  || $type =="parent_change"){
                 $urlPortion =  '/camp/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
             }
             else{
                 //$urlPortion = '/user/supports/' . $topicCreatedByNickId.'?topicnum='. $topic_num .'&campnum='. $camp_num .'&canon='.$namespaceId;
-                $urlPortion =  '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
-
+                //$urlPortion =  '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
+                $urlPortion =  '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
             }
             return $urlPortion;
