@@ -147,6 +147,7 @@ class TreeController extends Controller
         $model_id = $request->input('model_id') ?? NULL;
         $model_type = $request->input('model_type') ?? NULL;
         $job_type = $request->input('job_type') ?? NULL;
+        $camp_num = (int) $request->input('camp_num');
 
         Log::info("additional_infoooo1");
         Log::info(json_encode($request->all()));
@@ -230,7 +231,7 @@ class TreeController extends Controller
         /// check all id and hit the changeToAgree api
         if($job_type == "live-time-job") {
             if(!empty($model_id) && !empty($model_type)) {
-                $this->agreeToChange($model_id, $topicNumber, 1 , $model_type);
+                $this->agreeToChange($model_id, $topicNumber, $camp_num, $model_type);
             }
         }
 

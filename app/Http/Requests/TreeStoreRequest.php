@@ -33,7 +33,8 @@ class TreeStoreRequest extends FormRequest
                         'update_all' => 'in:0,1',
                         'model_id' => 'nullable|integer',
                         'model_type' => 'nullable|string|in:topic,camp,statement',
-                        'job_type' => 'nullable|string|in:live-time-job'
+                        'job_type' => 'nullable|string|in:live-time-job',
+                        'camp_num' => 'integer'
                     ];
                     break;
                 }
