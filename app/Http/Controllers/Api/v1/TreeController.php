@@ -140,10 +140,19 @@ class TreeController extends Controller
     {
         /* get input params from request */
 
-        $topicNumber = (int) $request->input('topic_num');
-        $algorithm = $request->input('algorithm');
-        $asOfTime = (int) $request->input('asofdate');
-        $updateAll = (int) $request->input('update_all', 0);
+        $topicNumber        = (int) $request->input('topic_num');
+        $algorithm          = $request->input('algorithm');
+        $asOfTime           = (int) $request->input('asofdate');
+        $updateAll          = (int) $request->input('update_all', 0);
+        $model_id           = $request->input('model_id') ?? NULL;
+        $model_type         = $request->input('model_type') ?? NULL;
+        $job_type           = $request->input('job_type') ?? NULL;
+        $camp_num           = (int) $request->input('camp_num');
+        $event_type         = $request->input('event_type') ?? NULL;
+        $pre_LiveId         = $request->input('pre_LiveId') ?? NULL;
+
+        Log::info("additional_infoooo1");
+        Log::info(json_encode($request->all()));
 
         $start = microtime(true);
         $currentTime = time();
@@ -219,10 +228,49 @@ class TreeController extends Controller
 
         $end = microtime(true);
         $time = $end - $start;
+        
+        /// Check the job is for 24 hour
+        /// check all id and hit the changeToAgree api
+        if($job_type == "live-time-job") {
+            if(!empty($model_id) && !empty($model_type)) {
+                $this->agreeToChange($model_id, $topicNumber, $camp_num, $event_type, $pre_LiveId, $model_type);
+            }
+        }
 
         Log::info("Time via store method: " . $time);
 
         return new TreeResource(array($tree));
+    }
+
+    private function agreeToChange($changeId, $topic_num, $camp_num, $event_type, $pre_LiveId, $change_for = "") {
+        $requestBody = [
+            'record_id'             => $changeId,
+            'topic_num'             => $topic_num,
+            'camp_num'              => $camp_num,
+            'change_for'            => $change_for,
+            'event_type'            => $event_type,
+            'pre_LiveId'            => $pre_LiveId,
+            "called_from_service"   => true
+        ];
+
+        $endpoint = env('API_APP_URL') . "/" . env('API_AGREE_CHANGE_FOR_LIVE');
+
+        $headers = [];
+        $headers[] = 'Content-Type:multipart/form-data';
+        $headers[] = 'Authorization:Bearer: ' . env('API_TOKEN') . '';
+
+        $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
+
+        if(isset($response)) {
+            $checkRes = json_decode($response, true);
+            Log::info('AgreeTheChange => ' . json_encode($checkRes));
+            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+                Log::error("agreeTheChange => Unauthorized action.");
+                throw new Exception('Authentication Issue!', 401);
+                return false;
+            }
+        }
+        return true;
     }
 
     private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null) {
