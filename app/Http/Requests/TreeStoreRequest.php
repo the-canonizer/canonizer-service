@@ -3,6 +3,8 @@
 namespace App\Http\Requests;
 
 use Anik\Form\FormRequest;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class TreeStoreRequest extends FormRequest
 {
@@ -27,7 +29,7 @@ class TreeStoreRequest extends FormRequest
 
             case 'POST': {
                     return [
-                        'topic_num' => 'required|integer',
+                        'topic_num' => 'required|integer|max:'.PHP_INT_MAX.'|exists:topic,topic_num',
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
                         'update_all' => 'in:0,1',
@@ -36,7 +38,7 @@ class TreeStoreRequest extends FormRequest
                         'job_type' => 'nullable|string|in:live-time-job',
                         'event_type' => 'nullable|string',
                         'pre_LiveId' => 'nullable|string',
-                        'camp_num' => 'integer'
+                        'camp_num' => 'integer|max:' . PHP_INT_MAX,
                     ];
                     break;
                 }
@@ -51,5 +53,30 @@ class TreeStoreRequest extends FormRequest
             default:
                 break;
         }
+    }
+
+    protected function statusCode(): int
+    {
+        return 422;
+    }
+
+    protected function errorResponse(): ?JsonResponse
+    {
+        $errors = $this->validator->errors()->messages();
+        if(array_key_exists("topic_num", $errors)) {
+            $messageExists = in_array('The selected topic num is invalid.', $errors['topic_num']);            
+        }
+        // change status code to 404 when record not found...
+        $notFound = (isset($messageExists) && $messageExists) ? 404 : $this->statusCode();
+    
+        return response()->json([
+            'message' => $this->errorMessage(),
+            'errors' => $this->validator->errors()->messages(),
+        ], $notFound);
+    }
+
+    protected function validationFailed(): void
+    {
+        throw new ValidationException($this->validator, $this->errorResponse());
     }
 }
