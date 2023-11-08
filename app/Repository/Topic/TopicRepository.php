@@ -35,6 +35,9 @@ class TopicRepository implements TopicInterface
     // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
     public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0)
     {
+        $search = str_replace('\\', '\\\\', $search);
+        $search = $this->escapeSpecialCharacters($search);
+
         try {
             // Track the execution time of the code.
             $start = microtime(true);
@@ -72,8 +75,7 @@ class TopicRepository implements TopicInterface
                     '$options' => 'i'
                 ];
             }
-
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -158,7 +160,8 @@ class TopicRepository implements TopicInterface
                 [
                     // Stage 6: Sort the record in descending order by topic_score
                     '$sort' => [
-                        'topic_score' => -1
+                        'topic_score' => -1,
+                        'topic_name' => 1,
                     ]
                 ],
             ];
@@ -166,12 +169,12 @@ class TopicRepository implements TopicInterface
             if ($applyPagination) {
                 $aggregate = array_merge($aggregate, [
                     [
-                        // Stage 6: Skip certain records
-                        '$skip' => $skip,
+                        // Stage 7: Skip certain records
+                        '$skip' => 0,
                     ],
                     [
-                        // Stage 7: Limit the records.
-                        '$limit' => $pageSize,
+                        // Stage 8: Limit the records.
+                        '$limit' => $skip + $pageSize,
                     ]
                 ]);
             }
@@ -182,8 +185,9 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
+
             $time_elapsed_secs = microtime(true) - $start;
-            return $record;
+            return collect($record)->skip($skip)->all();
         } catch (\Throwable $th) {
             throw $th;
         }
@@ -227,7 +231,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -261,6 +265,8 @@ class TopicRepository implements TopicInterface
     // Get latest topic count from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
     public function getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asOf, $search = '', $filter = '', $archive = 0)
     {
+        $search = $this->escapeSpecialCharacters($search);
+
         try {
 
             // Track the execution time of the code.
@@ -300,7 +306,7 @@ class TopicRepository implements TopicInterface
                 ];
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -418,7 +424,7 @@ class TopicRepository implements TopicInterface
                 });
             }
 
-            $record->when(!empty($nickNameIds), function ($q) use($nickNameIds) {
+            $record->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
                 $q->whereIn('created_by_nick_id', $nickNameIds);
             });
 
@@ -445,5 +451,13 @@ class TopicRepository implements TopicInterface
         }
 
         return array_values($aggregate);
+    }
+
+    private function escapeSpecialCharacters($inputString)
+    {
+        $charactersToReplace = ['~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|' ];
+        $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|'];
+
+        return str_replace($charactersToReplace, $replacementCharacters, $inputString);
     }
 }

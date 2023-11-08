@@ -890,25 +890,18 @@ class CampService
 
         try {
 
+            $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
+                ->join('topic', 'topic.topic_num', '=', 'camp.topic_num');
+
             if ($asof == 'default') {
-
-                $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.*'))
-                    ->join('topic', 'topic.topic_num', '=', 'camp.topic_num')
-                    ->where('camp.go_live_time', '<=', $asofdate)
-                    ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null and topic.go_live_time <=' . $asofdate . ' group by topic.topic_num)');
-
+                $returnTopics = $returnTopics->where('camp.go_live_time', '<=', $asofdate)
+                ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null and topic.go_live_time <=' . $asofdate . ' group by topic.topic_num)');
             } else {
                 if ($asof == "review") {
-                    $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.*'))
-                        ->join('topic', 'topic.topic_num', '=', 'camp.topic_num')
-                        ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null group by topic.topic_num)');
-
+                    $returnTopics = $returnTopics->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null group by topic.topic_num)');
                 } else if ($asof == "bydate") {
-
                     //$asofdate = strtotime(date('Y-m-d H:i:s', strtotime($asofdate)));
-                    $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.*'))
-                        ->join('topic', 'topic.topic_num', '=', 'camp.topic_num')
-                        ->where('camp.go_live_time', '<=', $asofdate);
+                    $returnTopics = $returnTopics->where('camp.go_live_time', '<=', $asofdate);
                 }
             }
 

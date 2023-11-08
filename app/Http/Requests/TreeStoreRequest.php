@@ -30,7 +30,13 @@ class TreeStoreRequest extends FormRequest
                         'topic_num' => 'required|integer',
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
-                        'update_all' => 'in:0,1'
+                        'update_all' => 'in:0,1',
+                        'model_id' => 'nullable|integer',
+                        'model_type' => 'nullable|string|in:topic,camp,statement',
+                        'job_type' => 'nullable|string|in:live-time-job',
+                        'event_type' => 'nullable|string',
+                        'pre_LiveId' => 'nullable|string',
+                        'camp_num' => 'integer'
                     ];
                     break;
                 }
