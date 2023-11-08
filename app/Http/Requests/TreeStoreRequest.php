@@ -70,8 +70,11 @@ class TreeStoreRequest extends FormRequest
         $notFound = (isset($messageExists) && $messageExists) ? 404 : $this->statusCode();
     
         return response()->json([
+            'code' => $notFound,
             'message' => $this->errorMessage(),
-            'errors' => $this->validator->errors()->messages(),
+            'error' => $this->validator->errors()->messages(),
+            'data' => null,
+            'success' => false,
         ], $notFound);
     }
 
