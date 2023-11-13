@@ -60,6 +60,13 @@ class TreeStoreRequest extends FormRequest
         return 422;
     }
 
+    protected function messages(): array
+    {
+        return [
+            'topic_num.exists' => 'Topic not found.',
+        ];
+    }
+
     protected function errorResponse(): ?JsonResponse
     {
         $errors = $this->validator->errors()->messages();
@@ -67,15 +74,15 @@ class TreeStoreRequest extends FormRequest
             $messageExists = in_array('The selected topic num is invalid.', $errors['topic_num']);            
         }
         // change status code to 404 when record not found...
-        $notFound = (isset($messageExists) && $messageExists) ? 404 : $this->statusCode();
+        $statusCode = (isset($messageExists) && $messageExists) ? 404 : $this->statusCode();
     
         return response()->json([
-            'code' => $notFound,
+            'code' => $statusCode,
             'message' => $this->errorMessage(),
             'error' => $this->validator->errors()->messages(),
-            'data' => null,
-            'success' => false,
-        ], $notFound);
+            'data' => NULL,
+            'success' => FALSE,
+        ], $statusCode);
     }
 
     protected function validationFailed(): void
