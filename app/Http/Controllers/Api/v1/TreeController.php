@@ -537,12 +537,6 @@ class TreeController extends Controller
                 $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['collapsedTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
             }
 
-            $responseArray['message'] = 'Tree found!';
-            if($responseArray['data'][0][1]['created_date'] == 0) {
-                $responseArray = array_merge($responseArray, ['code' => 404, 'success' => false, 'message' => 'Tree not found!']);
-                return response()->json($responseArray, 404);
-            }
-
             $response = $responseArray;
             return $response;
         } catch (Throwable $e) {
