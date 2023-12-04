@@ -25,7 +25,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
 
     // topicTimeline
     $router->group(['prefix' => 'timeline'], function () use ($router) {
-        $router->post('/store', ['uses' => 'TimelineController@store']); //'middleware' => 'auth',
+        $router->post('/store', ['middleware' => 'auth','uses' => 'TimelineController@store']); //'middleware' => 'auth',
         $router->post('/get', ['uses' => 'TimelineController@find']);
         $router->get('/all', function () {
             ini_set('max_execution_time', 3000);
@@ -35,6 +35,15 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
             $execution_time = ($time_end - $time_start);
             dd('<b>All topic timelines generated successfully. Execution Time is:</b> '.($execution_time*1000).'Milliseconds');
         });
+        $router->get('/adding-specific-topic/{topic_num}/{algorithm_id}', function (string $topic_num = null, string $algorithm_id = null) {
+            ini_set('max_execution_time', 3000);
+            $time_start = microtime(true); 
+            Artisan::call('timeline:all '. $topic_num . '  '. $algorithm_id);
+            $time_end = microtime(true);
+            $execution_time = ($time_end - $time_start);           
+            dd(' Specific topic timelines generated successfully. Execution Time is:  '.($execution_time).' seconds');
+        });
+        
     });
     
 });
