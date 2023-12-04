@@ -89,9 +89,7 @@ class CreateTopicTimelineCommand extends Command
         */
 
         try {
-            Log::info('timeline:all command started....');
-            $start = microtime(true);
-            $asOfTime =  time();
+            
             if (!empty($topic_num)) {
                 // get specific topic
                 $topics = Topic::select(['topic_num'])->where('topic_num', $topic_num)->groupBy('topic_num')->get();
@@ -100,6 +98,10 @@ class CreateTopicTimelineCommand extends Command
                 // get all topic
                 $topics = Topic::select(['topic_num'])->orderBy('topic_num', 'ASC')->groupBy('topic_num')->get();
             }
+
+            Log::info('timeline command start and total topic number : '.count($topics));
+            $main_start = microtime(true);
+            $asOfTime =  time();
 
             $lastRecord = 0; 
             if(count($topics)>1) {
@@ -124,13 +126,18 @@ class CreateTopicTimelineCommand extends Command
             }
             else {
                     $lastRecord = $topic_num;
-                    if($algorithm_id!="")
+                    if($algorithm_id!=""){
                         $del = Timeline::where('algorithm_id', $algorithm_id)->where('topic_id','=', (int)$topic_num)->delete();
+                    }
+                    else{
+                        $del = Timeline::where('topic_id','=', (int)$topic_num)->delete();
+                    }
             }
 
             foreach ($topics  as $key => $topic) 
             {
                 Log::info('Topic number start - '.$topic->topic_num);
+                $start = microtime(true);
                 // get the timeline tree from mongoDb
                 //$conditions = TimelineService::getTopicConditions($topic->topic_num);
                 //$mongoTree = TimelineRepository::findTimeline($conditions);
@@ -154,13 +161,14 @@ class CreateTopicTimelineCommand extends Command
 
                 } 
                 $data = [];
-                Log::info('Topic number end - '.$topic->topic_num. ' total time execution'. date("H:i:s",microtime(true) - $start) );
+                Log::info('Topic number end - '.$topic->topic_num. ' and total time execution: '. date("H:i:s",microtime(true) - $start) );
+                log::info($count .' records added in above topic number.');
             }  
 
-            Log::info('timeline:all command ended....');
-            log::info('Total Count '.$count);
-            $time_elapsed_secs = microtime(true) - $start;
-            $this->info("timeline:all execution time : " .  date("H:i:s",$time_elapsed_secs));
+            Log::info(' Timeline command ended.');
+            $time_elapsed_secs = microtime(true) - $main_start;
+            log::info(" Timeline command total execution time : " .  date("H:i:s",$time_elapsed_secs));
+            $this->info(" Timeline command total execution time : " .  date("H:i:s",$time_elapsed_secs));
             
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
@@ -429,11 +437,11 @@ class CreateTopicTimelineCommand extends Command
                 $new_parent_id =null; 
                 $old_parent_id = null;
                 if($info->delegate_support_start=="delegate_support_start"){
-                    $timelineMessage = $info->nick_name . " delegated their support to ". $info->delegate_supporter;
+                    $timelineMessage = $info->delegate_supporter . " has just delegated their support to ".  $info->nick_name;
                     $type="delegate_support_added";
                 }
                 else{
-                    $timelineMessage = $info->nick_name . " removed their delegate support";
+                    $timelineMessage =  $info->delegate_supporter . "  has removed their delegated support from ". $info->nick_name;
                     $type="delegate_support_removed";
                 }
                
