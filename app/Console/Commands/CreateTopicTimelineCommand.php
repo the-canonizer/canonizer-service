@@ -204,10 +204,11 @@ class CreateTopicTimelineCommand extends Command
                 topic_name, 
                 submit_time, 
                 submitter_nick_id,
+                objector_nick_id,
                 LAG(topic_name) OVER(ORDER BY submit_time) AS previous_topic_name FROM topic
                 WHERE topic_num = '.$topic_num.'  ORDER BY submit_time 
             ) a, nick_name b
-            WHERE a.submitter_nick_id = b.id'); //AND objector_nick_id IS NULL
+            WHERE a.submitter_nick_id = b.id AND objector_nick_id IS NULL');
            
         if(!empty($topic_information)){
 
