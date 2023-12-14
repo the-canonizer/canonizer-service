@@ -150,7 +150,7 @@ class CreateTopicTimelineCommand extends Command
                 $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
                 $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
                 $key_values = array_column($data, 'asOfTime'); 
-                array_multisort($key_values, SORT_DESC, $data); //SORT_ASC SORT_DESC
+                array_multisort($key_values, SORT_ASC, $data); //SORT_ASC SORT_DESC
                 if(!empty($data)){
                     foreach($data as $k=>$result){
                         $count =$count +1;
@@ -403,6 +403,38 @@ class CreateTopicTimelineCommand extends Command
     private function getDelegatedSupportHistory($topic_num,$data) 
     {
         $support_info = DB::select("SELECT
+	    MIN(support_id) As support_id,
+            topic_num,
+            MIN(camp_num) AS camp_num,
+            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
+            delegate_nick_name_id,
+            nick_name,
+            MIN(`start`) AS 'date',
+            'delegate_support_start'
+            FROM
+            support a, nick_name b
+            WHERE a.delegate_nick_name_id = b.id
+            AND topic_num = ".$topic_num." 
+            AND delegate_nick_name_id != 0
+            GROUP BY topic_num, delegate_supporter, delegate_nick_name_id, delegate_support_start
+            UNION 
+            SELECT
+            MIN(support_id) As support_id,
+            topic_num,
+            MIN(camp_num) AS camp_num,
+            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
+            delegate_nick_name_id,
+            nick_name,
+            MIN(`end`) AS 'date',
+            'delegate_support_end'
+            FROM
+            support a, nick_name b
+            WHERE a.delegate_nick_name_id = b.id
+            AND topic_num = ".$topic_num."
+            AND END != 0
+            AND delegate_nick_name_id != 0
+            GROUP BY topic_num, delegate_supporter, delegate_nick_name_id, delegate_support_end");
+/*SELECT
             support_id,
             topic_num,
             camp_num,
@@ -431,7 +463,7 @@ class CreateTopicTimelineCommand extends Command
             WHERE a.delegate_nick_name_id = b.id
             AND topic_num = ".$topic_num."
             AND END != 0
-            AND delegate_nick_name_id != 0");
+            AND delegate_nick_name_id != 0"*/
         if(!empty($support_info))
         {
             foreach($support_info as $info) {
@@ -449,6 +481,7 @@ class CreateTopicTimelineCommand extends Command
                 $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->support_id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>null);
             }
         }
+        
         return $data;
     }
 
