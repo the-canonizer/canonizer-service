@@ -362,11 +362,6 @@ class TimelineController extends Controller
             if(array_key_exists('data', $responseArray) && count($responseArray['data'])) {
                 // sorting arraY
                 /*uksort($responseArray, function($a, $b) {
-                    $aTime = str_replace('asoftime_', '', $a);
-                    $bTime = str_replace('asoftime_', '', $b);
-                    return $aTime <=> $bTime;
-                });*/
-                uksort($responseArray, function($a, $b) {
                     $aParts = explode('_', $a);
                     $bParts = explode('_', $b);
                     
@@ -374,7 +369,7 @@ class TimelineController extends Controller
                     $bMiddle = isset($bParts[1]) ? $bParts[1] : '';
                 
                     return $aMiddle <=> $bMiddle;
-                });
+                });*/
                 // loop through array
                 foreach($responseArray['data'] as $key => $item){
                     // unset them
