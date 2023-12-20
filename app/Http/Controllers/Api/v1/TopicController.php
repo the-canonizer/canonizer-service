@@ -9,10 +9,8 @@ use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
 use App\Services\AlgorithmService;
 use App\Model\v1\Tree;
-use App\Model\v1\Nickname;
+use App\Model\v1\Timeline;
 use CampService;
-use DateTimeHelper;
-use Illuminate\Http\Request;
 use TopicService;
 use UtilHelper;
 use Throwable;
@@ -327,11 +325,13 @@ class TopicController extends Controller
             ];
 
             if ($request->has('topic_numbers')) {
-                $getTopics = Tree::whereIn('topic_id', $request->topic_numbers)->delete();
+                $removeTree = Tree::whereIn('topic_id', $request->topic_numbers)->delete();
 
-                if ($getTopics) {
+                $removeTimeline = Timeline::whereIn('topic_id', $request->topic_numbers)->delete();
+
+                if ($removeTree && $removeTimeline) {
                     $response['status_code'] = 200;
-                    $response['message'] = 'Tree cache removed';
+                    $response['message'] = 'Tree and Timeline cache removed for requested topics';
                 }
             }
         } catch (Throwable $th) {
