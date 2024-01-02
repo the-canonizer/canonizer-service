@@ -35,7 +35,7 @@ class TimelineService
         $reviewNamespaceId = isset($reviewTopic->namespace_id) ? $reviewTopic->namespace_id : '';
         $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
         $topicFullScore = isset($tree[1]['full_score']) && !is_string($tree[1]['full_score']) ? $tree[1]['full_score'] : 0;
-        $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
+        $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  $topic_name;
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
         $asOfDate =$asOfDate;
@@ -50,6 +50,7 @@ class TimelineService
                         'nickname_id'=>$topicCreatedByNickId,
                         'namespaceId' => $namespaceId,
                         'camp_num' =>$camp_num,
+                        'topic_name' => $topic_name,
                         'url' =>isset($url)? $url: $this->getTimelineUrl($topicNumber, $topic_name, $camp_num, $camp_name, $topicTitle, $type, $rootUrl,$namespaceId,$topicCreatedByNickId)
                     ),
                     "payload_response" => $this->array_single_dimensional($tree)
@@ -106,13 +107,14 @@ class TimelineService
             try {
                 
                 if($timelineType=="history"){
-                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
-                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
+                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory =1);
+                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 1);
                 }
                 else{
                     $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
                     $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 }
+                //Log::info($message);
                 //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
