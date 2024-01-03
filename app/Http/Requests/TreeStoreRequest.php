@@ -29,7 +29,7 @@ class TreeStoreRequest extends FormRequest
 
             case 'POST': {
                     return [
-                        'topic_num' => 'required|integer|max:'.PHP_INT_MAX.'|exists:topic,topic_num',
+                        'topic_num' => 'required|gte:1|integer|max:'.PHP_INT_MAX.'|exists:topic,topic_num',
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
                         'update_all' => 'in:0,1',
@@ -38,7 +38,7 @@ class TreeStoreRequest extends FormRequest
                         'job_type' => 'nullable|string|in:live-time-job',
                         'event_type' => 'nullable|string',
                         'pre_LiveId' => 'nullable|string',
-                        'camp_num' => 'integer|max:' . PHP_INT_MAX,
+                        'camp_num' => 'integer|gte:1|max:' . PHP_INT_MAX,
                     ];
                     break;
                 }
