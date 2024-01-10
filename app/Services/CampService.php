@@ -922,7 +922,8 @@ class CampService
             *  https://github.com/the-canonizer/Canonizer-Beta--Issue-Tracking/issues/627
             */
 
-            /* $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
+            /* 
+            $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
             ->join('topic', 'topic.topic_num', '=', 'camp.topic_num');
 
             if ($asof == 'default') {
@@ -960,7 +961,8 @@ class CampService
                 if ($asof == "bydate") {
                     $returnTopics->where('topic.go_live_time', '<=', $asofdate);
                 }
-            }; */
+            }; 
+            */
 
             $returnTopics
                 ->latest('support')
