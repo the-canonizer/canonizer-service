@@ -3,22 +3,12 @@
 namespace App\Services;
 
 use AlgorithmService;
-use App\Exceptions\Camp\CampDetailsException;
-use App\Exceptions\Camp\CampSupportCountException;
-use App\Exceptions\Camp\CampTreeCountException;
-use App\Exceptions\Camp\CampTreeException;
-use App\Exceptions\Camp\CampURLException;
-use App\Exceptions\Camp\AgreementCampsException;
-use App\Model\v1\Camp;
-use App\Model\v1\Support;
-use App\Model\v1\Topic;
-use App\Model\v1\Nickname;
-use App\Model\v1\TopicSupport;
-use App\Model\v1\CampSubscription;
-use DB;
+use App\Exceptions\Camp\{CampDetailsException, CampSupportCountException, CampTreeCountException, CampTreeException, CampURLException, AgreementCampsException};
+use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription};
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use TopicService;
 use Illuminate\Support\Facades\Log;
 
@@ -890,12 +880,54 @@ class CampService
 
         try {
 
-            $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
-                ->join('topic', 'topic.topic_num', '=', 'camp.topic_num');
+            $returnTopics = DB::table('topic')
+                ->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num = c1.topic_num) as support'), 'c1.topic_num', 'c1.camp_num', 'c1.title', 'c1.go_live_time', 'c1.submitter_nick_id', 't1.namespace_id')
+                ->from('topic as t1')->where(['t1.objector_nick_id' => null, 't1.grace_period' => 0])
+                ->where('t1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
+                    $query->from('topic as t2')->selectRaw('max(t2.go_live_time)')->whereColumn('t2.topic_num', 't1.topic_num')
+                        ->where([
+                            ['t2.objector_nick_id', null],
+                            ['t2.grace_period', 0],
+                        ]);
+                    if ($asof != 'review') {
+                        $query->where('t2.go_live_time', '<=', $asofdate);
+                    }
+                })
+                ->when($namespaceId, fn ($query, $namespaceId) => $query->where('t1.namespace_id', $namespaceId))
+                ->when($search, fn ($query, $search) => $query->where('t1.topic_name', 'like', '%' . $search . '%'))
+                ->join('camp as c1', function ($join) use ($asofdate, $asof, $archive, $nickNameIds) {
+                    $join->on('c1.topic_num', '=', 't1.topic_num')
+                        ->where(['c1.camp_num' => 1, 'c1.objector_nick_id' => null, 'c1.grace_period' => 0, 'c1.is_archive' => $archive, 'c1.direct_archive' => $archive])
+                        ->where('c1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
+                            $query->from('camp as c2')->selectRaw('max(c2.go_live_time)')->whereColumn('c2.topic_num', 't1.topic_num')
+                                ->where([
+                                    ['c2.camp_num', 1],
+                                    ['c2.objector_nick_id', null],
+                                    ['c2.grace_period', 0]
+                                ]);
+                            if ($asof != 'review') {
+                                $query->where('c2.go_live_time', '<=', $asofdate);
+                            }
+                        })
+                        ->when($nickNameIds, function ($query, $nickNameIds) {
+                            $query->whereIn('c2.submitter_nick_id', $nickNameIds);
+                        });
+                });
+
+            /*
+            *  Following query was only getting the first change of Agreement of every topic
+            *  We've replace with the new query above that will get the lastest change of Agreement camp of every topic
+            *  due to camp archive functionality.
+            *
+            *  https://github.com/the-canonizer/Canonizer-Beta--Issue-Tracking/issues/627
+            */
+
+            /* $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
+            ->join('topic', 'topic.topic_num', '=', 'camp.topic_num');
 
             if ($asof == 'default') {
                 $returnTopics = $returnTopics->where('camp.go_live_time', '<=', $asofdate)
-                ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null and topic.go_live_time <=' . $asofdate . ' group by topic.topic_num)');
+                    ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null and topic.go_live_time <=' . $asofdate . ' group by topic.topic_num)');
             } else {
                 if ($asof == "review") {
                     $returnTopics = $returnTopics->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null group by topic.topic_num)');
@@ -905,48 +937,45 @@ class CampService
                 }
             }
 
-            if(isset($archive) &&  !$archive){
+            if (isset($archive) &&  !$archive) {
                 $returnTopics->where('is_archive', '=', 0);
             }
 
-        /* Common conditions in all queries */
-        $returnTopics
-            ->where('camp_name', '=', 'Agreement')
-            ->where('topic.objector_nick_id', '=', null);
+            $returnTopics
+                ->where('camp_name', '=', 'Agreement')
+                ->where('topic.objector_nick_id', '=', null);
 
-        $returnTopics->when($namespaceId !== '', function ($q) use($namespaceId) {
-            $q->where('namespace_id', $namespaceId);
-        });
+            $returnTopics->when($namespaceId !== '', function ($q) use ($namespaceId) {
+                $q->where('namespace_id', $namespaceId);
+            });
 
-        $returnTopics->when(!empty($nickNameIds), function ($q) use($nickNameIds) { 
-            $q->whereIn('camp.submitter_nick_id', $nickNameIds);
-        });
+            $returnTopics->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
+                $q->whereIn('camp.submitter_nick_id', $nickNameIds);
+            });
 
-        /* if the search paramet is set then add search condition in the query */
-        if (isset($search) && $search != '') {
+            if (isset($search) && $search != '') {
 
-            $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
+                $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
 
-            if($asof == "bydate") {
-                $returnTopics->where('topic.go_live_time', '<=', $asofdate);
+                if ($asof == "bydate") {
+                    $returnTopics->where('topic.go_live_time', '<=', $asofdate);
+                }
+            }; */
+
+            $returnTopics
+                ->latest('support')
+                ->orderBy('t1.topic_name', 'DESC');
+
+            if ($isCount) {
+                return $returnTopics->get()->count();
             }
-        };
 
-        $returnTopics
-            ->latest('support')
-            ->groupBy('topic.topic_num')
-            ->orderBy('topic.topic_name', 'DESC');
-
-        if($isCount){
-            return $returnTopics->get()->count();
-        }
-
-        return $returnTopics
-            ->skip($skip)
-            ->take($pageSize)
-            ->get();
+            return $returnTopics
+                ->skip($skip)
+                ->take($pageSize)
+                ->get();
         } catch (\Throwable $th) {
-            throw new AgreementCampsException("Exception in GetAgreementCamp:". $th->getMessage());
+            throw new AgreementCampsException("Exception in GetAgreementCamp:" . $th->getMessage());
         }
     }
 
