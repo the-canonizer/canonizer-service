@@ -43,18 +43,6 @@ class UtilHelper
     }
 
     /**
-     * Decode the base64 string.
-     * @param string $code
-     *
-     * @return int $code
-     */
-
-    public function canonDecode($code = ''){
-        $code = base64_decode($code);
-        return (int) $code=str_replace("Malia","",$code);
-    }
-
-    /**
      * Excute the http calls
      * @param string $type (GET|POST|PUT|DELETE)
      * @param string $url
