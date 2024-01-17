@@ -300,7 +300,8 @@ class AlgorithmService
         $userId = null;
 
         if (!empty($nickname) && count(array($nickname)) > 0) {
-            $userId = $nickname->user_id;
+            $ownerCode = $nickname->owner_code;
+            $userId = UtilHelper::canonDecode($ownerCode);
         }
 
         $ethers = EtherAddresses::where('user_id', '=', $userId)->get();

@@ -18,7 +18,9 @@ class Helpers
         try {
             $user = (new Person())->where('email', $email)->first();
             if (!empty($user)) {
-                return (new Nickname())->where('user_id', $user->id)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+                $encode = General::canon_encode($user->id);
+                $nicknames = (new Nickname())->where('owner_code', $encode)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+                return $nicknames;
             } else {
                 return [];
             }
