@@ -33,7 +33,7 @@ class TopicRepository implements TopicInterface
      * @return array Response
      */
     // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0)
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort =false)
     {
         $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
@@ -94,6 +94,17 @@ class TopicRepository implements TopicInterface
                 'created_by_nick_id' => 1,
                 'tree_structure.1.review_title' => 1
             ];
+
+            if(isset($sort) && $sort){
+               $sort = [
+                    'topic_id' => -1,
+               ];
+            }else{
+                $sort = [
+                    'topic_score' => -1,
+                    'topic_name' => 1,
+                ];
+            }
 
             // This is a aggregate function from MongoDB Raw. It contains on stages. Output of one stage will be input of next stage.
             $aggregate = [
@@ -158,11 +169,8 @@ class TopicRepository implements TopicInterface
                     '$project' => $projection
                 ],
                 [
-                    // Stage 6: Sort the record in descending order by topic_score
-                    '$sort' => [
-                        'topic_score' => -1,
-                        'topic_name' => 1,
-                    ]
+                    // Stage 6: Sort the record in descending order by topic_score  //topic_id
+                    '$sort' => $sort
                 ],
             ];
 

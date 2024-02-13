@@ -883,7 +883,7 @@ class CampService
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0, $sort = false)
     {
 
         $returnTopics = [];
@@ -908,6 +908,7 @@ class CampService
             if(isset($archive) &&  !$archive){
                 $returnTopics->where('is_archive', '=', 0);
             }
+
 
         /* Common conditions in all queries */
         $returnTopics
@@ -934,8 +935,16 @@ class CampService
 
         $returnTopics
             ->latest('support')
-            ->groupBy('topic.topic_num')
-            ->orderBy('topic.topic_name', 'DESC');
+            ->groupBy('topic.topic_num');
+
+        if(isset($sort) &&  $sort){
+            $returnTopics->orderBy('topic.id', 'DESC');
+        }
+        else{
+            $returnTopics->orderBy('topic.topic_name', 'DESC');
+        }
+
+        
 
         if($isCount){
             return $returnTopics->get()->count();
