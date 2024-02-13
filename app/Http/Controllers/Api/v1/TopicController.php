@@ -189,7 +189,7 @@ class TopicController extends Controller
 
             $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
 
-            $sort = ($request->has('sort')) ? true: false;
+            $sort = ($request->has('sort')) ?  $request->input('sort'): false;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
