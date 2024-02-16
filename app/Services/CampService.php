@@ -358,6 +358,8 @@ class CampService
                     $array[$support->nick_name_id]['nick_name_link'] = Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum);
                     $array[$support->nick_name_id]['delegate_nick_name_id'] = $support->delegate_nick_name_id;
                     $delegateArr = $delegateTree[$support->nick_name_id]['delegates'];
+                    $liveCamp = static::getLiveCamp($topicNum, $campNum, [], $asOfTime);
+                    $array[$support->nick_name_id]['camp_leader'] = $liveCamp->camp_leader_nick_id > 0 && $liveCamp->camp_leader_nick_id == $support->nick_name_id;
                     $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $parentSupportOrder, $multiSupport,$delegateArr, $asOfTime, $namespaceId);
                 }  
             }
