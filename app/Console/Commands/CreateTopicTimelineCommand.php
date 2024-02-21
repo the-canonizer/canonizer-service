@@ -244,7 +244,7 @@ class CreateTopicTimelineCommand extends Command
                 parent_camp_num,
                 camp_num,
                 camp_name,
-                go_live_time,
+                submit_time,
                 submitter_nick_id,
                 nick_name,
                 previous_camp_name,
@@ -271,19 +271,19 @@ class CreateTopicTimelineCommand extends Command
                   a.parent_camp_num,
                   a.camp_num,
                   a.camp_name,
-                  a.go_live_time,
+                  a.submit_time,
                   a.submitter_nick_id,
                   LAG(a.camp_name) OVER(
-                ORDER BY a.topic_num,
+                ORDER BY  a.submit_time,
+                a.topic_num,
                   a.parent_camp_num,
-                  a.camp_num,
-                  a.go_live_time
+                  a.camp_num
                 ) AS previous_camp_name,
                 LAG(a.parent_camp_num) OVER(
-                ORDER BY a.topic_num,
+                ORDER BY  a.submit_time,
+                a.topic_num,
                   a.parent_camp_num,
-                  a.camp_num,
-                  a.go_live_time
+                  a.camp_num
                 ) AS previous_parent_camp_num
                 FROM
                   (SELECT
@@ -291,7 +291,7 @@ class CreateTopicTimelineCommand extends Command
                     parent_camp_num,
                     camp_num,
                     camp_name,
-                    go_live_time,
+                    submit_time,
                     submitter_nick_id
                   FROM
                     camp
@@ -306,13 +306,21 @@ class CreateTopicTimelineCommand extends Command
                   FROM
                     camp
                   WHERE topic_num = '.$topic_num.'
-                  AND camp_num = '.$camp['camp_num'].'
+                 AND camp_num = '.$camp['camp_num'].'
                     ) b
                 WHERE a.topic_num = b.topic_num
                   AND a.camp_num = b.camp_num
                   AND a.parent_camp_num = b.parent_camp_num) a,
                 nick_name b
-                WHERE a.submitter_nick_id = b.id');
+                WHERE a.submitter_nick_id = b.id  
+GROUP BY topic_num,
+                parent_camp_num,
+                camp_num,
+                camp_name,
+                submit_time,
+                submitter_nick_id,
+                nick_name
+ORDER BY `a`.`submit_time` ASC');
                 if(!empty($camp_information)){
                     foreach($camp_information as $info){
                         $new_parent_id =null; 
@@ -322,18 +330,18 @@ class CreateTopicTimelineCommand extends Command
                             $type="parent_change";
                             $new_parent_id =$info->parent_camp_num; 
                             $old_parent_id = $info->camp_num;
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                         else if($info->camp_name_comparison=="camp_created"){ // create
                             $timelineMessage = $info->nick_name . " created a new Camp ". $info->camp_name;
                             $type="create_camp";
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                         else if($info->camp_name_comparison=="change_in_camp_name"){
                             $timelineMessage = $info->nick_name . " updated the Camp name from ". $info->previous_camp_name. " to ". $info->camp_name;
                             
                             $type="update_camp"; 
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->go_live_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
                         }
                     }
 
