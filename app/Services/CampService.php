@@ -873,7 +873,7 @@ class CampService
      *
      * @return Illuminate\Database\Eloquent\Collection
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0, $sort = false)
     {
 
         $returnTopics = [];
@@ -942,9 +942,11 @@ class CampService
                 $returnTopics->where('is_archive', '=', 0);
             }
 
-            $returnTopics
-                ->where('camp_name', '=', 'Agreement')
-                ->where('topic.objector_nick_id', '=', null);
+
+        /* Common conditions in all queries */
+        $returnTopics
+            ->where('camp_name', '=', 'Agreement')
+            ->where('topic.objector_nick_id', '=', null);
 
             $returnTopics->when($namespaceId !== '', function ($q) use ($namespaceId) {
                 $q->where('namespace_id', $namespaceId);
@@ -964,9 +966,17 @@ class CampService
             }; 
             */
 
-            $returnTopics
-                ->latest('support')
-                ->orderBy('t1.topic_name', 'DESC');
+        $returnTopics
+            ->latest('support')
+            ->groupBy('topic.topic_num');
+
+        if(isset($sort) &&  $sort){
+            $returnTopics->orderBy('topic.id', 'DESC');
+        }
+        else{
+            $returnTopics->orderBy('topic.topic_name', 'DESC');
+        }
+
 
             if ($isCount) {
                 return $returnTopics->get()->count();
@@ -1477,6 +1487,7 @@ class CampService
                                 ->orderBy('submit_time', 'desc')
                                 ->get();
             }
+            
             
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
             $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true], $asOf, $fetchTopicHistory);
