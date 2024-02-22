@@ -943,7 +943,7 @@ class CampService
             }
 
 
-        /* Common conditions in all queries */
+        
         $returnTopics
             ->where('camp_name', '=', 'Agreement')
             ->where('topic.objector_nick_id', '=', null);
@@ -965,17 +965,15 @@ class CampService
                 }
             }; 
             */
-
-        $returnTopics
-            ->latest('support')
-            ->groupBy('topic.topic_num');
-
-        if(isset($sort) &&  $sort){
-            $returnTopics->orderBy('topic.id', 'DESC');
-        }
-        else{
-            $returnTopics->orderBy('topic.topic_name', 'DESC');
-        }
+            
+            $returnTopics
+            ->latest('support');
+            if(isset($sort) &&  $sort){
+                $returnTopics->orderBy('t1.id', 'DESC');
+            }
+            else{
+                $returnTopics->orderBy('t1.topic_name', 'DESC');
+            }
 
 
             if ($isCount) {
@@ -985,7 +983,8 @@ class CampService
             return $returnTopics
                 ->skip($skip)
                 ->take($pageSize)
-                ->get();
+                ->get();       
+         
         } catch (\Throwable $th) {
             throw new AgreementCampsException("Exception in GetAgreementCamp:" . $th->getMessage());
         }
