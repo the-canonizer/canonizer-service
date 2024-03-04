@@ -910,7 +910,7 @@ class CampService
                             }
                         })
                         ->when($nickNameIds, function ($query, $nickNameIds) {
-                            $query->whereIn('c2.submitter_nick_id', $nickNameIds);
+                            $query->whereIn('c1.submitter_nick_id', $nickNameIds);
                         });
                 });
 
