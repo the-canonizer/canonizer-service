@@ -498,6 +498,7 @@ class TreeController extends Controller
                                 $tree = collect([$mongoTree[0]['tree_structure']]);
                                 if (!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
                                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                    Log::info("953-issue line 501 -- ".$asOfTime);
                                 }
                             } else {
                                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
