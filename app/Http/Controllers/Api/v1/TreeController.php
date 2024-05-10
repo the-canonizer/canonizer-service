@@ -423,9 +423,9 @@ class TreeController extends Controller
             $algorithm = $request->input('algorithm');
 
             
-            Log::info("953-issue -- ".$asOfTime);
             $asOf = $request->input('asOf');
             $asOfTime = ($asOf=="default") ? time() : ceil($request->input('asofdate'));
+            Log::info("953-issue -- ".$asOfTime);
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
