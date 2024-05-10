@@ -151,9 +151,6 @@ class TreeController extends Controller
         $event_type         = $request->input('event_type') ?? NULL;
         $pre_LiveId         = $request->input('pre_LiveId') ?? NULL;
 
-        Log::info("additional_infoooo1");
-        Log::info(json_encode($request->all()));
-
         $start = microtime(true);
         $currentTime = time();
 
@@ -424,13 +421,11 @@ class TreeController extends Controller
 
             
             $asOf = $request->input('asOf');
-            $asOfTime = ceil($request->input('asofdate'));
-            Log::info("953-issue -- ".$asOfTime);
+            $asOfTime = ($asOf=="default") ? time() : ceil($request->input('asofdate'));
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
             $asOfDate = Helpers::getStartOfTheDay($asOfTime);
-            Log::info("953-issue -- ".$asOfDate);
             $campNumber = (int) $request->input('camp_num', 1);
             $topicId = $topicNumber . '_' . $campNumber;
 
@@ -465,7 +460,6 @@ class TreeController extends Controller
 
                 // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
                 if ($isLastJobPending || $asOf == "review") {
-                    Log::info("953-issue line 469 -- ".$asOfTime);
                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 } else {
                     if (($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
@@ -473,17 +467,14 @@ class TreeController extends Controller
                         $mongoTree = TreeRepository::findLatestTree($conditions);
 
                         if ($mongoTree && count($mongoTree)) {
-                            Log::info("953-issue line 476 -- ".$asOfTime);
                             // If requested asOfDate < The latest version asOfDate of tree in Mongo...
                             if ($asOfDate < $mongoTree[0]->as_of_date) {
 
                                 // Now check the tree exists in mongo for requested asOfDate..
                                 $mongoTree = TreeRepository::findTree($conditions);
-                                Log::info("953-issue line 482 -- ".$asOfTime);
                                 /* If the tree is not in mongo for that asOfDate, then create in mongo and
                                 return the tree */
                                 if ((!$mongoTree || !count($mongoTree))) {
-                                    Log::info("953-issue line 486 -- ".$asOfTime);
                                     // First check the topic exist in database, then we can run upsertTree.
                                     $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber, $asOfTime);
 
@@ -494,30 +485,23 @@ class TreeController extends Controller
                             }
 
                             if ($mongoTree && count($mongoTree)) {
-                                Log::info("953-issue line 497 -- ".$asOfTime);
                                 $tree = collect([$mongoTree[0]['tree_structure']]);
                                 if (!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
                                     $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                                    Log::info("953-issue line 501 -- ".$asOfTime);
                                 }
                             } else {
                                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                                Log::info("953-issue line 503 -- ".$asOfTime);
                             }
                         } else {
                             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                            Log::info("953-issue line 508 -- ".$asOfTime);
                         }
                     } else {
-                        Log::info("DB Case 2");
                         $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
-                        Log::info("953-issue line 513 -- ".$asOfTime);
                     }
                 }
             } else {
                 //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
                 $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
-                Log::info("953-issue line 518 -- ".$asOfTime);
             }
 
             $end = microtime(true);
