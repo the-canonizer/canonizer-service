@@ -421,7 +421,7 @@ class TreeController extends Controller
 
             
             $asOf = $request->input('asOf');
-            $asOfTime = ($asOf=="default") ? time() : ceil($request->input('asofdate'));
+            $asOfTime = ($asOf=="default" || $asOf=="review") ? time() : ceil($request->input('asofdate'));
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
