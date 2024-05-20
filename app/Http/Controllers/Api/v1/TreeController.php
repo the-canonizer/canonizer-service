@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Events\IncreaseTopicViewCountEvent;
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
@@ -535,6 +536,10 @@ class TreeController extends Controller
                     }
                 }
                 $responseArray['data'][0][1] = array_merge($responseArray['data'][0][1], ['collapsedTreeCampIds' => array_reverse(Helpers::renderParentsCampTree($topicNumber, $campNumber))]);
+            }
+
+            if ($request->has('view')) {
+                event(new IncreaseTopicViewCountEvent($topicNumber, $campNumber, $asOfTime, $request->view));
             }
 
             $response = $responseArray;
