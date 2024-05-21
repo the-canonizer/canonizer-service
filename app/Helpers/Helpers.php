@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Library\General;
-use App\Model\v1\{Camp, Nickname, Person, Topic};
+use App\Model\v1\{Camp, Nickname, Person, Topic, TopicView};
 use Carbon\Carbon;
 
 class Helpers
@@ -45,5 +45,10 @@ class Helpers
         }
 
         return array_merge([$camp->camp_num], self::renderParentsCampTree($topic_num, $camp->parent_camp_num));
+    }
+
+    public static function getCampViewByDay(int $topic_num, int $camp_num, Carbon $day, bool $needCountOnly = false)
+    {
+        return TopicView::where(['topic_num' => $topic_num, 'camp_num' => $camp_num])->whereBetween('created_at', [$day->startOfDay()->timestamp, $day->endOfDay()->timestamp])->first();
     }
 }

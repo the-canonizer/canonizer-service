@@ -16,6 +16,7 @@ use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
 use App\Model\v1\Statement;
+use App\Model\v1\TopicView;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
@@ -542,7 +543,9 @@ class TreeController extends Controller
                 event(new IncreaseTopicViewCountEvent($topicNumber, $campNumber, $asOfTime, $request->view));
             }
 
+            $responseArray['data'][0]['camp_views'] = Helpers::getCampViewByDay($topicNumber, $campNumber, Carbon::now())->views ?? 0;
             $response = $responseArray;
+            
             return $response;
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
