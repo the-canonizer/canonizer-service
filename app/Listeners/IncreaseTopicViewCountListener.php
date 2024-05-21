@@ -21,7 +21,7 @@ class IncreaseTopicViewCountListener implements ShouldQueue
     public function handle(IncreaseTopicViewCountEvent $event)
     {
         if (Hash::driver('argon2id')->check($event->asOfTime, '$argon2id$v=19$m=' . env('HASH_MEMORY_COST') . ',t=' . env('HASH_ITERATION') . ',p=' . env('HASH_PARALLELISM_FACTOR') . $event->view)) {
-            if ($view = Helpers::getCampViewByDay($event->topic_num, $event->camp_num, Carbon::now())) {
+            if ($view = Helpers::getCampViewsByDate($event->topic_num, $event->camp_num, Carbon::now(), 'record')) {
                 $view->increment('views');
             } else {
                 TopicView::create(['topic_num' => $event->topic_num, 'camp_num' => $event->camp_num, 'views' => 1]);

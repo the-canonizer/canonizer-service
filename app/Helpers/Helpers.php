@@ -47,8 +47,19 @@ class Helpers
         return array_merge([$camp->camp_num], self::renderParentsCampTree($topic_num, $camp->parent_camp_num));
     }
 
-    public static function getCampViewByDay(int $topic_num, int $camp_num, Carbon $day, bool $needCountOnly = false)
+    public static function getCampViewsByDate(int $topic_num, int $camp_num, ?Carbon $date = null, string $need = 'count')
     {
-        return TopicView::where(['topic_num' => $topic_num, 'camp_num' => $camp_num])->whereBetween('created_at', [$day->startOfDay()->timestamp, $day->endOfDay()->timestamp])->first();
+        $views = TopicView::where(['topic_num' => $topic_num, 'camp_num' => $camp_num])
+            ->when($date, fn ($query) => $query->whereBetween('created_at', [$date->startOfDay()->timestamp, $date->endOfDay()->timestamp]));
+
+        switch ($need) {
+            case 'count':
+                return intval($views->sum('views'));
+                break;
+
+            case 'record':
+                return $views->first();
+                break;
+        }
     }
 }
