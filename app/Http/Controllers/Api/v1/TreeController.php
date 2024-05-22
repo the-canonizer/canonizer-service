@@ -543,7 +543,7 @@ class TreeController extends Controller
                 event(new IncreaseTopicViewCountEvent($topicNumber, $campNumber, $asOfTime, $request->view));
             }
 
-            $responseArray['data'][0][1]['camp_views'] = Helpers::getCampViewsByDate($topicNumber, $campNumber, Carbon::parse($asOfTime));
+            $responseArray['data'][0][1]['camp_views'] = intval(Helpers::getCampViewsByDate($topicNumber, $campNumber));
             $response = $responseArray;
             
             return $response;
