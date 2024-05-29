@@ -534,7 +534,7 @@ class TreeController extends Controller
             }
 
             if ($request->has('view')) {
-                event(new IncreaseTopicViewCountEvent($topicNumber, $campNumber, $asOfTime, $request->view));
+                event(new IncreaseTopicViewCountEvent($topicNumber, $campNumber, ceil($request->input('asofdate')), $request->view));
             }
 
             $responseArray['data'][0][1]['camp_views'] = intval(Helpers::getCampViewsByDate($topicNumber, $campNumber));
