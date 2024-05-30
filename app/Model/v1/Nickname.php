@@ -357,8 +357,8 @@ class Nickname extends Model {
     }
 
     public static function personNicknameIdsByEmail($email) {
-            $userId= DB::table('person')->where('email',$email)->pluck('id')->first();
-            return DB::table('nick_name')->where('user_id', $userId)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+        $userId= DB::table('person')->where('email',$email)->pluck('id')->first();
+        return DB::table('nick_name')->where('user_id', $userId)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
     }
 
     public static function getUserIDByNickName($nick_id) {
@@ -390,7 +390,8 @@ class Nickname extends Model {
      * Talentelgia
      * Return owner code
      */
-    public static function getUserIdBynickId($nick_id){
+    public static function getOwnerCodeBynickId($nick_id)
+    {
         $nickname = self::find($nick_id);
         if (!empty($nickname) && count($nickname) > 0) {
             return $nickname->user_id;
@@ -404,13 +405,14 @@ class Nickname extends Model {
      * @nickId is nick name ID of a user
      * return all nick names associated with that user
      */
-    public static function personAllNicknamesByAnyNickId($nickId) {
-       $userId = self::getUserIdBynickId($nickId);
-       if(!empty($userId)){
-        return DB::table('nick_name')->select('id', 'nick_name')->where('user_id', $userId)->orderBy('nick_name', 'ASC')->get();
-       }else{
-        return [];
-       }
+    public static function personAllNicknamesByAnyNickId($nickId)
+    {
+        $userId = self::getUserIdBynickId($nickId);
+        if (!empty($userId)) {
+            return DB::table('nick_name')->select('id', 'nick_name')->where('user_id', $userId)->orderBy('nick_name', 'ASC')->get();
+        } else {
+            return [];
+        }
     }
 
 }
