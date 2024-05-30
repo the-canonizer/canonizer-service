@@ -253,7 +253,11 @@ class TopicController extends Controller
                 })->all();
 
             foreach ($topics as $key => $value) {
-                $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                if (is_object($value)) {
+                    $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+                } elseif (is_array($value)) {
+                    $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                }
             }
 
             return new TopicResource($topics);
