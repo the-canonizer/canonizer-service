@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Library\General;
-use App\Model\v1\{Camp, Nickname, Person, Topic};
+use App\Model\v1\{Camp, Nickname, Person,TopicView};
 use Carbon\Carbon;
 
 class Helpers
