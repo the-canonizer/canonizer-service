@@ -109,6 +109,7 @@ class GetAllTopicsApiTest extends TestCase
                         "topic_name",
                         "tree_structure",
                         "as_of_date",
+                        "camp_views",
                     ]
                 ]
             ],
