@@ -10,11 +10,13 @@ use App\Http\Resources\TopicResource;
 use App\Services\AlgorithmService;
 use App\Model\v1\Tree;
 use App\Model\v1\Timeline;
+use App\Model\v1\TopicView;
 use CampService;
 use TopicService;
 use UtilHelper;
 use Throwable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class TopicController extends Controller
 {
@@ -241,6 +243,22 @@ class TopicController extends Controller
             //     /** total pages */
             //     // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             // }
+
+            $topicViews = TopicView::select('topic_num', DB::raw('SUM(views) AS view_count'))
+                ->whereIn('topic_num', collect($topics)->pluck('topic_id')->all())
+                ->groupBy('topic_num')
+                ->get()
+                ->mapWithKeys(function ($item, int $key) {
+                    return [$item['topic_num'] => $item['view_count']];
+                })->all();
+
+            foreach ($topics as $key => $value) {
+                if (is_object($value)) {
+                    $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+                } elseif (is_array($value)) {
+                    $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                }
+            }
 
             return new TopicResource($topics);
         } catch (Throwable $th) {
