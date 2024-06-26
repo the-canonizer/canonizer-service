@@ -27,7 +27,12 @@ class User extends Model
         'password', 'remember_token',
     ];
     
-    
+    // Define the accessor for the profile_picture_path attribute
+    public function getProfilePicturePathAttribute($value)
+    {
+        return urldecode(env('AWS_PUBLIC_URL') . '/' . $value);
+    }
+
     public static function getByEmail($email){        
         $user = User::where('email', $email)->first();
        return !empty($user) ? $user : false;

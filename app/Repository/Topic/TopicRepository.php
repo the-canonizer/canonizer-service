@@ -92,7 +92,8 @@ class TopicRepository implements TopicInterface
                 'algorithm_id' => 1,
                 'submitter_nick_id' => 1,
                 'created_by_nick_id' => 1,
-                'tree_structure.1.review_title' => 1
+                'tree_structure.1.review_title' => 1,
+                'tree_structure.1.support_tree' => 1
             ];
 
             if(isset($sort) && $sort){

@@ -252,6 +252,16 @@ class Nickname extends Model {
         return User::find($nickname->user_id);
     }
 
+    public static function getUsersByNickNameIds(array $nick_name_ids, array $columns = ['*'])
+    {
+        $userNickIds = self::whereIn('id', $nick_name_ids)->get();
+        return User::select($columns)->whereIn('id', $userNickIds->pluck('user_id')->toArray())->get()->transform(function ($item) use ($userNickIds) {
+            $item = $item->toArray();
+            $item['nick_name_id'] = $userNickIds->where('user_id', $item['id'])->first()->id;
+            return $item;
+        })->values()->keyBy('nick_name_id')->all();
+    }
+
     public static function getNickName($nick_id) {
 
         return $nickname = self::find($nick_id);
@@ -415,4 +425,7 @@ class Nickname extends Model {
         }
     }
 
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }

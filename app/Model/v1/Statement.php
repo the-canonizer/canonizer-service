@@ -3,7 +3,7 @@
 namespace App\Model\v1;
 
 use Illuminate\Database\Eloquent\Model;
-use DB;
+use Illuminate\Support\Str;
 
 class Statement extends Model {
 
@@ -95,5 +95,40 @@ class Statement extends Model {
     }
 
 
+    public static function getLiveStatementText($topicnum, $campnum)
+    {
+        $statement = self::select('parsed_value')
+            ->where('topic_num', $topicnum)
+            ->where('camp_num', $campnum)
+            ->where('objector_nick_id', '=', null)
+            ->where('go_live_time', '<=', time())
+            ->orderBy('submit_time', 'desc')
+            ->first()->parsed_value ?? null;
+
+        $statement = preg_replace('/[^a-zA-Z0-9_ %\.\?%&-]/s', '', self::stripTagsExcept($statement, ['figure', 'table']));
+        $statement = Str::of($statement)->trim()->words(30);
+        return $statement;
+    }
+
+
+    public static function stripTagsExcept($html, $excludeTags = [])
+    {
+        if (!is_string($html)) {
+            return $html;
+        }
+        $excludeTagsPattern = implode('|', array_map(function ($tag) {
+            return preg_quote($tag, '/');
+        }, $excludeTags));
+
+        // Remove the content and tags of the excluded tags
+        $pattern = '/<(' . $excludeTagsPattern . ')\b[^>]*>(.*?)<\/\1>/is';
+        $html = preg_replace($pattern, '', $html);
+
+        // Strip all remaining tags
+        return strip_tags($html);
+
+        // Decode HTML entities to get the proper text
+        // $cleanedText = html_entity_decode($cleanedText, ENT_QUOTES, 'UTF-8');
+    }
 
 }
