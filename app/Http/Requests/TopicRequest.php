@@ -36,7 +36,8 @@ class TopicRequest extends FormRequest
                         'asofdate' => 'required',
                         'algorithm' => 'required|string',
                         'asof' => 'required|string',
-                        'search' => 'nullable|string'
+                        'search' => 'nullable|string',
+                        'page' => 'nullable|string'
                     ];
                     break;
                 }

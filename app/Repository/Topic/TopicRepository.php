@@ -37,11 +37,11 @@ class TopicRepository implements TopicInterface
      * @throws \Throwable
      * @return array The response array
      */
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false)
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false, $page = 'home')
     {
         $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
-
+        $recordCount = 0;
         try {
             // Track the execution time of the code.
             $start = microtime(true);
@@ -100,7 +100,7 @@ class TopicRepository implements TopicInterface
                 'tree_structure.1.review_title' => 1,
             ];
 
-            if (request()->segment(2) === 'v2') {
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
                 $projection['tree_structure.1.support_tree'] = 1;
             }
 
@@ -183,9 +183,12 @@ class TopicRepository implements TopicInterface
                 ],
             ];
 
-            $recordCount = $this->treeModel::raw(function ($collection) use ($aggregate) {
-                return $collection->aggregate($aggregate);
-            })->count();
+
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
+                $recordCount = $this->treeModel::raw(function ($collection) use ($aggregate) {
+                    return $collection->aggregate($aggregate);
+                })->count();
+            }
 
             if ($applyPagination) {
                 $aggregate = array_merge($aggregate, [
@@ -206,7 +209,11 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
-            return ['topics' => collect($record)->skip($skip)->all(), 'totalCount' => $recordCount, 'time_elapsed_secs' =>  microtime(true) - $start];
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
+                return ['topics' => collect($record)->skip($skip)->all(), 'totalCount' => $recordCount, 'time_elapsed_secs' =>  microtime(true) - $start];
+            }
+
+            return collect($record)->skip($skip)->all();
         } catch (\Throwable $th) {
             throw $th;
         }

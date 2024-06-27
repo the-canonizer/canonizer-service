@@ -152,7 +152,7 @@ class TopicController extends Controller
      *                  )
      * )
      */
-    
+
     /**
      * Retrieves all topics based on the provided request parameters.
      *
@@ -185,6 +185,8 @@ class TopicController extends Controller
             $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
             $totalCount = 0;
             $sort = ($request->has('sort')) ?  $request->input('sort') : false;
+            $page = $request->input('page') ?: "home";
+
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -201,21 +203,22 @@ class TopicController extends Controller
             $topicsFoundInMongo = Tree::count();
 
             if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
-                $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort);
+                $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page);
                 extract($topics);
             } else {
                 /*  search & filter functionality */
                 $topics = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, false, $archive, $sort);
-                $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort);
-
-                $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
+                if ($page === 'browse') {
+                    $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort);
+                }
+                $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime, $page);
 
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {
                     $topics = TopicServiceFacade::filterTopicCollection($topics, $filter);
                 }
             }
-            
+
             $topicViews = TopicView::getTopicViewCounts(collect($topics)->pluck('topic_id')->all())->mapWithKeys(function ($item) {
                 return [$item['topic_num'] => $item['view_count']];
             })->all();
@@ -227,15 +230,19 @@ class TopicController extends Controller
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
-                    $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
-                    foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
-                        $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,profile_picture_path')->find($support['nick_name_id'])->user;
+                    if ($page === 'browse') {
+                        $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
+                        foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
+                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,profile_picture_path')->find($support['nick_name_id'])->user;
+                        }
                     }
                 } elseif (is_array($value)) {
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
-                    $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
-                    foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
-                        $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,profile_picture_path')->find($support['nick_name_id'])->user;
+                    if ($page === 'browse') {
+                        $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
+                        foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,profile_picture_path')->find($support['nick_name_id'])->user;
+                        }
                     }
                 }
             }
