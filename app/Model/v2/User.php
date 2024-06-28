@@ -30,6 +30,9 @@ class User extends Model
     // Define the accessor for the profile_picture_path attribute
     public function getProfilePicturePathAttribute($value)
     {
+        if (is_null($value)) {
+            return null;
+        }
         return urldecode(env('AWS_PUBLIC_URL') . '/' . $value);
     }
 
