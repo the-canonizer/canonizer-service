@@ -9,8 +9,15 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
-class IncreaseTopicViewCountListener
+class IncreaseTopicViewCountListener implements ShouldQueue
 {
+    /**
+     * The name of the queue the job should be sent to.
+     *
+     * @var string|null
+     */
+    public $queue = 'camp-views-count';
+
     /**
      * Handle the event.
      *
