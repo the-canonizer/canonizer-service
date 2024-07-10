@@ -30,7 +30,7 @@ class IncreaseTopicViewCountListener implements ShouldQueue
             if ($view = TopicView::where(['topic_num' => $event->topic_num, 'camp_num' => $event->camp_num])->whereBetween('created_at', [Carbon::now()->startOfDay()->timestamp, Carbon::now()->endOfDay()->timestamp])->first()) {
                 $view->increment('views');
             } else {
-                TopicView::create(['topic_num' => $event->topic_num, 'camp_num' => $event->camp_num]);
+                TopicView::create(['topic_num' => $event->topic_num, 'camp_num' => $event->camp_num, 'views' => 1]);
             }
         }
     }
