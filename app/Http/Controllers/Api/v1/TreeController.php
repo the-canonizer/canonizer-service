@@ -151,9 +151,6 @@ class TreeController extends Controller
         $event_type         = $request->input('event_type') ?? NULL;
         $pre_LiveId         = $request->input('pre_LiveId') ?? NULL;
 
-        Log::info("additional_infoooo1");
-        Log::info(json_encode($request->all()));
-
         $start = microtime(true);
         $currentTime = time();
 
@@ -422,13 +419,13 @@ class TreeController extends Controller
             $topicNumber = (int) $request->input('topic_num');
             $algorithm = $request->input('algorithm');
 
-            $asOfTime = ceil($request->input('asofdate'));
+            
             $asOf = $request->input('asOf');
+            $asOfTime = ($asOf=="default" || $asOf=="review") ? time() : ceil($request->input('asofdate'));
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
             $asOfDate = Helpers::getStartOfTheDay($asOfTime);
-
             $campNumber = (int) $request->input('camp_num', 1);
             $topicId = $topicNumber . '_' . $campNumber;
 
@@ -470,13 +467,11 @@ class TreeController extends Controller
                         $mongoTree = TreeRepository::findLatestTree($conditions);
 
                         if ($mongoTree && count($mongoTree)) {
-
                             // If requested asOfDate < The latest version asOfDate of tree in Mongo...
                             if ($asOfDate < $mongoTree[0]->as_of_date) {
 
                                 // Now check the tree exists in mongo for requested asOfDate..
                                 $mongoTree = TreeRepository::findTree($conditions);
-
                                 /* If the tree is not in mongo for that asOfDate, then create in mongo and
                                 return the tree */
                                 if ((!$mongoTree || !count($mongoTree))) {
@@ -501,7 +496,6 @@ class TreeController extends Controller
                             $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                         }
                     } else {
-                        Log::info("DB Case 2");
                         $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                 }
