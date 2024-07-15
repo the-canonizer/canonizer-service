@@ -120,7 +120,7 @@ class CampService
             $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
            
-            $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime);
+            $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime, $asOf);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
             
             return $reducedTree = TopicSupport::sumTranversedArraySupportCount($tree);
@@ -348,13 +348,15 @@ class CampService
                     $array[$support->nick_name_id]['nick_name_link'] = Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum);
                     $array[$support->nick_name_id]['delegate_nick_name_id'] = $support->delegate_nick_name_id;
                     $delegateArr = $delegateTree[$support->nick_name_id]['delegates'];
+                    $liveCamp = static::getLiveCamp($topicNum, $campNum, [], $asOfTime);
+                    $array[$support->nick_name_id]['camp_leader'] = $liveCamp->camp_leader_nick_id > 0 && $liveCamp->camp_leader_nick_id == $support->nick_name_id;
                     $array[$support->nick_name_id]['delegates'] = $this->traverseChildTree($algorithm, $topicNum, $campNum, $support->nick_name_id, $parentSupportOrder, $multiSupport,$delegateArr, $asOfTime, $namespaceId);
                 }  
             }
             return self::sortTraversedSupportCountTreeArray($array);
     }
 
-    public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime){
+    public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime, $asOf = 'default'){
         try{
 
             if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNum}_{$algorithm}"))
@@ -377,6 +379,7 @@ class CampService
         $array = [];
         
         $liveTopic = TopicService::getLiveTopic($topicNum,$asOfTime, ['nofilter'=>true]);
+        $liveCamp = static::getLiveCamp($topicNum, $campNum, [], $asOfTime, $asOf);
         $namespaceId = (isset($liveTopic->namespace_id) && $liveTopic->namespace_id ) ? $liveTopic->namespace_id : 1; 
         foreach($supports as $key =>$support){            
             $array[$support->nick_name_id] = [
@@ -385,7 +388,8 @@ class CampService
                     'nick_name' => $support->nick_name,
                     'nick_name_id' => $support->nick_name_id,
                     'nick_name_link' => Nickname::getNickNameLink($support->nick_name_id, $namespaceId, $topicNum, $campNum),
-                    'delegates' => []    
+                    'delegates' => [],
+                    'camp_leader' => $liveCamp->camp_leader_nick_id > 0 && $liveCamp->camp_leader_nick_id == $support->nick_name_id,
                 ];
            
             $currentCampSupport = 0;
