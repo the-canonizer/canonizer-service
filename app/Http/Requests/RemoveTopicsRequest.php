@@ -23,22 +23,8 @@ class RemoveTopicsRequest extends FormRequest
      */
     protected function rules(): array
     {
-        switch ($this->method()) {
-
-            case 'POST': {
-                    return [
-                        'topic_numbers' => 'required|array',
-                    ];
-                    break;
-                }
-            case 'GET': {
-                    return [
-                        'topic_numbers' => 'required|array',
-                    ];
-                    break;
-            }
-            default:
-                break;
-        }
+        return [
+            'topic_numbers' => 'required|array',
+        ];
     }
 }

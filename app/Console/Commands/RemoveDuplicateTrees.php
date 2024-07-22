@@ -2,11 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
-use App\Model\v1\Tree;
+use App\Model\v1\{CommandHistory, Tree};
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use UtilHelper;
 
 class RemoveDuplicateTrees extends Command
@@ -28,16 +28,6 @@ class RemoveDuplicateTrees extends Command
         {--do-not-delete} is used to log all the duplicated records without deleting the record.';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
@@ -47,15 +37,11 @@ class RemoveDuplicateTrees extends Command
         Log::info('Remove duplication command started...');
         $start = microtime(true);
 
-        $asOfTime = $this->argument('asOfTime') ?? NULL;
+        $asOfTime = $this->argument('asOfTime') ?? null;
         $doNotDelete = $this->option('do-not-delete') ? true : false;
 
         // check the argument of asOfTime with command / else use the current time.
-        if (!empty($asOfTime)) {
-            $asOfTime = intval($asOfTime);
-        } else {
-            $asOfTime = time();
-        }
+        $asOfTime = !empty($asOfTime) ? intval($asOfTime) : time();
 
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
@@ -68,13 +54,6 @@ class RemoveDuplicateTrees extends Command
 
         try {
             $startOfTheDay = Carbon::parse($asOfTime)->startOfDay();
-            // If tree:remove-duplicate command is already running, don't execute command
-            $commandStatement = "php artisan tree:remove-duplicate";
-            $commandSignature = "tree:remove-duplicate";
-
-            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-
-            // if (!$commandStatus) {
 
             $algorithmes = $this->getDistinctTreeAlgorithm();
 
@@ -91,7 +70,7 @@ class RemoveDuplicateTrees extends Command
                 Log::info($algorithm . '=> ' . json_encode($test->all()));
 
                 if (!$doNotDelete) {
-                    $users = Tree::whereIn('_id', $duplicatedDocuments->all())->delete();
+                    Tree::whereIn('_id', $duplicatedDocuments->all())->delete();
                 }
             }
 
@@ -100,7 +79,7 @@ class RemoveDuplicateTrees extends Command
             } else {
                 $this->info('Duplicated data logged.');
             }
-            // }
+
             $time_elapsed_secs = microtime(true) - $start;
             $this->info('tree:remove-duplicate execution time: ' . $time_elapsed_secs);
             Log::info('Remove duplication command ended...');

@@ -43,8 +43,6 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
             $execution_time = ($time_end - $time_start);
             dd(' Specific topic timelines generated successfully. Execution Time is:  '.($execution_time).' seconds');
         });
-
     });
-
 });
 
