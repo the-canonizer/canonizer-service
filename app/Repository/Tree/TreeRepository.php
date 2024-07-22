@@ -2,7 +2,7 @@
 
 namespace App\Repository\Tree;
 
-use App\Model\v1\Tree;
+use App\Models\v1\Tree;
 use App\Repository\Tree\TreeInterface;
 
 class TreeRepository implements TreeInterface

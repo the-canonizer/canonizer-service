@@ -2,18 +2,10 @@
 
 namespace App\Services;
 
-use CampService;
-use TreeRepository;
-use DateTimeHelper;
-use TopicService;
-use AlgorithmService;
-use App\Exceptions\Camp\CampTreeException;
-use App\Exceptions\Camp\CampURLException;
-use App\Exceptions\Camp\CampDetailsException;
-use App\Exceptions\Camp\CampSupportCountException;
-use App\Exceptions\Camp\CampTreeCountException;
-use Illuminate\Support\Facades\Log;
-
+use App\Facades\Services\{AlgorithmServiceFacade, CampServiceFacade, TopicServiceFacade};
+use App\Exceptions\{Camp\CampTreeException, Camp\CampURLException, Camp\CampDetailsException, Camp\CampSupportCountException, Camp\CampTreeCountException};
+use App\Facades\Helpers\DateTimeHelperFacade;
+use App\Facades\Repositories\TreeRepositoryFacade;
 
 class TreeService
 {
@@ -91,19 +83,19 @@ class TreeService
     public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
     {
 
-        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm,"tree");
+        $algorithms =  AlgorithmServiceFacade::getCacheAlgorithms($updateAll, $algorithm,"tree");
         $rootUrl =  $this->getRootUrl($request);
         $asOf = $request['asOf'] ?? 'default';
         $startCamp = 1;
-        $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
+        $topicCreatedByNickId = TopicServiceFacade::getTopicAuthor($topicNumber);
         $rtnTree = '';
         foreach ($algorithms as $algo) {
             try {
-                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl, null, $asOf);
-                $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
-                $topicInReview = TopicService::getReviewTopic($topicNumber);
+                $tree = CampServiceFacade::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl, null, $asOf);
+                $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                $topicInReview = TopicServiceFacade::getReviewTopic($topicNumber);
                 //get date string from timestamp
-                $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
+                $asOfDate = DateTimeHelperFacade::getAsOfDate($asOfTime);
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
@@ -111,7 +103,7 @@ class TreeService
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
             }
 
-            $tree = TreeRepository::upsertTree($mongoArr, $conditions);
+            $tree = TreeRepositoryFacade::upsertTree($mongoArr, $conditions);
             if ($algorithm == $algo) {
                 $rtnTree = $tree;
             }
@@ -138,7 +130,7 @@ class TreeService
         $asOf = $request->asOf ?? 'default';
         $startCamp = 1;
         try {
-           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
+           $tree = CampServiceFacade::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
         }
         catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

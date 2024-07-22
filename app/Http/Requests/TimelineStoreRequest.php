@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use Anik\Form\FormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
 class TimelineStoreRequest extends FormRequest
 {
@@ -23,26 +23,18 @@ class TimelineStoreRequest extends FormRequest
      */
     protected function rules(): array
     {
-        switch ($this->method()) {
+        return match ($this->method()) {
 
-            case 'POST': {
-                    return [
-                        'topic_num' => 'required|integer',
-                        //'asofdate' => 'required',
-                        'algorithm' => 'required|string',
-                        'update_all' => 'in:0,1'
-                    ];
-                    break;
-                }
-            case 'GET': {
-                    return [
-                        'topic_num' => 'required|integer',
-                        'algorithm' => 'required|string'
-                    ];
-                    break;
-                }
-            default:
-                break;
-        }
+            'POST' => [
+                'topic_num' => 'required|integer',
+                'algorithm' => 'required|string',
+                'update_all' => 'in:0,1'
+            ],
+            'GET' => [
+                'topic_num' => 'required|integer',
+                'algorithm' => 'required|string'
+            ],
+            default => [],
+        };
     }
 }

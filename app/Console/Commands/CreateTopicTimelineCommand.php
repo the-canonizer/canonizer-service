@@ -2,19 +2,19 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
+use App\Models\v1\CommandHistory;
 use Illuminate\Console\Command;
-use App\Model\v1\Namespaces;
-use App\Model\v1\Topic;
+use App\Models\v1\Namespaces;
+use App\Models\v1\Topic;
 use Carbon\Carbon;
 use Exception;
 use TimelineService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 use UtilHelper;
-use App\Model\v1\Camp;
-use App\Model\v1\Nickname;
-use App\Model\v1\Timeline;
+use App\Models\v1\Camp;
+use App\Models\v1\Nickname;
+use App\Models\v1\Timeline;
 use App\Services\AlgorithmService;
 use Illuminate\Support\Facades\DB;
 use TimelineRepository;

@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
-use App\Model\v1\Tree;
+use App\Models\v1\CommandHistory;
+use App\Models\v1\Tree;
 use App\Services\AlgorithmService;
 use TopicRepository;
 use Illuminate\Console\Command;

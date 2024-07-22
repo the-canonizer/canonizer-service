@@ -2,7 +2,7 @@
 
 namespace App\Repository\Timeline;
 
-use App\Model\v1\Timeline;
+use App\Models\v1\Timeline;
 use App\Repository\Timeline\TimelineInterface;
 
 class TimelineRepository implements TimelineInterface

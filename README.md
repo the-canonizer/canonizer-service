@@ -1,202 +1,66 @@
-<div id="top"></div>
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<!-- PROJECT LOGO -->
-<br />
-<div align="center">
-  <a href="https://canonizer.com">
-    <img src="https://github.com/shahab-ramzan/read-me/blob/main/canonizer-fav.png" alt="Logo" width='80' >
-  </a>
-  <h3 align="center">Canonizer-3.0</h3>
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-  <p align="center">
-    <br />
-    <a href="https://canonizer.com/" style="color: #FFF;">View Demo</a>
-    ·
-    <a href="https://github.com/the-canonizer/canonizer-service/issues" style="color: #FFF;">Report Bug</a>
-    ·
-    <a href="https://github.com/the-canonizer/canonizer-service/issues" style="color: #FFF;">Request New Feature</a>
-  </p>
-</div>
+## About Laravel
 
-<!-- TABLE OF CONTENTS -->
-<details>
-  <summary>Table of Contents</summary>
-  <ol>
-    <li>
-      <a href="#objective">Objective</a>
-    </li>
-    <li>
-      <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
-    </li>
-    <li>
-      <a href="#contributing">Contributing</a>
-      <ul>
-        <li><a href="#Fork-this-repository">Fork this repository</a></li>
-        <li><a href="#Create-a-branch">Create a branch</a></li>
-        <li><a href="#Make-the-change">Make the change</a></li>
-        <li><a href="#Push-the-change">Push the change</a></li>
-      </ul>
-    </li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-  </ol>
-</details>
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-## Objective
-The objective of this repo is to provide the core building block for (https://canonizer.com/). This repo is responsible for managing initial data for canonizer by linkup with Canonizer3.0(https://github.com/the-canonizer/canonizer-3.0-api) and responsible to store data mongodb.
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-<!-- ABOUT THE PROJECT -->
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-## About The Project
+## Learning Laravel
 
-[![Product Name Screen Shot][product-screenshot]](https://canonizer.com)
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-A wiki system that solves the critical liabilities of Wikipedia. It solves petty "edit wars" by providing contributors the ability to create and join camps and present their views without having them immediately erased. It also provides ways to standardize definitions and vocabulary, especially important in new fields.
+You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
-### Built With
+## Laravel Sponsors
 
-- [Laravel Lumen](https://lumen.laravel.com/docs/8.x)
-- [MongoDb](https://www.mongodb.com/)
-- Unit Testing
-  - [PHP Unit Testing](https://phpunit.de/)
+We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+### Premium Partners
 
-<!-- GETTING STARTED -->
-
-## Getting Started
-
-To get a local copy up and running follow these simple steps.
-
-### Prerequisites
-
-1. Git
-2. PHP: version 7.4 or higher
-3. MongoDb: version 6.0 or higher 
-4. MySql
-5. Composer(https://getcomposer.org/download/) 
-5. A clone of the [canonizer-service](https://github.com/the-canonizer/canonizer-service) repo on your local machine
-
-### Installation
-
-1. Clone the repo
-   ```sh
-   git clone https://github.com/the-canonizer/canonizer-service.git
-   ```
-2. Go into the project root
-   ```sh
-   cd canonizer-service
-   ```
-3. Copy environment variables from `.env.example` to `.env` file
-   ```sh
-   cp .env.example .env
-   ```
-4. Install Dependency packages
-   ```sh
-   composer install
-   ```
-5. Make the mongodb connection string and place in .env
-6. To start the hot-reloading development server
-   ```sh
-   php artisan serve
-   ```
-7. Run the command to make data on mongodb.
-   ```sh
-   php artisan tree:all
-   ```
-8. Check the status of results on postman
-   ```sh
-   open http://localhost:8002 
-   ```
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- CONTRIBUTING -->
+- **[Vehikl](https://vehikl.com/)**
+- **[Tighten Co.](https://tighten.co)**
+- **[WebReinvent](https://webreinvent.com/)**
+- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
+- **[64 Robots](https://64robots.com)**
+- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
+- **[Cyber-Duck](https://cyber-duck.co.uk)**
+- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
+- **[Jump24](https://jump24.co.uk)**
+- **[Redberry](https://redberry.international/laravel/)**
+- **[Active Logic](https://activelogic.com)**
+- **[byte5](https://byte5.de)**
+- **[OP.GG](https://op.gg)**
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-If you have a suggestion that would make this better, please clone the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+## Code of Conduct
 
-<img align="right" width="300" src="https://firstcontributions.github.io/assets/Readme/fork.png" alt="fork this repository" />
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Fork this repository
+## Security Vulnerabilities
 
-Fork this repository by clicking on the fork button on the top of this page.
-This will create a copy of this repository in your account.
-
-### Branch Naming Conventions
-
-To contribute on it for any issue you can check the rules/example for naming the branches.
-(https://docs.google.com/document/d/1qm5hqWfayHczDWOe74t-cLG7ovEJVa_jLhjICkaIjv8/)
-
-### Create a branch
-
-1. `git checkout master` from any folder in your local `canonizer-service` repository
-2. `git pull origin master` to ensure you have the latest main code
-3. `git checkout -b the-name-of-my-branch` (replacing `the-name-of-my-branch` with a suitable name) to create a branch
-
-<!--
-1. Clone the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Pretiffy the code for standard indendation (`npm run format`)
-4. Make sure no one test case is being failed (`npm run test`)
-5. Make sure Build is created successfuly (`npm run build`)
-6. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-7. Push to the Branch (`git push origin feature/AmazingFeature`)
-8. Open a Pull Request
- -->
-
-### Make the change
-
-1. Save the files and check by requesting on any internal API.
-
-### Push the change
-
-1. `git add -A && git commit -m "My message"` (replacing `My message` with a commit message, such as `Fix in logic of specific function`) to stage and commit your changes
-2. `git push my-fork-name the-name-of-my-branch`
-3. Go to the [canonizer-service repo](https://github.com/the-canonizer/canonizer-service) repo and you should see recently pushed branches.
-4. Follow GitHub's instructions to create the Pull Request to master.
-5. If possible, include screenshots of visual changes.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- LICENSE -->
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
 ## License
 
-Will be added.
-
-<!--
-Distributed under the MIT License. See `LICENSE.txt` for more information.
- -->
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- CONTACT -->
-
-## Contact
-
-Brent Allsop - [@Brent's_twitter](https://twitter.com/Brent_Allsop) - brent.allsop@gmail.com
-
-Project Link: [https://canonizer.com](https://canonizer.com)
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-
-[product-screenshot]: https://github.com/shahab-ramzan/read-me/blob/main/Canonizer%20(1).png
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).

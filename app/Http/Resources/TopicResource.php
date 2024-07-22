@@ -30,9 +30,7 @@ class TopicResource extends ResourceCollection
      */
     public function toArray($request)
     {
-
         if (count(array($this->resource)) > 0) {
-
             return [
                 'status_code' => 200,
                 'message' => 'Success',
@@ -42,8 +40,7 @@ class TopicResource extends ResourceCollection
                     // 'number_of_pages' => $this->numberOfPages
                 ],
             ];
-        } else if (count(array($this->resource)) <= 0) {
-
+        } elseif (count(array($this->resource)) <= 0) {
             return [
                 'status_code' => 404,
                 'message' => "No data found",
@@ -54,7 +51,6 @@ class TopicResource extends ResourceCollection
                 ]
             ];
         } else {
-
             return [
                 'status_code' => 400,
                 'message' => "something went wrong",

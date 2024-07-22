@@ -2,7 +2,7 @@
 
 namespace App\Repository\Topic;
 
-use App\Model\v1\Tree;
+use App\Models\v1\Tree;
 use App\Repository\Topic\TopicInterface;
 
 class TopicRepository implements TopicInterface

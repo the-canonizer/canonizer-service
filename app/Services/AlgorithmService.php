@@ -2,14 +2,10 @@
 
 namespace App\Services;
 
-use App\Model\v1\EtherAddresses;
-use App\Model\v1\Nickname;
-use App\Model\v1\SharesAlgorithm;
+use App\Models\v1\{EtherAddresses, Nickname, SharesAlgorithm};
 use App\Exceptions\Algorithm\ShareAlgorithmException;
-use Illuminate\Support\Facades\Cache;
-use DB;
-use CampService;
-use UtilHelper;
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Facades\Services\CampServiceFacade;
 
 /**
  * Class AlgorithmService.
@@ -64,7 +60,7 @@ class AlgorithmService
 
     public function mind_experts($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
-        return CampService::campTreeCount(81, $nickNameId,$topicNumber,$campNumber, $asOfTime);
+        return CampServiceFacade::campTreeCount(81, $nickNameId,$topicNumber,$campNumber, $asOfTime);
     }
 
     /**
@@ -79,7 +75,7 @@ class AlgorithmService
 
     public function computer_science_experts($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
-        return CampService::campTreeCount(124, $nickNameId, $topicNumber, $campNumber,$asOfTime);
+        return CampServiceFacade::campTreeCount(124, $nickNameId, $topicNumber, $campNumber,$asOfTime);
     }
 
     /**
@@ -101,7 +97,7 @@ class AlgorithmService
             '(topic_num = 55 and camp_num = 15) or ' .
             '(topic_num = 55 and camp_num = 17)';
 
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -124,7 +120,7 @@ class AlgorithmService
             '(topic_num = 54 and camp_num = 10) or ' .
             '(topic_num = 54 and camp_num = 11) or ' .
             '(topic_num = 54 and camp_num = 18)';
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -140,7 +136,7 @@ class AlgorithmService
     public function secular($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 54 and camp_num = 3)';
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -159,7 +155,7 @@ class AlgorithmService
             '(topic_num = 54 and camp_num = 9) or ' .
             '(topic_num = 54 and camp_num = 10) or ' .
             '(topic_num = 54 and camp_num = 11)';
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -174,7 +170,7 @@ class AlgorithmService
     public function uu($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 54 and camp_num = 15)';
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -192,7 +188,7 @@ class AlgorithmService
             '(topic_num = 2 and camp_num = 2) or ' .
             '(topic_num = 2 and camp_num = 4) or ' .
             '(topic_num = 2 and camp_num = 5)';
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -220,7 +216,7 @@ class AlgorithmService
             '(topic_num = 48 and camp_num = 3) or ' .
             '(topic_num = 49 and camp_num = 2) ';
 
-        return CampService::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
+        return CampServiceFacade::campCount($nickNameId, $condition, false, $topicNumber, $campNumber, $asOfTime);
     }
 
     /**
@@ -238,7 +234,7 @@ class AlgorithmService
     public function united_utah($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 2)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 2, $asOfTime,$topicNumber);
+        return CampServiceFacade::campCount($nickNameId, $condition, true, 231, 2, $asOfTime,$topicNumber);
     }
 
     /**
@@ -256,13 +252,13 @@ class AlgorithmService
     public function republican($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 3)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
+        return CampServiceFacade::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
     }
 
     // Forward party Algorith using related topic and camp
     public function forward_party($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null){
         $condition = '(topic_num = 231 and camp_num = 6)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
+        return CampServiceFacade::campCount($nickNameId, $condition, true, 231, 3, $asOfTime,$topicNumber);
     }
 
     /**
@@ -280,7 +276,7 @@ class AlgorithmService
     public function democrat($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $condition = '(topic_num = 231 and camp_num = 4)';
-        return CampService::campCount($nickNameId, $condition, true, 231, 4, $asOfTime,$topicNumber);
+        return CampServiceFacade::campCount($nickNameId, $condition, true, 231, 4, $asOfTime,$topicNumber);
     }
 
     /**
@@ -324,7 +320,7 @@ class AlgorithmService
         foreach ($ethers as $ether) { // If users has multiple addresses
 
             $body = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBalance\",\"params\": [\"$ether->address\", \"latest\"],\"id\":1}";
-            $curlResponse = UtilHelper::curlExecute($method, $etherUrl, $headers, $body);
+            $curlResponse = UtilHelperFacade::curlExecute($method, $etherUrl, $headers, $body);
 
             if (!isset($response) || empty($response) || $response == '' || $response == null) {
                 return 0;

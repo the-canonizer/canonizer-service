@@ -2,18 +2,9 @@
 
 namespace App\Services;
 
-use CampService;
-use TimelineRepository;
-use DateTimeHelper;
-use TopicService;
-use AlgorithmService;
-use App\Exceptions\Camp\CampTreeException;
-use App\Exceptions\Camp\CampURLException;
-use App\Exceptions\Camp\CampDetailsException;
-use App\Exceptions\Camp\CampSupportCountException;
-use App\Exceptions\Camp\CampTreeCountException;
-use Illuminate\Support\Facades\Log;
-
+use App\Facades\Services\{AlgorithmServiceFacade, CampServiceFacade, TopicServiceFacade};
+use App\Facades\Repositories\TimelineRepositoryFacade;
+use App\Exceptions\{Camp\CampTreeException, Camp\CampURLException, Camp\CampDetailsException, Camp\CampSupportCountException, Camp\CampTreeCountException};
 
 class TimelineService
 {
@@ -93,7 +84,7 @@ class TimelineService
     public function upsertTimeline($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name, $camp_num, $camp_name, $k=0, $url=null)
     {
        
-        $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm, "timeline");
+        $algorithms =  AlgorithmServiceFacade::getCacheAlgorithms($updateAll, $algorithm, "timeline");
         if($timelineType=="history"){
             $rootUrl =  $this->getRootUrlHistory($request);
         }
@@ -101,20 +92,20 @@ class TimelineService
             $rootUrl =  $this->getRootUrl($request);
         }
         $startCamp = 1;
-        $topicCreatedByNickId = TopicService::getTopicAuthor($topicNumber);
+        $topicCreatedByNickId = TopicServiceFacade::getTopicAuthor($topicNumber);
         foreach ($algorithms as $algo) { 
             try {
                 
                 if($timelineType=="history"){
-                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
-                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
+                    $tree = CampServiceFacade::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl,$nickNameId = null, $asOf = 'bydate', $fetchTopicHistory = 0);
+                    $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false],$asOf = 'bydate', $fetchTopicHistory = 0);
                 }
                 else{
-                    $tree = CampService::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
-                    $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                    $tree = CampServiceFacade::prepareCampTimeline($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl);
+                    $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 }
-                //$topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
-                $topicInReview = TopicService::getReviewTopic($topicNumber);
+                //$topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                $topicInReview = TopicServiceFacade::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = $asOfTime;
                 $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $message, $type, $id, $old_parent_id, $new_parent_id, $topic_name, $camp_num, $camp_name, $k,$rootUrl,$url);
@@ -124,7 +115,7 @@ class TimelineService
                 return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];
             }
 
-            $tree = TimelineRepository::upsertTimeline($mongoArr, $conditions);
+            $tree = TimelineRepositoryFacade::upsertTimeline($mongoArr, $conditions);
         }
 
         return $tree;
@@ -148,7 +139,7 @@ class TimelineService
         $asOf = $request->asOf ?? 'default';
         $startCamp = 1;
         try {
-           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
+           $tree = CampServiceFacade::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
         }
         catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

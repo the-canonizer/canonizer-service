@@ -2,16 +2,14 @@
 
 namespace App\Http\Requests;
 
-use Anik\Form\FormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
 class RemoveTopicsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
-    protected function authorize(): bool
+    public function authorize(): bool
     {
         return true;
     }
@@ -19,26 +17,12 @@ class RemoveTopicsRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
-    protected function rules(): array
+    public function rules(): array
     {
-        switch ($this->method()) {
-
-            case 'POST': {
-                    return [
-                        'topic_numbers' => 'required|array',
-                    ];
-                    break;
-                }
-            case 'GET': {
-                    return [
-                        'topic_numbers' => 'required|array',
-                    ];
-                    break;
-            }
-            default:
-                break;
-        }
+        return [
+            'topic_numbers' => 'required|array',
+        ];
     }
 }

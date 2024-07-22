@@ -2,15 +2,11 @@
 
 namespace App\Services;
 
-use AlgorithmService;
 use App\Exceptions\Camp\{CampDetailsException, CampSupportCountException, CampTreeCountException, CampTreeException, CampURLException, AgreementCampsException};
-use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription};
+use App\Facades\Services\{AlgorithmServiceFacade, TopicServiceFacade};
+use App\Models\v1\{Camp, Support, Nickname, TopicSupport, CampSubscription};
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use TopicService;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\{Arr,Facades\Cache,Facades\DB};
 
 /**
  * Class CampService.
@@ -86,8 +82,8 @@ class CampService
             }
             
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
-            $reviewTopic = TopicService::getReviewTopic($topicNumber);
+            $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false], $asOf, $fetchTopicHistory);
+            $reviewTopic = TopicServiceFacade::getReviewTopic($topicNumber);
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $reviewTopicName = (isset($reviewTopic) && isset($reviewTopic->topic_name)) ? $reviewTopic->topic_name : $topicName;
@@ -111,7 +107,7 @@ class CampService
             $tree[$startCamp]['full_score'] = $this->getCamptSupportCount($algorithm, $topicNumber, $startCamp, $asOfTime, $nickNameId,true);
             $tree[$startCamp]['submitter_nick_id'] = $topic->submitter_nick_id ?? '';
             
-            $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
+            $topicCreatedDate = TopicServiceFacade::getTopicCreatedDate($topicNumber);
             $tree[$startCamp]['created_date'] = $topicCreatedDate ?? 0;
             $tree[$startCamp]['is_valid_as_of_time'] = $asOfTime >= $topicCreatedDate ? true : false;
             $tree[$startCamp]['is_disabled'] = $isDisabled ?? 0;
@@ -231,7 +227,7 @@ class CampService
             $topic_id_name = $topicNumber;
             $camp_num_name = $campNumber;
 
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true]);
+            $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true]);
             $camp = $this->getLiveCamp($topicNumber, $campNumber, ['nofilter' => true], $asOfTime);
 
             if ($topic && isset($topic->topic_name)) {
@@ -244,7 +240,7 @@ class CampService
 
             // check if topic or camp are in review
             if ($isReview) {
-                $ReviewTopic = TopicService::getReviewTopic($topicNumber, $asOfTime, ['nofilter' => true]);
+                $ReviewTopic = TopicServiceFacade::getReviewTopic($topicNumber, $asOfTime, ['nofilter' => true]);
                 $ReviewCamp = $this->getReviewCamp($topicNumber, $campNumber);
                 if ($ReviewTopic && isset($ReviewTopic->topic_name)) {
                     $topic_name = ($ReviewTopic->topic_name != '') ? $ReviewTopic->topic_name : $ReviewTopic->title;
@@ -378,7 +374,7 @@ class CampService
 
         $array = [];
         
-        $liveTopic = TopicService::getLiveTopic($topicNum,$asOfTime, ['nofilter'=>true]);
+        $liveTopic = TopicServiceFacade::getLiveTopic($topicNum,$asOfTime, ['nofilter'=>true]);
         $liveCamp = static::getLiveCamp($topicNum, $campNum, [], $asOfTime, $asOf);
         $namespaceId = (isset($liveTopic->namespace_id) && $liveTopic->namespace_id ) ? $liveTopic->namespace_id : 1; 
         foreach($supports as $key =>$support){            
@@ -551,7 +547,7 @@ class CampService
     //                     });
     //                 }
 
-    //                 // $supportPoint = AlgorithmService::{$algorithm}(
+    //                 // $supportPoint = AlgorithmServiceFacade::{$algorithm}(
     //                 //     $supported->nick_name_id,
     //                 //     $supported->topic_num,
     //                 //     $supported->camp_num,
@@ -588,7 +584,7 @@ class CampService
     //                 /** End of previous Logic */
     //                 if($nickNameId && $currentCampSupport && $supported->nick_name_id == $nickNameId){
 
-    //                     $supportPoint = AlgorithmService::{$algorithm}(
+    //                     $supportPoint = AlgorithmServiceFacade::{$algorithm}(
     //                         $supported->nick_name_id,
     //                         $supported->topic_num,
     //                         $supported->camp_num,
@@ -613,7 +609,7 @@ class CampService
     //                     );
     //                 }
     //                  else if ($currentCampSupport && $nickNameId == null) {                        
-    //                     $supportPoint = AlgorithmService::{$algorithm}(
+    //                     $supportPoint = AlgorithmServiceFacade::{$algorithm}(
     //                         $supported->nick_name_id,
     //                         $supported->topic_num,
     //                         $supported->camp_num,
@@ -675,7 +671,7 @@ class CampService
         $score = 0;
         foreach ($delegatedSupports as $support) {
 
-            $supportPoint = AlgorithmService::{$algorithm}(
+            $supportPoint = AlgorithmServiceFacade::{$algorithm}(
                 $support->nick_name_id,
                 $support->topic_num,
                 $support->camp_num,
@@ -754,7 +750,7 @@ class CampService
                 $array[$child->camp_num]['support_tree'] = $this->getSupportTree($algorithm, $child->topic_num, $child->camp_num, $asOfTime);
                 $array[$child->camp_num]['subscribed_users'] = $this->getTopicCampSubscriptions($child->topic_num, $child->camp_num); 
                 if($child->parent_camp_num == 1) {
-                    $parentCamp = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
+                    $parentCamp = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 } else {
                     $parentCamp = $this->getLiveCamp($child->topic_num, $child->parent_camp_num, ['nofilter' => true], $asOfTime, $asOf);
                 }
@@ -1252,7 +1248,7 @@ class CampService
         
         foreach($nick_name_wise_support as $nickNameId=>$support_camp){
             foreach($support_camp as $support){ 
-                $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
+                $supportPoint = AlgorithmServiceFacade::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
                 $support_total = 0; 
                 $full_support_total = 0; 
                      if($multiSupport){
@@ -1346,7 +1342,7 @@ class CampService
                     $camp_wise_score[$support->camp_num][$support->support_order][$support->nick_name_id]['score'] = 0;
                     $nick_name_support_tree[$support->nick_name_id][$support->support_order][$support->camp_num]['full_score'] = 0;
                         $camp_wise_score[$support->camp_num][$support->support_order][$support->nick_name_id]['full_score'] = 0;
-                    $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
+                    $supportPoint = AlgorithmServiceFacade::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
                     if($multiSupport){
                             $support_total = $support_total + round($supportPoint * 1 / (2 ** ($support->support_order)), 3);
                         }else{
@@ -1493,7 +1489,7 @@ class CampService
             
             
             $this->sessionTempArray["topic-child-{$topicNumber}"] = $topicChild;
-            $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true], $asOf, $fetchTopicHistory);
+            $topic = TopicServiceFacade::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => true], $asOf, $fetchTopicHistory);
             
             $topicName = (isset($topic) && isset($topic->topic_name)) ? $topic->topic_name : '';
             $title = preg_replace('/[^A-Za-z0-9\-]/', '-', $topicName);

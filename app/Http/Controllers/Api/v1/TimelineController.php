@@ -2,24 +2,15 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Facades\Repositories\TimelineRepositoryFacade;
+use App\Facades\Services\{TimelineServiceFacade, TopicServiceFacade};
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimelineStoreRequest;
 use App\Http\Resources\TimelineResource;
-use DateTimeHelper;
-use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-use TimelineRepository;
-use TreeService;
-use TimelineService;
-use UtilHelper;
-use App\Model\v1\Topic;
-use App\Model\v1\Camp;
-use App\Model\v1\Statement;
-use App\Services\CampService;
-use App\Services\TopicService;
+use App\Models\v1\{Camp, Statement, Topic};
+use Illuminate\Support\Facades\{Artisan, Log};
 use Throwable;
-use App\Model\v1\Nickname;
-use Illuminate\Support\Facades\Artisan;
 
 class TimelineController extends Controller
 {
@@ -207,7 +198,7 @@ class TimelineController extends Controller
             }
             Log::info("check url: " . $url);
 
-            $timeline = TimelineService::upsertTimeline($topicNumber, $algorithm='', $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name="", $camp_num=null, $camp_name="", $k=0, $url);
+            $timeline = TimelineServiceFacade::upsertTimeline($topicNumber, $algorithm='', $asOfTime, $updateAll, $request, $message, $type, $id, $old_parent_id, $new_parent_id, $timelineType="", $topic_name="", $camp_num=null, $camp_name="", $k=0, $url);
 
             $end = microtime(true);
             $time = $end - $start;
@@ -216,7 +207,7 @@ class TimelineController extends Controller
 
             return new TimelineResource(array($timeline));
         } catch (Throwable $e) {
-            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            $errResponse = UtilHelperFacade::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
     }
@@ -327,22 +318,22 @@ class TimelineController extends Controller
             $topicNumber = (int) $request->input('topic_num');
             $algorithm = $request->input('algorithm');
             /** Get Cron Run date from .env file and make timestring */
-            $cronDate = UtilHelper::getCronRunDateString();
+            $cronDate = UtilHelperFacade::getCronRunDateString();
 
             // get the timeline tree from mongoDb
             $start = microtime(true);
-            $conditions = TimelineService::getConditions($topicNumber, $algorithm);
-            $mongoTree = TimelineRepository::findTimeline($conditions);
+            $conditions = TimelineServiceFacade::getConditions($topicNumber, $algorithm);
+            $mongoTree = TimelineRepositoryFacade::findTimeline($conditions);
 
             // First check the topic exist in database
             $asOfTime= time();
-            $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber,$asOfTime);
+            $topicExistInMySql = TopicServiceFacade::checkTopicInMySql($topicNumber,$asOfTime);
 
             /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
             if ((!$mongoTree || !count($mongoTree)) && $topicExistInMySql) {
                 
                 if(Artisan::call('timeline:all '.$topicNumber.' '.$algorithm)){
-                    $mongoTree = TimelineRepository::findTimeline($conditions);
+                    $mongoTree = TimelineRepositoryFacade::findTimeline($conditions);
                 }             
             }
        
@@ -390,7 +381,7 @@ class TimelineController extends Controller
             return $response;
         } 
         catch (Throwable $e) {
-            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            $errResponse = UtilHelperFacade::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
     }

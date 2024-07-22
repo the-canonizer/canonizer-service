@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Anik\Form\FormRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
 
 class TopicRequest extends FormRequest
 {
@@ -14,7 +12,7 @@ class TopicRequest extends FormRequest
      *
      * @return bool
      */
-    protected function authorize(): bool
+    public function authorize(): bool
     {
         return true;
     }
@@ -24,25 +22,17 @@ class TopicRequest extends FormRequest
      *
      * @return array
      */
-    protected function rules(): array
+    public function rules(): array
     {
-        switch ($this->method()) {
-
-            case 'POST': {
-                    return [
-                        'page_number' => 'required|integer',
-                        'page_size' => 'required|integer',
-                        'namespace_id' => 'integer',
-                        'asofdate' => 'required',
-                        'algorithm' => 'required|string',
-                        'asof' => 'required|string',
-                        'search' => 'nullable|string'
-                    ];
-                    break;
-                }
-            default:
-                break;
-        }
+        return [
+            'page_number' => 'required|integer',
+            'page_size' => 'required|integer',
+            'namespace_id' => 'nullable|integer',
+            'asofdate' => 'required',
+            'algorithm' => 'required|string',
+            'asof' => 'required|string',
+            'search' => 'nullable|string'
+        ];
     }
 
      /**
@@ -50,9 +40,8 @@ class TopicRequest extends FormRequest
      *
      * @return array
      */
-    protected function errorResponse(): ?JsonResponse
+    public function errorResponse(): ?JsonResponse
     {
-
         return response()->json([
             'status_code' => 422,
             'message' => 'validation errors',

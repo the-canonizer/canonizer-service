@@ -2,16 +2,20 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Facades\Services\TreeServiceFacade;
+use App\Models\v1\CommandHistory;
+use App\Models\v1\Namespaces;
+use App\Models\v1\Topic;
 use Illuminate\Console\Command;
-use App\Model\v1\Namespaces;
-use App\Model\v1\Topic;
-use Carbon\Carbon;
-use Exception;
-use TreeService;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use UtilHelper;
+
+use function Laravel\Prompts\progress;
+use function Laravel\Prompts\spin;
+use function Laravel\Prompts\form;
 
 class CreateTopicTreeCommand extends Command
 {
@@ -30,29 +34,15 @@ class CreateTopicTreeCommand extends Command
     protected $description = 'This commnad will create the tree of all topics';
 
     /**
-     * Create a new command instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
-    /**
      * Execute the console command.
      *
      * @return mixed
      */
     public function handle()
     {
-        $asOfTime = $this->argument('asOfTime') ?? NULL;
+        $asOfTime = $this->argument('asOfTime') ?? null;
         // check the argument of asOfTime with command / else use the current time.
-        if (!empty($asOfTime)) {
-            $asOfTime =  $asOfTime;
-        } else {
-            $asOfTime =  time();
-        }
+        $asOfTime = !empty($asOfTime) ? intval($asOfTime) : time();
 
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
@@ -62,21 +52,14 @@ class CreateTopicTreeCommand extends Command
             'started_at' => Carbon::now()->timestamp,
         ]);
 
-        // If tree:all command is already running, don't execute command
-        $commandStatement = "php artisan tree:all";
-        $commandSignature = "tree:all";
-
-        $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
         try {
             Log::info('tree:all command started....');
             $start = microtime(true);
 
-            // if (!$commandStatus) {
-                //get all namespaces
-                $namespaces = Namespaces::all();
-                // $asOfTime =  time();
-                foreach ($namespaces as $value) {
-                    // get all topic associated with this namespace
+            progress(
+                label: 'Making trees on MongoDB',
+                steps: Namespaces::all(),
+                callback: function ($value) use ($asOfTime) {
                     $topics = Topic::select(['topic_num', 'namespace_id', 'id'])
                         ->where(["namespace_id" => $value['id']])
                         ->groupBy('topic_num')
@@ -84,13 +67,13 @@ class CreateTopicTreeCommand extends Command
                     $this->createLess166Topics($topics, $asOfTime);
                     $this->creategreater166Topics($topics, $asOfTime);
                 }
+            );
 
-                // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
-                $this->call('tree:remove-duplicate', [
-                    'asOfTime' => $asOfTime
-                ]);
-            // }
-            
+            // In some rare cases, data is duplicated randomly. This commad is used remove duplicated tree data.
+            $this->call('tree:remove-duplicate', [
+                'asOfTime' => $asOfTime
+            ]);
+
             $time_elapsed_secs = microtime(true) - $start;
             $this->info('tree:all execution time: ' . $time_elapsed_secs);
             Log::info('tree:all command ended....');
@@ -107,13 +90,13 @@ class CreateTopicTreeCommand extends Command
     {
         if (count($topics)) {
             // create the tree for every topic
-            foreach ($topics  as $key => $value) {
+            foreach ($topics as $value) {
 
                 $topic_num = $value['topic_num'];
                 $updateAll = 1;
 
                 if ($value['topic_num'] < 166) {
-                    $tree =  TreeService::upsertTree($topic_num, "blind_popularity", $asOfTime, $updateAll);
+                    $tree =  TreeServiceFacade::upsertTree($topic_num, "blind_popularity", $asOfTime, $updateAll);
                     Log::info($tree);
                 }
             }
@@ -123,13 +106,13 @@ class CreateTopicTreeCommand extends Command
     {
         if (count($topics)) {
             // create the tree for every topic
-            foreach ($topics  as $key => $value) {
+            foreach ($topics as $value) {
 
                 $topic_num = $value['topic_num'];
                 $updateAll = 1;
 
                 if ($value['topic_num'] >= 166) {
-                    $tree =  TreeService::upsertTree($topic_num, "blind_popularity", $asOfTime, $updateAll);
+                    $tree =  TreeServiceFacade::upsertTree($topic_num, "blind_popularity", $asOfTime, $updateAll);
                     Log::info($tree);
                 }
             }

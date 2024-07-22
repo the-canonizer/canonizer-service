@@ -2,24 +2,19 @@
 
 namespace App\Http\Controllers\Api\v1;
 
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Facades\Repositories\TreeRepositoryFacade;
+use App\Facades\Services\{AlgorithmServiceFacade, CampServiceFacade, TopicServiceFacade, TreeServiceFacade};
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
-use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-use TreeRepository;
-use TreeService;
-use UtilHelper;
-use App\Model\v1\Topic;
-use App\Model\v1\Camp;
-use App\Model\v1\Statement;
-use App\Services\CampService;
-use App\Services\TopicService;
-use Throwable;
-use App\Services\AlgorithmService;
+use App\Models\v1\{Camp, Statement, Topic};
 use Exception;
+use Illuminate\Http\Request;
+use Throwable;
+use Illuminate\Support\Facades\{Artisan, DB};
 
 class TreeController extends Controller
 {
@@ -144,12 +139,12 @@ class TreeController extends Controller
         $algorithm          = $request->input('algorithm');
         $asOfTime           = (int) $request->input('asofdate');
         $updateAll          = (int) $request->input('update_all', 0);
-        $model_id           = $request->input('model_id') ?? NULL;
-        $model_type         = $request->input('model_type') ?? NULL;
-        $job_type           = $request->input('job_type') ?? NULL;
+        $model_id           = $request->input('model_id') ?? null;
+        $model_type         = $request->input('model_type') ?? null;
+        $job_type           = $request->input('job_type') ?? null;
         $camp_num           = (int) $request->input('camp_num');
-        $event_type         = $request->input('event_type') ?? NULL;
-        $pre_LiveId         = $request->input('pre_LiveId') ?? NULL;
+        $event_type         = $request->input('event_type') ?? null;
+        $pre_LiveId         = $request->input('pre_LiveId') ?? null;
 
         $start = microtime(true);
         $currentTime = time();
@@ -169,7 +164,7 @@ class TreeController extends Controller
                     // $topic->grace_period = 0;
                     // $topic->update();
 
-                    if(!self::commitTheChange($topic->id, 'topic')) {
+                    if (!self::commitTheChange($topic->id, 'topic')) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
@@ -192,7 +187,7 @@ class TreeController extends Controller
                     // $camp->grace_period = 0;
                     // $camp->update();
 
-                    if(!self::commitTheChange($camp->id, 'camp', $camp->old_parent_camp_num, $camp->parent_camp_num)) {
+                    if (!self::commitTheChange($camp->id, 'camp', $camp->old_parent_camp_num, $camp->parent_camp_num)) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
@@ -214,22 +209,22 @@ class TreeController extends Controller
                     // $statement->grace_period = 0;
                     // $statement->update();
 
-                    if(!self::commitTheChange($statement->id, 'statement')) {
+                    if (!self::commitTheChange($statement->id, 'statement')) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
             }
         }
 
-        $tree = TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
+        $tree = TreeServiceFacade::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request);
 
         $end = microtime(true);
         $time = $end - $start;
-        
+
         /// Check the job is for 24 hour
         /// check all id and hit the changeToAgree api
-        if($job_type == "live-time-job") {
-            if(!empty($model_id) && !empty($model_type)) {
+        if ($job_type == "live-time-job") {
+            if (!empty($model_id) && !empty($model_type)) {
                 $this->agreeToChange($model_id, $topicNumber, $camp_num, $event_type, $pre_LiveId, $model_type);
             }
         }
@@ -239,7 +234,8 @@ class TreeController extends Controller
         return new TreeResource(array($tree));
     }
 
-    private function agreeToChange($changeId, $topic_num, $camp_num, $event_type, $pre_LiveId, $change_for = "") {
+    private function agreeToChange($changeId, $topic_num, $camp_num, $event_type, $pre_LiveId, $change_for = "")
+    {
         $requestBody = [
             'record_id'             => $changeId,
             'topic_num'             => $topic_num,
@@ -256,12 +252,12 @@ class TreeController extends Controller
         $headers[] = 'Content-Type:multipart/form-data';
         $headers[] = 'Authorization:Bearer: ' . env('API_TOKEN') . '';
 
-        $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
+        $response = UtilHelperFacade::curlExecute('POST', $endpoint, $headers, $requestBody);
 
-        if(isset($response)) {
+        if (isset($response)) {
             $checkRes = json_decode($response, true);
             Log::info('AgreeTheChange => ' . json_encode($checkRes));
-            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+            if (array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
                 Log::error("agreeTheChange => Unauthorized action.");
                 throw new Exception('Authentication Issue!', 401);
                 return false;
@@ -270,7 +266,8 @@ class TreeController extends Controller
         return true;
     }
 
-    private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null) {
+    private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null)
+    {
         $requestBody = [
             "id" => $id,
             "type" => $type,
@@ -286,11 +283,11 @@ class TreeController extends Controller
         $headers[] = 'Content-Type:multipart/form-data';
         $headers[] = 'Authorization:Bearer: ' . env('API_TOKEN') . '';
 
-        $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
-        if(isset($response)) {
+        $response = UtilHelperFacade::curlExecute('POST', $endpoint, $headers, $requestBody);
+        if (isset($response)) {
             $checkRes = json_decode($response, true);
             Log::info('CommitTheChange => ' . json_encode($checkRes));
-            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+            if (array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
                 Log::error("commitTheChange => Unauthorized action.");
                 throw new Exception('Authentication Issue!', 401);
                 return false;
@@ -419,9 +416,9 @@ class TreeController extends Controller
             $topicNumber = (int) $request->input('topic_num');
             $algorithm = $request->input('algorithm');
 
-            
+
             $asOf = $request->input('asOf');
-            $asOfTime = ($asOf=="default" || $asOf=="review") ? time() : ceil($request->input('asofdate'));
+            $asOfTime = ($asOf == "default" || $asOf == "review") ? time() : ceil($request->input('asofdate'));
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
@@ -436,13 +433,13 @@ class TreeController extends Controller
             $commandStatement = "php artisan tree:all";
             $commandSignature = "tree:all";
 
-            $algorithms =  AlgorithmService::getAlgorithmKeyList("tree");
+            $algorithms =  AlgorithmServiceFacade::getAlgorithmKeyList("tree");
 
-            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+            $commandStatus = UtilHelperFacade::getCommandRuningStatus($commandStatement, $commandSignature);
 
             if (in_array($algorithm, $algorithms) && !($fetchTopicHistory) && !$commandStatus) {
 
-                $conditions = TreeService::getConditions($topicNumber, $algorithm, $asOfDate);
+                $conditions = TreeServiceFacade::getConditions($topicNumber, $algorithm, $asOfDate);
 
                 /**
                  * Fetch topic tree on the basis of jobs in queue or processed ones
@@ -455,31 +452,31 @@ class TreeController extends Controller
                  * If there is no processed job found for specific topic -- Get tree from Mongo
                  */
 
-                $isLastJobPending = \DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
-                $latestProcessedJobStatus  = \DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
+                $isLastJobPending = DB::table('jobs')->where('queue', env('QUEUE_NAME'))->where('model_id', $topicNumber)->orWhere('unique_id', $topicId)->first();
+                $latestProcessedJobStatus = DB::table('processed_jobs')->where('topic_num', $topicNumber)->orderBy('id', 'desc')->first();
 
                 // for now we will get topic in review record from database, because in mongo tree we only have default herarchy currently.
                 if ($isLastJobPending || $asOf == "review") {
-                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                    $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                 } else {
                     if (($latestProcessedJobStatus && $latestProcessedJobStatus->status == 'Success') || !$latestProcessedJobStatus) {
                         #MongoDBRefactoring -- Find the latest tree in mongo
-                        $mongoTree = TreeRepository::findLatestTree($conditions);
+                        $mongoTree = TreeRepositoryFacade::findLatestTree($conditions);
 
                         if ($mongoTree && count($mongoTree)) {
                             // If requested asOfDate < The latest version asOfDate of tree in Mongo...
                             if ($asOfDate < $mongoTree[0]->as_of_date) {
 
                                 // Now check the tree exists in mongo for requested asOfDate..
-                                $mongoTree = TreeRepository::findTree($conditions);
+                                $mongoTree = TreeRepositoryFacade::findTree($conditions);
                                 /* If the tree is not in mongo for that asOfDate, then create in mongo and
                                 return the tree */
                                 if ((!$mongoTree || !count($mongoTree))) {
                                     // First check the topic exist in database, then we can run upsertTree.
-                                    $topicExistInMySql = TopicService::checkTopicInMySql($topicNumber, $asOfTime);
+                                    $topicExistInMySql = TopicServiceFacade::checkTopicInMySql($topicNumber, $asOfTime);
 
                                     if ($topicExistInMySql) {
-                                        $mongoTree = array(TreeService::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                        $mongoTree = array(TreeServiceFacade::upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                                     }
                                 }
                             }
@@ -487,21 +484,21 @@ class TreeController extends Controller
                             if ($mongoTree && count($mongoTree)) {
                                 $tree = collect([$mongoTree[0]['tree_structure']]);
                                 if (!$tree[0][1]['title'] || ($request->asOf == "review" && !$tree[0][1]['review_title'])) {
-                                    $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                    $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                                 }
                             } else {
-                                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                                $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                             }
                         } else {
-                            $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                            $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                         }
                     } else {
-                        $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
+                        $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request));
                     }
                 }
             } else {
                 //TODO: shift latest mind_expert algorithm from canonizer 2.0 from getSupportCountFunction
-                $tree = array(TreeService::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
+                $tree = array(TreeServiceFacade::getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll, $request, $fetchTopicHistory));
             }
 
             $end = microtime(true);
@@ -515,8 +512,8 @@ class TreeController extends Controller
             if (array_key_exists('data', $responseArray) && count($responseArray['data'])) {
                 if ($asOf == 'bydate') {
 
-                    $topicCreatedDate = TopicService::getTopicCreatedDate($topicNumber);
-                    $campCreatedDate = CampService::getCampCreatedDate($campNumber, $topicNumber);
+                    $topicCreatedDate = TopicServiceFacade::getTopicCreatedDate($topicNumber);
+                    $campCreatedDate = CampServiceFacade::getCampCreatedDate($campNumber, $topicNumber);
 
                     $responseArray['data'][0][1]['is_valid_as_of_time']  = $asOfTime >= $topicCreatedDate ? true : false;
 
@@ -534,8 +531,18 @@ class TreeController extends Controller
             $response = $responseArray;
             return $response;
         } catch (Throwable $e) {
-            $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
+            $errResponse = UtilHelperFacade::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
+    }
+
+    public function treeAllCommand(Request $request)
+    {
+        ini_set('max_execution_time', 3000);
+        $time_start = microtime(true);
+        Artisan::call('tree:all');
+        $time_end = microtime(true);
+        $execution_time = ($time_end - $time_start);
+        dd('<b>All topics trees generated successfully. Execution Time is:</b> ' . ($execution_time * 1000) . 'Milliseconds');
     }
 }

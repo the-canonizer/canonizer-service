@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
-use App\Model\v1\Tree;
+use App\Models\v1\CommandHistory;
+use App\Models\v1\Tree;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;

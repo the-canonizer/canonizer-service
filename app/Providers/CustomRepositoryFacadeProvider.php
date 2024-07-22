@@ -2,12 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\v1\{Timeline, Tree};
 use Illuminate\Support\ServiceProvider;
-use App\Repository\Tree\TreeRepository;
-use App\Repository\Timeline\TimelineRepository;
-use App\Repository\Topic\TopicRepository;
-use App\Model\v1\Tree;
-use App\Model\v1\Timeline;
+use App\Repository\{Tree\TreeRepository,Timeline\TimelineRepository,Topic\TopicRepository};
+
 class CustomRepositoryFacadeProvider extends ServiceProvider
 {
     /**
@@ -37,8 +35,8 @@ class CustomRepositoryFacadeProvider extends ServiceProvider
             return new TopicRepository(new Tree());
         });
 
-         /**  Bind TimelineRepository Class */
-         $this->app->bind('TimelineRepository', function () {
+        /**  Bind TimelineRepository Class */
+        $this->app->bind('TimelineRepository', function () {
             return new TimelineRepository(new Timeline());
         });
     }
