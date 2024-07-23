@@ -23,9 +23,9 @@ class AlgorithmService
         if($default=="timeline"){
             if($algo!="")
               return array($algo);
-              
+
             return array('blind_popularity', 'mind_experts','computer_science_experts','PhD','christian','secular','mormon','uu','atheist','transhumanist','united_utah','republican','forward_party','democrat','ether','shares','shares_sqrt','sandy_city','sandy_city_council');
-        
+
         }
         else{
             return array('blind_popularity', 'mind_experts','computer_science_experts');
@@ -377,7 +377,7 @@ class AlgorithmService
     public function shares($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $algo = 'shares';
-        return $this->shareAlgo($nickNameId, $topicNumber, $campNumber, $algo, $asOfTime);
+        return $this->shareAlgo($nickNameId, $asOfTime, $topicNumber, $campNumber, $algo);
     }
 
     /**
@@ -393,7 +393,7 @@ class AlgorithmService
     public function shares_sqrt($nickNameId = null, $topicNumber = 0, $campNumber = 0, $asOfTime = null)
     {
         $algo = 'shares_sqrt';
-        return $this->shareAlgo($nickNameId, $topicNumber, $campNumber, $algo, $asOfTime);
+        return $this->shareAlgo($nickNameId, $asOfTime, $topicNumber, $campNumber, $algo);
     }
 
     /**
@@ -406,7 +406,7 @@ class AlgorithmService
      *
      * @return int $score
      */
-    public function shareAlgo($nickNameId, $topicNumber = 0, $campNumber = 0, $algo = 'shares', $asOfTime)
+    public function shareAlgo($nickNameId, $asOfTime, $topicNumber = 0, $campNumber = 0, $algo = 'shares')
     {
 
         try {
@@ -431,15 +431,15 @@ class AlgorithmService
                  // get the last month shares added for user as current share #1055
                 $latestRecord = SharesAlgorithm::where('nick_name_id',$nickNameId)->orderBy('as_of_date','desc')->first();
                 if(isset($latestRecord) && isset($latestRecord->as_of_date)){
-                    $as_of_time = strtotime($latestRecord->as_of_date); 
+                    $as_of_time = strtotime($latestRecord->as_of_date);
                     $year = date('Y', $as_of_time);
                     $month = date('m', $as_of_time);
-        
+
                     $shares = SharesAlgorithm::whereYear('as_of_date', '=', $year)
                         ->whereMonth('as_of_date', '<=', $month)
                         ->where('nick_name_id', $nickNameId)
                         ->orderBy('as_of_date', 'ASC')
-                        ->get(); 
+                        ->get();
                     if (count($shares)) {
                         foreach ($shares as $s) {
                             $sumOfShares = $s->share_value; //$sumOfShares + $s->share_value;
