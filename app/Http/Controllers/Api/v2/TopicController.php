@@ -8,7 +8,7 @@ use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\{RemoveTopicsRequest, TopicRequest};
 use App\Http\Resources\TopicResource;
-use App\Model\v1\{Timeline, Tree};
+use App\Model\v1\{Tag, Timeline, Tree};
 use App\Model\v2\{Nickname, Statement, TopicView};
 use App\Services\AlgorithmService;
 use Throwable;
@@ -230,14 +230,25 @@ class TopicController extends Controller
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+
+                    $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
+                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
+                    })->where('is_active', 1)->get();
+
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
                         foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
                             $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
-                } elseif (is_array($value)) {
+                } elseif (is_array($value))  // MongoDB Case
+                {
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+
+                    $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value) {
+                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value['topic_id'])->get();
+                    })->where('is_active', 1)->get();
+
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
                         foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
