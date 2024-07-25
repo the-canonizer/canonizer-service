@@ -145,7 +145,7 @@ class Statement extends Model
 
         if ($statement) {
             $statement = preg_replace('/[^a-zA-Z0-9_ %\.\?%&-]/s', '', self::stripTagsExcept($statement->parsed_value ?? null, ['figure', 'table']));
-            return Str::of($statement)->trim()->words(30);
+            return Str::of($statement)->trim();
         }
         return null;
     }
