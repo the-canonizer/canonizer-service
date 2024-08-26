@@ -208,9 +208,9 @@ class TopicController extends Controller
                 extract($topics);
             } else {
                 /*  search & filter functionality */
-                $topics = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, false, $archive, $sort);
+                $topics = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, false, $archive, $sort, $topic_tags);
                 if ($page === 'browse') {
-                    $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort);
+                    $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort, $topic_tags);
                 }
                 $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime, $page);
 
