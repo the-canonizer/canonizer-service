@@ -4,7 +4,7 @@ namespace App\Services;
 
 use AlgorithmService;
 use App\Exceptions\Camp\{CampDetailsException, CampSupportCountException, CampTreeCountException, CampTreeException, CampURLException, AgreementCampsException};
-use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription};
+use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription, TopicTag};
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -119,7 +119,8 @@ class CampService
             $tree[$startCamp]['is_archive'] = $isArchive ?? 0;
             $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
-           
+            $tree[$startCamp]['topic_tags'] = TopicTag::getRelatedTagIds($topicNumber);
+
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime, $asOf);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
             

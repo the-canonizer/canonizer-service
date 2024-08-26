@@ -74,10 +74,10 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0, $sort = false, $page = 'home')
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0, $sort = false, $page = 'home', $topic_tags = [])
     {
         // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
-        return TopicRepositoryFacade::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive, $sort, $page);
+        return TopicRepositoryFacade::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive, $sort, $page, $topic_tags);
     }
 
     /**

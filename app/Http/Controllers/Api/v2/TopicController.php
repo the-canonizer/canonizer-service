@@ -186,6 +186,7 @@ class TopicController extends Controller
             $totalCount = 0;
             $sort = ($request->has('sort')) ?  $request->input('sort') : false;
             $page = $request->input('page') ?: "home";
+            $topic_tags = $request->input('topic_tags') ?: [];
 
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
@@ -203,7 +204,7 @@ class TopicController extends Controller
             $topicsFoundInMongo = Tree::count();
 
             if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
-                $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page);
+                $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page, $topic_tags);
                 extract($topics);
             } else {
                 /*  search & filter functionality */

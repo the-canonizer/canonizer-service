@@ -37,7 +37,9 @@ class TopicRequest extends FormRequest
                         'algorithm' => 'required|string',
                         'asof' => 'required|string',
                         'search' => 'nullable|string',
-                        'page' => 'nullable|string'
+                        'page' => 'nullable|string',
+                        'topic_tags' => 'array', // Ensure it is an array
+                        'topic_tags.*' => 'integer', // Ensure each element in the array is an integer
                     ];
                     break;
                 }
