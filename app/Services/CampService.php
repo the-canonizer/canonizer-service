@@ -894,7 +894,8 @@ class CampService
         try {
 
             $returnTopics = DB::table('topic')
-            ->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num = c1.topic_num) as support'), 'c1.topic_num', 'c1.camp_num', 'c1.title', 'c1.go_live_time', 'c1.submitter_nick_id', 't1.namespace_id')
+            ->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num = c1.topic_num) as support'), 'c1.topic_num', 
+                'c1.camp_num', 'c1.title', 'c1.go_live_time', 'c1.submitter_nick_id', 't1.namespace_id')
             ->from('topic as t1')
             ->where(['t1.objector_nick_id' => null, 't1.grace_period' => 0])
             ->where('t1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
@@ -909,13 +910,13 @@ class CampService
             })
             ->when($namespaceId, fn ($query, $namespaceId) => $query->where('t1.namespace_id', $namespaceId))
             ->when($search, fn ($query, $search) => $query->where('t1.topic_name', 'like', '%' . $search . '%'))
-            ->when($topic_tags, function ($query) use ($topic_tags) {  // Add join only if $topic_tags is not empty
-                if (!empty($topic_tags)) {
-                    $query->join(DB::raw('(SELECT DISTINCT topic_num FROM topics_tags WHERE tag_id IN (' . implode(',', $topic_tags) . ')) as tagged_topics'), function($join) {
-                        $join->on('t1.topic_num', '=', 'tagged_topics.topic_num');
-                    });
-                }
+            
+            ->when(($topic_tags), function ($query) use ($topic_tags) {
+                $query->join('topics_tags', 't1.topic_num', '=', 'topics_tags.topic_num')
+                      ->whereIn('topics_tags.tag_id', $topic_tags)
+                      ->groupBy('t1.topic_num');
             })
+ 
             ->join('camp as c1', function ($join) use ($asofdate, $asof, $archive, $nickNameIds) {
                 $join->on('c1.topic_num', '=', 't1.topic_num')
                 ->where(['c1.camp_num' => 1, 'c1.objector_nick_id' => null, 'c1.grace_period' => 0, 'c1.is_archive' => $archive, 'c1.direct_archive' => $archive])
