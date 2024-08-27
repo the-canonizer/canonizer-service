@@ -37,7 +37,7 @@ class TopicRepository implements TopicInterface
      * @throws \Throwable
      * @return array The response array
      */
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false, $page = 'home')
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false, $page = 'home', $topic_tags = [])
     {
         $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
@@ -62,6 +62,10 @@ class TopicRepository implements TopicInterface
                 } else {
                     $match['namespace_id'] = $namespaceId;
                 }
+            }
+
+            if (is_array($topic_tags) && count($topic_tags) > 0) {
+                $match['tree_structure.1.topic_tags'] = ['$in' => $topic_tags];
             }
 
             if (!empty($nickNameIds)) {
