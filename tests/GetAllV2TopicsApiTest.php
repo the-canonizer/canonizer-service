@@ -209,4 +209,44 @@ class GetAllV2TopicsApiTest extends TestCase
             ],
         ]);
     }
+
+    /**
+     * Check Api with wrong type of tags in it
+     * validation check
+     */
+    public function testGetAllTopicsApiWithInvalidDataOfTags()
+    {
+        $response = $this->call('POST', $this->apiURl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '', 'topic_tags' => "wrong-data"]);
+        $this->assertEquals(422, $response->status());
+    }
+
+    /**
+     * Check Api with wrong array of tags
+     * validation check
+     */
+    public function testGetAllTopicsApiWithWrongTags()
+    {
+        $response = $this->call('POST', $this->apiURl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 5, 'algorithm' => 'blind_popularity', 'namespace_id' => "", 'asofdate' => time(), 'user_email' => '', 'topic_tags' => ["a","v"]]);
+        $this->assertEquals(422, $response->status());
+    }
+
+    /**
+     * Check Api with empty array of tags
+     * 
+     */
+    public function testGetAllTopicsApiWithEmptyTags()
+    {
+        $response = $this->call('POST', $this->apiURl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 5, 'algorithm' => 'blind_popularity', 'namespace_id' => "", 'asofdate' => time(), 'user_email' => '', 'topic_tags' => []]);
+        $this->assertEquals(200, $response->status());
+    }
+
+    /**
+     * Check Api with valid tags
+     * 
+     */
+    public function testGetAllTopicsApiWithValidTags()
+    {
+        $response = $this->call('POST', $this->apiURl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 5, 'algorithm' => 'blind_popularity', 'namespace_id' => "", 'asofdate' => time(), 'user_email' => '', 'topic_tags' => [4,5]]);
+        $this->assertEquals(200, $response->status());
+    }
 }
