@@ -41,7 +41,7 @@ class RemoveDuplicateTrees extends Command
         $doNotDelete = $this->option('do-not-delete') ? true : false;
 
         // check the argument of asOfTime with command / else use the current time.
-        $asOfTime = !empty($asOfTime) ? intval($asOfTime) : time();
+        $asOfTime = ! empty($asOfTime) ? intval($asOfTime) : time();
 
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
@@ -69,12 +69,12 @@ class RemoveDuplicateTrees extends Command
                 $test = collect($documents)->whereInStrict('topic_id', $counted)->keyBy('topic_id')->pluck('_id', 'topic_id');
                 Log::info($algorithm . '=> ' . json_encode($test->all()));
 
-                if (!$doNotDelete) {
+                if (! $doNotDelete) {
                     Tree::whereIn('_id', $duplicatedDocuments->all())->delete();
                 }
             }
 
-            if (!$doNotDelete) {
+            if (! $doNotDelete) {
                 $this->info('Data Deleted');
             } else {
                 $this->info('Duplicated data logged.');

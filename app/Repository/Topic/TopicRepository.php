@@ -3,12 +3,11 @@
 namespace App\Repository\Topic;
 
 use App\Models\v1\Tree;
-use App\Repository\Topic\TopicInterface;
 
 class TopicRepository implements TopicInterface
 {
-
     protected $treeModel;
+
     /**
      * Instantiate a new TopicRepository instance.
      *
@@ -22,18 +21,16 @@ class TopicRepository implements TopicInterface
     /**
      * get Topics with pagination.
      *
-     * @param int $namespaceId
-     * @param int $asofdate
-     * @param string $algorithm
-     * @param int $skip
-     * @param int $pageSize
-     * @param string $search
-     *
-     *
+     * @param  int  $namespaceId
+     * @param  int  $asofdate
+     * @param  string  $algorithm
+     * @param  int  $skip
+     * @param  int  $pageSize
+     * @param  string  $search
      * @return array Response
      */
     // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort =false)
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false)
     {
         $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
@@ -47,7 +44,7 @@ class TopicRepository implements TopicInterface
 
             if (isset($filter) && $filter != null && $filter != '') {
                 $match['topic_score'] = [
-                    '$gt' => $filter
+                    '$gt' => $filter,
                 ];
             }
 
@@ -59,7 +56,7 @@ class TopicRepository implements TopicInterface
                 }
             }
 
-            if (!empty($nickNameIds)) {
+            if (! empty($nickNameIds)) {
                 $match['created_by_nick_id'] = ['$in' => $nickNameIds];
             }
 
@@ -71,10 +68,10 @@ class TopicRepository implements TopicInterface
                 }
                 $match[$searchField] = [
                     '$regex' => $search,
-                    '$options' => 'i'
+                    '$options' => 'i',
                 ];
             }
-            if (isset($archive) &&  !$archive) {
+            if (isset($archive) && ! $archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -91,14 +88,14 @@ class TopicRepository implements TopicInterface
                 'algorithm_id' => 1,
                 'submitter_nick_id' => 1,
                 'created_by_nick_id' => 1,
-                'tree_structure.1.review_title' => 1
+                'tree_structure.1.review_title' => 1,
             ];
 
-            if(isset($sort) && $sort){
-               $sort = [
+            if (isset($sort) && $sort) {
+                $sort = [
                     'topic_id' => -1,
-               ];
-            }else{
+                ];
+            } else {
                 $sort = [
                     'topic_score' => -1,
                     'topic_name' => 1,
@@ -110,54 +107,54 @@ class TopicRepository implements TopicInterface
                 [
                     // Stage 1: get all records matches with algorithm_id
                     '$match' => [
-                        'algorithm_id' => $algorithm
-                    ]
+                        'algorithm_id' => $algorithm,
+                    ],
                 ],
                 [
                     // Stage 2: Sort all the topic by as_of_date in descending order to get latest
-                    '$sort' => ['as_of_date' =>  -1]
+                    '$sort' => ['as_of_date' => -1],
                 ],
                 [
                     // Stage 3: GroupBy topic_id, and filter specific fields with lastest record from each group
                     '$group' => [
                         '_id' => '$topic_id',
                         'id' => [
-                            '$first' => '$_id'
+                            '$first' => '$_id',
                         ],
                         'as_of_date' => [
-                            '$first' => '$as_of_date'
+                            '$first' => '$as_of_date',
                         ],
                         'topic_score' => [
-                            '$first' => '$topic_score'
+                            '$first' => '$topic_score',
                         ],
                         'topic_full_score' => [
-                            '$first' => '$topic_full_score'
+                            '$first' => '$topic_full_score',
                         ],
                         'topic_name' => [
-                            '$first' => '$topic_name'
+                            '$first' => '$topic_name',
                         ],
                         'topic_id' => [
-                            '$first' => '$topic_id'
+                            '$first' => '$topic_id',
                         ],
                         'namespace_id' => [
-                            '$first' => '$namespace_id'
+                            '$first' => '$namespace_id',
                         ],
                         'review_namespace_id' => [
-                            '$first' => '$review_namespace_id'
+                            '$first' => '$review_namespace_id',
                         ],
                         'algorithm_id' => [
-                            '$first' => '$algorithm_id'
+                            '$first' => '$algorithm_id',
                         ],
                         'tree_structure' => [
-                            '$first' => '$tree_structure'
+                            '$first' => '$tree_structure',
                         ],
                         'submitter_nick_id' => [
-                            '$first' => '$submitter_nick_id'
+                            '$first' => '$submitter_nick_id',
                         ],
                         'created_by_nick_id' => [
-                            '$first' => '$created_by_nick_id'
+                            '$first' => '$created_by_nick_id',
                         ],
-                    ]
+                    ],
                 ],
                 [
                     // Stage 4: Apply further filters to the grouped records
@@ -165,11 +162,11 @@ class TopicRepository implements TopicInterface
                 ],
                 [
                     // Stage 5: Only get required keys from the grouped records
-                    '$project' => $projection
+                    '$project' => $projection,
                 ],
                 [
                     // Stage 6: Sort the record in descending order by topic_score  //topic_id
-                    '$sort' => $sort
+                    '$sort' => $sort,
                 ],
             ];
 
@@ -182,7 +179,7 @@ class TopicRepository implements TopicInterface
                     [
                         // Stage 8: Limit the records.
                         '$limit' => $skip + $pageSize,
-                    ]
+                    ],
                 ]);
             }
 
@@ -192,8 +189,8 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
-
             $time_elapsed_secs = microtime(true) - $start;
+
             return collect($record)->skip($skip)->all();
         } catch (\Throwable $th) {
             throw $th;
@@ -203,13 +200,11 @@ class TopicRepository implements TopicInterface
     /**
      * get count topics with condition.
      *
-     * @param int $namespaceId
-     * @param int $asofdate
-     * @param string $algorithm
-     * @param string $search
-     * @param string $filter
-     *
-     *
+     * @param  int  $namespaceId
+     * @param  int  $asofdate
+     * @param  string  $algorithm
+     * @param  string  $search
+     * @param  string  $filter
      * @return array Response
      */
     // Get latest topic count from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
@@ -227,7 +222,7 @@ class TopicRepository implements TopicInterface
 
             if (isset($filter) && $filter != null && $filter != '') {
                 $match['topic_score'] = [
-                    '$gt' => $filter
+                    '$gt' => $filter,
                 ];
             }
 
@@ -239,7 +234,7 @@ class TopicRepository implements TopicInterface
                 }
             }
 
-            if (!empty($nickNameIds)) {
+            if (! empty($nickNameIds)) {
                 $match['created_by_nick_id'] = ['$in' => $nickNameIds];
             }
 
@@ -251,11 +246,11 @@ class TopicRepository implements TopicInterface
                 }
                 $match[$searchField] = [
                     '$regex' => $search,
-                    '$options' => 'i'
+                    '$options' => 'i',
                 ];
             }
 
-            if (isset($archive) &&  !$archive) {
+            if (isset($archive) && ! $archive) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -264,54 +259,54 @@ class TopicRepository implements TopicInterface
                 [
                     // Stage 1: get all records matches with algorithm_id
                     '$match' => [
-                        'algorithm_id' => $algorithm
-                    ]
+                        'algorithm_id' => $algorithm,
+                    ],
                 ],
                 [
                     // Stage 2: Sort all the topic by as_of_date in descending order to get latest
-                    '$sort' => ['as_of_date' =>  -1]
+                    '$sort' => ['as_of_date' => -1],
                 ],
                 [
                     // Stage 3: GroupBy topic_id, and filter specific fields with lastest record from each group
                     '$group' => [
                         '_id' => '$topic_id',
                         'id' => [
-                            '$first' => '$_id'
+                            '$first' => '$_id',
                         ],
                         'as_of_date' => [
-                            '$first' => '$as_of_date'
+                            '$first' => '$as_of_date',
                         ],
                         'topic_score' => [
-                            '$first' => '$topic_score'
+                            '$first' => '$topic_score',
                         ],
                         'topic_full_score' => [
-                            '$first' => '$topic_full_score'
+                            '$first' => '$topic_full_score',
                         ],
                         'topic_name' => [
-                            '$first' => '$topic_name'
+                            '$first' => '$topic_name',
                         ],
                         'topic_id' => [
-                            '$first' => '$topic_id'
+                            '$first' => '$topic_id',
                         ],
                         'namespace_id' => [
-                            '$first' => '$namespace_id'
+                            '$first' => '$namespace_id',
                         ],
                         'review_namespace_id' => [
-                            '$first' => '$review_namespace_id'
+                            '$first' => '$review_namespace_id',
                         ],
                         'algorithm_id' => [
-                            '$first' => '$algorithm_id'
+                            '$first' => '$algorithm_id',
                         ],
                         'tree_structure' => [
-                            '$first' => '$tree_structure'
+                            '$first' => '$tree_structure',
                         ],
                         'submitter_nick_id' => [
-                            '$first' => '$submitter_nick_id'
+                            '$first' => '$submitter_nick_id',
                         ],
                         'created_by_nick_id' => [
-                            '$first' => '$created_by_nick_id'
+                            '$first' => '$created_by_nick_id',
                         ],
-                    ]
+                    ],
                 ],
                 [
                     // Stage 4: Apply further filters to the grouped records
@@ -319,8 +314,8 @@ class TopicRepository implements TopicInterface
                 ],
                 [
                     // Stage 5: Count the filtered record and stored into record_count variable.
-                    '$count' => "record_count"
-                ]
+                    '$count' => 'record_count',
+                ],
             ];
 
             $aggregate = $this->filterEmptyMongoStages($aggregate);
@@ -353,7 +348,7 @@ class TopicRepository implements TopicInterface
 
     private function escapeSpecialCharacters($inputString)
     {
-        $charactersToReplace = ['~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|' ];
+        $charactersToReplace = ['~',   '`',   '!',   '@',   '#',   '$',   '%',   '^',   '&',   '*',   '(',   ')',   '_',   '+',   '-',   '=',   '{',   '}',   '[',   ']',   ';',   '\'',   ':',   '\"',   ',',   '.',   '/',   '<',   '>',   '?',   '|'];
         $replacementCharacters = ['\\~', '\\`', '\\!', '\\@', '\\#', '\\$', '\\%', '\\^', '\\&', '\\*', '\\(', '\\)', '\\_', '\\+', '\\-', '\\=', '\\{', '\\}', '\\[', '\\]', '\\;', '\\\'', '\\:', '\\\"', '\\,', '\\.', '\\/', '\\<', '\\>', '\\?', '\\|'];
 
         return str_replace($charactersToReplace, $replacementCharacters, $inputString);

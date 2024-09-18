@@ -8,8 +8,6 @@ class TimelineStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     protected function authorize(): bool
     {
@@ -18,8 +16,6 @@ class TimelineStoreRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     protected function rules(): array
     {
@@ -28,11 +24,11 @@ class TimelineStoreRequest extends FormRequest
             'POST' => [
                 'topic_num' => 'required|integer',
                 'algorithm' => 'required|string',
-                'update_all' => 'in:0,1'
+                'update_all' => 'in:0,1',
             ],
             'GET' => [
                 'topic_num' => 'required|integer',
-                'algorithm' => 'required|string'
+                'algorithm' => 'required|string',
             ],
             default => [],
         };

@@ -1,8 +1,11 @@
 <?php
 
-use App\Http\Controllers\Api\v1\{TimelineController, TopicController, TreeController};
+use App\Http\Controllers\Api\v1\TimelineController;
+use App\Http\Controllers\Api\v1\TopicController;
+use App\Http\Controllers\Api\v1\TreeController;
 use App\Http\Middleware\EnsureTokenIsPresentAndValid;
-use Illuminate\Support\Facades\{Artisan, Route};
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 
 Route::controller(TreeController::class)->name('tree.')->prefix('tree')->group(function () {
     Route::middleware(EnsureTokenIsPresentAndValid::class)->group(function () {
@@ -29,7 +32,7 @@ Route::controller(TimelineController::class)->prefix('timeline')->name('timeline
         dd('<b>All topic timelines generated successfully. Execution Time is:</b> ' . ($execution_time * 1000) . 'Milliseconds');
     })->name('all');
 
-    Route::get('/adding-specific-topic/{topic_num}/{algorithm_id}', function (string $topic_num = null, string $algorithm_id = null) {
+    Route::get('/adding-specific-topic/{topic_num}/{algorithm_id}', function (?string $topic_num = null, ?string $algorithm_id = null) {
         ini_set('max_execution_time', 3000);
         $time_start = microtime(true);
         Artisan::call('timeline:all ' . $topic_num . '  ' . $algorithm_id);

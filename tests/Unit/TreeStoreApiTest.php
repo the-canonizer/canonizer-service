@@ -6,7 +6,6 @@ use Tests\TestCase;
 
 class TreeStoreApiTest extends TestCase
 {
-
     private $apiUrl = '/api/v1/tree/store';
 
     /**

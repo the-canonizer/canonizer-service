@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Facades\Helpers;
 
 use Illuminate\Support\Facades\Facade;

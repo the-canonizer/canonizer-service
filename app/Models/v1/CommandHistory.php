@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class CommandHistory extends Model
 {
     protected $table = 'command_histories';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -18,7 +19,7 @@ class CommandHistory extends Model
     ];
 
     protected $casts = [
-        'parameters' => 'array' ,
+        'parameters' => 'array',
         'started_at' => 'integer',
         'finished_at' => 'integer',
     ];

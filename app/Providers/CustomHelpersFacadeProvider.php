@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Helpers\DateTimeHelper;
 use App\Helpers\UtilHelper;
+use Illuminate\Support\ServiceProvider;
 
 class CustomHelpersFacadeProvider extends ServiceProvider
 {
@@ -30,8 +30,8 @@ class CustomHelpersFacadeProvider extends ServiceProvider
             return new DateTimeHelper();
         });
 
-         /**  Bind UtileHelper Class */
-         $this->app->bind('UtilHelper', function () {
+        /** Bind UtileHelper Class */
+        $this->app->bind('UtilHelper', function () {
             return new UtilHelper;
         });
     }

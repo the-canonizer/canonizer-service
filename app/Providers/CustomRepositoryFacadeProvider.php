@@ -2,9 +2,12 @@
 
 namespace App\Providers;
 
-use App\Models\v1\{Timeline, Tree};
+use App\Models\v1\Timeline;
+use App\Models\v1\Tree;
+use App\Repository\Timeline\TimelineRepository;
+use App\Repository\Topic\TopicRepository;
+use App\Repository\Tree\TreeRepository;
 use Illuminate\Support\ServiceProvider;
-use App\Repository\{Tree\TreeRepository,Timeline\TimelineRepository,Topic\TopicRepository};
 
 class CustomRepositoryFacadeProvider extends ServiceProvider
 {

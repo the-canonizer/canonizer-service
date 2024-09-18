@@ -2,22 +2,19 @@
 
 namespace App\Console\Commands;
 
+use App\Models\v1\Camp;
 use App\Models\v1\CommandHistory;
-use Illuminate\Console\Command;
-use App\Models\v1\Namespaces;
+use App\Models\v1\Timeline;
 use App\Models\v1\Topic;
+use App\Services\AlgorithmService;
 use Carbon\Carbon;
-use Exception;
-use TimelineService;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use UtilHelper;
-use App\Models\v1\Camp;
-use App\Models\v1\Nickname;
-use App\Models\v1\Timeline;
-use App\Services\AlgorithmService;
-use Illuminate\Support\Facades\DB;
 use TimelineRepository;
+use TimelineService;
+use UtilHelper;
 
 class CreateTopicTimelineCommand extends Command
 {
@@ -53,25 +50,25 @@ class CreateTopicTimelineCommand extends Command
     public function handle()
     {
         $data = [];
-        $asOfTime =  time();
-        $topic_num = $this->argument('topic_num') ?? NULL;
+        $asOfTime = time();
+        $topic_num = $this->argument('topic_num') ?? null;
         $algorithm_id = $this->argument('algorithm_id') ?? '';
-        $count =0;
+        $count = 0;
         $commandHistory = (new CommandHistory())->create([
             'name' => $this->signature,
             'parameters' => [
-                'asOfTime' => $asOfTime
+                'asOfTime' => $asOfTime,
             ],
             'started_at' => Carbon::now()->timestamp,
         ]);
 
         // If timeline:all command is already running, don't execute command
-        $commandStatement = "php artisan timeline:all {topic_num?} {algorithm_id?}";
-        $commandSignature = "timeline:all {topic_num?} {algorithm_id?}";
+        $commandStatement = 'php artisan timeline:all {topic_num?} {algorithm_id?}';
+        $commandSignature = 'timeline:all {topic_num?} {algorithm_id?}';
         $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
 
         //First Deleted all old topic Timeline related records.
-        $algorithms = (new AlgorithmService())->getAlgorithmKeyList("timeline",$algorithm_id);
+        $algorithms = (new AlgorithmService())->getAlgorithmKeyList('timeline', $algorithm_id);
         /*
         * Delete specific topic number otherwise delete all topic in mongodb
         */
@@ -80,7 +77,7 @@ class CreateTopicTimelineCommand extends Command
             // Check the argument of id with command / else use the all.
             if (!empty($topic_num)) {
                 $del = Timeline::where('algorithm_id', $algorithm)->where('topic_id','=', (int)$topic_num)->delete();
-               
+
             }
             else{
                 $del = Timeline::where('algorithm_id', $algorithm)->delete();
@@ -89,53 +86,49 @@ class CreateTopicTimelineCommand extends Command
         */
 
         try {
-            
-            if (!empty($topic_num)) {
+
+            if (! empty($topic_num)) {
                 // get specific topic
                 $topics = Topic::select(['topic_num'])->where('topic_num', $topic_num)->groupBy('topic_num')->get();
-            }
-            else{
+            } else {
                 // get all topic
                 $topics = Topic::select(['topic_num'])->orderBy('topic_num', 'ASC')->groupBy('topic_num')->get();
             }
 
             Log::info('timeline command start and total topic number : '.count($topics));
             $main_start = microtime(true);
-            $asOfTime =  time();
+            $asOfTime = time();
 
-            $lastRecord = 0; 
-            if(count($topics)>1) {
-                foreach ($topics  as $key => $topic) 
-                {
+            $lastRecord = 0;
+            if (count($topics) > 1) {
+                foreach ($topics as $key => $topic) {
                     // get the timeline tree from mongoDb
                     $conditions = TimelineService::getTopicConditions($topic->topic_num);
                     $mongoTree = TimelineRepository::findTimeline($conditions);
                     /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
-                    if ((!$mongoTree || !count($mongoTree)))
+                    if ((! $mongoTree || ! count($mongoTree))) {
                         break;
-                    
-                    $lastRecord =$topic->topic_num;
+                    }
+
+                    $lastRecord = $topic->topic_num;
 
                 }
 
-                if($lastRecord){
+                if ($lastRecord) {
                     // Delete specific topic
-                    $del = Timeline::where('topic_id','=', (int)$lastRecord)->delete();
+                    $del = Timeline::where('topic_id', '=', (int) $lastRecord)->delete();
                 }
 
-            }
-            else {
-                    $lastRecord = $topic_num;
-                    if($algorithm_id!=""){
-                        $del = Timeline::where('algorithm_id', $algorithm_id)->where('topic_id','=', (int)$topic_num)->delete();
-                    }
-                    else{
-                        $del = Timeline::where('topic_id','=', (int)$topic_num)->delete();
-                    }
+            } else {
+                $lastRecord = $topic_num;
+                if ($algorithm_id != '') {
+                    $del = Timeline::where('algorithm_id', $algorithm_id)->where('topic_id', '=', (int) $topic_num)->delete();
+                } else {
+                    $del = Timeline::where('topic_id', '=', (int) $topic_num)->delete();
+                }
             }
 
-            foreach ($topics  as $key => $topic) 
-            {
+            foreach ($topics as $key => $topic) {
                 Log::info('Topic number start - '.$topic->topic_num);
                 $start = microtime(true);
                 // get the timeline tree from mongoDb
@@ -143,33 +136,33 @@ class CreateTopicTimelineCommand extends Command
                 //$mongoTree = TimelineRepository::findTimeline($conditions);
                 /* If the timeline is not in mongo for that asOfTime, then create in mongo and return the timeline */
                 //if ((!$mongoTree || !count($mongoTree))) {
-                if($topic->topic_num < $lastRecord)
+                if ($topic->topic_num < $lastRecord) {
                     continue;
-                $data = $this->getTopicHistory($topic_num=$topic->topic_num,$data);
-                $data = $this->getCampHistory($topic_num=$topic->topic_num,$data);                
-                $data = $this->getDirectSupportHistory($topic_num=$topic->topic_num,$data);
-                $data = $this->getDelegatedSupportHistory($topic_num=$topic->topic_num,$data);
-                $key_values = array_column($data, 'asOfTime'); 
+                }
+                $data = $this->getTopicHistory($topic_num = $topic->topic_num, $data);
+                $data = $this->getCampHistory($topic_num = $topic->topic_num, $data);
+                $data = $this->getDirectSupportHistory($topic_num = $topic->topic_num, $data);
+                $data = $this->getDelegatedSupportHistory($topic_num = $topic->topic_num, $data);
+                $key_values = array_column($data, 'asOfTime');
                 array_multisort($key_values, SORT_ASC, $data); //SORT_ASC SORT_DESC
-                if(!empty($data)){
-                    foreach($data as $k=>$result){
-                        $count =$count +1;
-                        $tree =  TimelineService::upsertTimeline($topic_num=$result['topic_num'], $algorithm=$algorithm_id, $asOfTime=$result['asOfTime'], $updateAll=0, $request = [], $message=$result['message'], $type=$result['type'], $id=$result['id'], $old_parent_id=$result['old_parent_id'], $new_parent_id=$result['new_parent_id'],$timelineType="history", $topic_name=$result['topic_name'], $camp_num=$result['camp_num'], $camp_name=$result['camp_name'],$key=count($data)-$k, $url=null);            
-                        
-                    
+                if (! empty($data)) {
+                    foreach ($data as $k => $result) {
+                        $count = $count + 1;
+                        $tree = TimelineService::upsertTimeline($topic_num = $result['topic_num'], $algorithm = $algorithm_id, $asOfTime = $result['asOfTime'], $updateAll = 0, $request = [], $message = $result['message'], $type = $result['type'], $id = $result['id'], $old_parent_id = $result['old_parent_id'], $new_parent_id = $result['new_parent_id'], $timelineType = 'history', $topic_name = $result['topic_name'], $camp_num = $result['camp_num'], $camp_name = $result['camp_name'], $key = count($data) - $k, $url = null);
+
                     }
 
-                } 
+                }
                 $data = [];
-                Log::info('Topic number end - '.$topic->topic_num. ' and total time execution: '. date("H:i:s",microtime(true) - $start) );
+                Log::info('Topic number end - '.$topic->topic_num. ' and total time execution: '. date('H:i:s', microtime(true) - $start));
                 log::info($count .' records added in above topic number.');
-            }  
+            }
 
             Log::info(' Timeline command ended.');
             $time_elapsed_secs = microtime(true) - $main_start;
-            log::info(" Timeline command total execution time : " .  date("H:i:s",$time_elapsed_secs));
-            $this->info(" Timeline command total execution time : " .  date("H:i:s",$time_elapsed_secs));
-            
+            log::info(' Timeline command total execution time : ' .  date('H:i:s', $time_elapsed_secs));
+            $this->info(' Timeline command total execution time : ' .  date('H:i:s', $time_elapsed_secs));
+
         } catch (Throwable $th) {
             $commandHistory->error_output = json_encode($th);
             $commandHistory->save();
@@ -179,8 +172,7 @@ class CreateTopicTimelineCommand extends Command
         $commandHistory->save();
     }
 
-    
-    private function getTopicHistory($topic_num,$data)
+    private function getTopicHistory($topic_num, $data)
     {
         $topic_information = DB::select('SELECT	
             a.id, 
@@ -209,36 +201,36 @@ class CreateTopicTimelineCommand extends Command
                 WHERE topic_num = '.$topic_num.'  ORDER BY submit_time 
             ) a, nick_name b
             WHERE a.submitter_nick_id = b.id AND objector_nick_id IS NULL');
-           
-        if(!empty($topic_information)){
 
-            foreach($topic_information as $info){
-                if($info->String_comparison=="same_topic_name" && ($info->previous_topic_name=="" || $info->previous_topic_name==NULL)){
-                    $timelineMessage = $info->nick_name . " created a new topic ". $info->topic_name;
-                    $type= "create_topic";
-                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");
-                }
-                else if($info->String_comparison=="change_in_topic_name"){
-                    $timelineMessage = $info->nick_name . " updated the topic name from ". $info->previous_topic_name. " to ". $info->topic_name;
-                    $type="update_topic";
-                    $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->id, 'old_parent_id'=>null, 'new_parent_id'=>null, 'topic_name'=>$info->topic_name, 'camp_num'=>1, 'camp_name'=>"Aggreement");   
+        if (! empty($topic_information)) {
+
+            foreach ($topic_information as $info) {
+                if ($info->String_comparison == 'same_topic_name' && ($info->previous_topic_name == '' || $info->previous_topic_name == null)) {
+                    $timelineMessage = $info->nick_name . ' created a new topic '. $info->topic_name;
+                    $type = 'create_topic';
+                    $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->submit_time, 'message' => $timelineMessage, 'type' => $type, 'id' => $info->id, 'old_parent_id' => null, 'new_parent_id' => null, 'new_parent_id' => null, 'topic_name' => $info->topic_name, 'camp_num' => 1, 'camp_name' => 'Aggreement'];
+                } elseif ($info->String_comparison == 'change_in_topic_name') {
+                    $timelineMessage = $info->nick_name . ' updated the topic name from '. $info->previous_topic_name. ' to '. $info->topic_name;
+                    $type = 'update_topic';
+                    $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->submit_time, 'message' => $timelineMessage, 'type' => $type, 'id' => $info->id, 'old_parent_id' => null, 'new_parent_id' => null, 'topic_name' => $info->topic_name, 'camp_num' => 1, 'camp_name' => 'Aggreement'];
                 }
             }
         }
-        return $data;  
+
+        return $data;
     }
 
-    private function getCampHistory($topic_num,$data)
-    {               
-        $camps_info = Camp::select(['id','camp_num'])
-            ->where('topic_num', '=',$topic_num)
+    private function getCampHistory($topic_num, $data)
+    {
+        $camps_info = Camp::select(['id', 'camp_num'])
+            ->where('topic_num', '=', $topic_num)
             ->where('camp_name', '!=', 'Agreement')
             ->where('objector_nick_id', '=', null)
             ->orderBy('id', 'asc')
             ->groupBy('camp_num')
-            ->get(); 
-        if(!empty($camps_info)) {
-            foreach($camps_info as $camp){
+            ->get();
+        if (! empty($camps_info)) {
+            foreach ($camps_info as $camp) {
                 $camp_information = DB::select('SELECT
                 topic_num,
                 parent_camp_num,
@@ -321,37 +313,36 @@ GROUP BY topic_num,
                 submitter_nick_id,
                 nick_name
 ORDER BY `a`.`submit_time` ASC');
-                if(!empty($camp_information)){
-                    foreach($camp_information as $info){
-                        $new_parent_id =null; 
+                if (! empty($camp_information)) {
+                    foreach ($camp_information as $info) {
+                        $new_parent_id = null;
                         $old_parent_id = null;
-                        if($info->parent_camp_num_comparison=="change_in_parent_camp_num"){
-                            $timelineMessage = $info->nick_name . " changed the parent of camp ". $info->camp_name;
-                            $type="parent_change";
-                            $new_parent_id =$info->parent_camp_num; 
+                        if ($info->parent_camp_num_comparison == 'change_in_parent_camp_num') {
+                            $timelineMessage = $info->nick_name . ' changed the parent of camp '. $info->camp_name;
+                            $type = 'parent_change';
+                            $new_parent_id = $info->parent_camp_num;
                             $old_parent_id = $info->camp_num;
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
-                        }
-                        else if($info->camp_name_comparison=="camp_created"){ // create
-                            $timelineMessage = $info->nick_name . " created a new Camp ". $info->camp_name;
-                            $type="create_camp";
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
-                        }
-                        else if($info->camp_name_comparison=="change_in_camp_name"){
-                            $timelineMessage = $info->nick_name . " updated the Camp name from ". $info->previous_camp_name. " to ". $info->camp_name;
-                            
-                            $type="update_camp"; 
-                            $data[] =array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->submit_time, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$camp->id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                            $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->submit_time, 'message' => $timelineMessage, 'type' => $type, 'id' => $camp->id, 'old_parent_id' => $old_parent_id, 'new_parent_id' => $new_parent_id, 'topic_name' => null, 'camp_num' => $info->camp_num, 'camp_name' => $info->camp_name];
+                        } elseif ($info->camp_name_comparison == 'camp_created') { // create
+                            $timelineMessage = $info->nick_name . ' created a new Camp '. $info->camp_name;
+                            $type = 'create_camp';
+                            $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->submit_time, 'message' => $timelineMessage, 'type' => $type, 'id' => $camp->id, 'old_parent_id' => $old_parent_id, 'new_parent_id' => $new_parent_id, 'topic_name' => null, 'camp_num' => $info->camp_num, 'camp_name' => $info->camp_name];
+                        } elseif ($info->camp_name_comparison == 'change_in_camp_name') {
+                            $timelineMessage = $info->nick_name . ' updated the Camp name from '. $info->previous_camp_name. ' to '. $info->camp_name;
+
+                            $type = 'update_camp';
+                            $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->submit_time, 'message' => $timelineMessage, 'type' => $type, 'id' => $camp->id, 'old_parent_id' => $old_parent_id, 'new_parent_id' => $new_parent_id, 'topic_name' => null, 'camp_num' => $info->camp_num, 'camp_name' => $info->camp_name];
                         }
                     }
 
                 }
             }
         }
-        return $data;   
+
+        return $data;
     }
 
-    private function getDirectSupportHistory($topic_num,$data) 
+    private function getDirectSupportHistory($topic_num, $data)
     {
         $support_info = DB::select("SELECT
                 a.topic_num,
@@ -383,32 +374,30 @@ ORDER BY `a`.`submit_time` ASC');
             WHERE a.nick_name_id = b.id 
                 AND a.topic_num = c.topic_num
                 AND a.camp_num = c.camp_num
-                AND a.topic_num = ".$topic_num."  
+                AND a.topic_num = ".$topic_num.'  
                 AND `end` != 0
                 AND delegate_nick_name_id = 0
-                AND c.submit_time <= a.end");
+                AND c.submit_time <= a.end');
 
-        if(!empty($support_info))
-        {
-            foreach($support_info as $info) {
-                $new_parent_id =null; 
+        if (! empty($support_info)) {
+            foreach ($support_info as $info) {
+                $new_parent_id = null;
                 $old_parent_id = null;
-                if($info->direct_support_start=="direct_support_start"){
-                    $timelineMessage = $info->nick_name . " added their support on camp ". $info->camp_name;
-                    $type="direct_support_added";
+                if ($info->direct_support_start == 'direct_support_start') {
+                    $timelineMessage = $info->nick_name . ' added their support on camp '. $info->camp_name;
+                    $type = 'direct_support_added';
+                } else {
+                    $timelineMessage = $info->nick_name . ' removed their support from camp '. $info->camp_name;
+                    $type = 'direct_support_removed';
                 }
-                else{
-                    $timelineMessage = $info->nick_name . " removed their support from camp ". $info->camp_name;
-                    $type="direct_support_removed";
-                }
-                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->camp_num, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>$info->camp_name);
+                $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->date, 'message' => $timelineMessage, 'type' => $type, 'id' => $info->camp_num, 'old_parent_id' => $old_parent_id, 'new_parent_id' => $new_parent_id, 'topic_name' => null, 'camp_num' => $info->camp_num, 'camp_name' => $info->camp_name];
             }
         }
-        
+
         return $data;
     }
 
-    private function getDelegatedSupportHistory($topic_num,$data) 
+    private function getDelegatedSupportHistory($topic_num, $data)
     {
         $support_info = DB::select("SELECT
 	    MIN(support_id) As support_id,
@@ -438,105 +427,98 @@ ORDER BY `a`.`submit_time` ASC');
             FROM
             support a, nick_name b
             WHERE a.delegate_nick_name_id = b.id
-            AND topic_num = ".$topic_num."
+            AND topic_num = ".$topic_num.'
             AND END != 0
             AND delegate_nick_name_id != 0
-            GROUP BY topic_num, delegate_supporter, delegate_nick_name_id, delegate_support_end");
-/*SELECT
-            support_id,
-            topic_num,
-            camp_num,
-            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
-                delegate_nick_name_id,
-                nick_name,
-                `start` AS 'date',
-                'delegate_support_start'
-            FROM
-            support a, nick_name b
-            WHERE a.delegate_nick_name_id = b.id
-            AND topic_num = ".$topic_num." 
-            AND delegate_nick_name_id != 0
-            UNION
-            SELECT
-            support_id,
-            topic_num,
-            camp_num,
-            (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
-            delegate_nick_name_id,
-            nick_name,
-            `end` AS 'date',
-            'delegate_support_end'
-            FROM
-            support a, nick_name b
-            WHERE a.delegate_nick_name_id = b.id
-            AND topic_num = ".$topic_num."
-            AND END != 0
-            AND delegate_nick_name_id != 0"*/
-        if(!empty($support_info))
-        {
-            foreach($support_info as $info) {
-                $new_parent_id =null; 
+            GROUP BY topic_num, delegate_supporter, delegate_nick_name_id, delegate_support_end');
+        /*SELECT
+                    support_id,
+                    topic_num,
+                    camp_num,
+                    (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
+                        delegate_nick_name_id,
+                        nick_name,
+                        `start` AS 'date',
+                        'delegate_support_start'
+                    FROM
+                    support a, nick_name b
+                    WHERE a.delegate_nick_name_id = b.id
+                    AND topic_num = ".$topic_num."
+                    AND delegate_nick_name_id != 0
+                    UNION
+                    SELECT
+                    support_id,
+                    topic_num,
+                    camp_num,
+                    (SELECT nick_name FROM nick_name WHERE id = a.nick_name_id) AS delegate_supporter,
+                    delegate_nick_name_id,
+                    nick_name,
+                    `end` AS 'date',
+                    'delegate_support_end'
+                    FROM
+                    support a, nick_name b
+                    WHERE a.delegate_nick_name_id = b.id
+                    AND topic_num = ".$topic_num."
+                    AND END != 0
+                    AND delegate_nick_name_id != 0"*/
+        if (! empty($support_info)) {
+            foreach ($support_info as $info) {
+                $new_parent_id = null;
                 $old_parent_id = null;
-                if($info->delegate_support_start=="delegate_support_start"){
-                    $timelineMessage = $info->delegate_supporter . " has just delegated their support to ".  $info->nick_name;
-                    $type="delegate_support_added";
+                if ($info->delegate_support_start == 'delegate_support_start') {
+                    $timelineMessage = $info->delegate_supporter . ' has just delegated their support to '.  $info->nick_name;
+                    $type = 'delegate_support_added';
+                } else {
+                    $timelineMessage = $info->delegate_supporter . '  has removed their delegated support from '. $info->nick_name;
+                    $type = 'delegate_support_removed';
                 }
-                else{
-                    $timelineMessage =  $info->delegate_supporter . "  has removed their delegated support from ". $info->nick_name;
-                    $type="delegate_support_removed";
-                }
-               
-                $data[] = array('topic_num'=>$info->topic_num, 'asOfTime'=>$info->date, 'message'=>$timelineMessage, 'type'=>$type, 'id'=>$info->support_id, 'old_parent_id'=>$old_parent_id, 'new_parent_id'=>$new_parent_id, 'topic_name'=>null, 'camp_num'=>$info->camp_num, 'camp_name'=>null);
+
+                $data[] = ['topic_num' => $info->topic_num, 'asOfTime' => $info->date, 'message' => $timelineMessage, 'type' => $type, 'id' => $info->support_id, 'old_parent_id' => $old_parent_id, 'new_parent_id' => $new_parent_id, 'topic_name' => null, 'camp_num' => $info->camp_num, 'camp_name' => null];
             }
         }
-        
+
         return $data;
     }
 
     /**
      * Get the url.
      *
-     * @param int $topicNumber
-     * @param int $campNumber
-     * @param int $asOfTime
-     * @param boolean $isReview
-     *
+     * @param  int  $topicNumber
+     * @param  int  $campNumber
+     * @param  int  $asOfTime
+     * @param  bool  $isReview
      * @return string url
      */
-
-     public function getTimelineUrl($topic_num, $topic_name, $camp_num, $camp_name, $topicTitle, $type)
-     {
+    public function getTimelineUrl($topic_num, $topic_name, $camp_num, $camp_name, $topicTitle, $type)
+    {
         try {
-            $topic_name =isset($topic_name)?$topic_name:$topicTitle;
-            $camp_num =isset($camp_num)?$camp_num:1;
-            $camp_name =isset($camp_name)?$camp_name:"Agreement";
+            $topic_name = isset($topic_name) ? $topic_name : $topicTitle;
+            $camp_num = isset($camp_num) ? $camp_num : 1;
+            $camp_name = isset($camp_name) ? $camp_name : 'Agreement';
             $rootUrl = env('REFERER_URL');
-            if($type ="create_topic" || $type ="create_camp" || $type ="parent_change"){
+            if ($type = 'create_topic' || $type = 'create_camp' || $type = 'parent_change') {
                 $urlPortion = $rootUrl . '/topic/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name) . '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
-            }
-            else if($type ="update_topic"){
+            } elseif ($type = 'update_topic') {
                 $urlPortion = $rootUrl . '/topic/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name);
 
-            }
-            else if($type ="update_camp"){
+            } elseif ($type = 'update_camp') {
                 $urlPortion = $rootUrl . '/camp/history/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . $this->replaceSpecialCharacters($camp_name);
 
-            }
-            else{
+            } else {
                 $urlPortion = $rootUrl . '/support/' . $topic_num . '-' . $this->replaceSpecialCharacters($topic_name). '/' . $camp_num . '-' . ($camp_name);
 
             }
+
             return $urlPortion;
 
         } catch (CampURLException $th) {
-             throw new CampURLException("URL Exception");
-         }
+            throw new CampURLException('URL Exception');
+        }
     }
 
-    public function replaceSpecialCharacters($info){
+    public function replaceSpecialCharacters($info)
+    {
         return preg_replace('/[^A-Za-z0-9\-]/', '-', $info);
     }
-
 }
-

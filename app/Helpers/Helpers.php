@@ -2,7 +2,9 @@
 
 namespace App\Helpers;
 
-use App\Models\v1\{Camp, Nickname, Person, Topic};
+use App\Models\v1\Camp;
+use App\Models\v1\Nickname;
+use App\Models\v1\Person;
 use Carbon\Carbon;
 
 class Helpers
@@ -15,11 +17,11 @@ class Helpers
     public static function getNickNamesByEmail($email)
     {
         $user = (new Person())->where('email', $email)->first();
-            if (!empty($user)) {
-                return (new Nickname())->where('user_id', $user->id)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
-            } else {
-                return [];
-            }
+        if (! empty($user)) {
+            return (new Nickname())->where('user_id', $user->id)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+        } else {
+            return [];
+        }
     }
 
     public static function renderParentsCampTree($topic_num, $camp_num)
@@ -31,7 +33,7 @@ class Helpers
             'objector_nick_id' => null,
         ])->orderBy('submit_time', 'desc')->first();
 
-        if (!$camp) {
+        if (! $camp) {
             return [];
         }
 

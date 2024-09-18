@@ -18,7 +18,7 @@ class EnsureTokenIsPresentAndValid
         if ($request->hasHeader('X-Api-Token') && $request->header('X-Api-Token') == env('API_TOKEN')) {
             return $next($request);
         }
-        
+
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 }

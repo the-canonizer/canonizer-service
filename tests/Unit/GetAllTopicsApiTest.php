@@ -8,6 +8,7 @@ use Tests\TestCase;
 class GetAllTopicsApiTest extends TestCase
 {
     private $apiUrl = '/api/v1/topic/getAll';
+
     /**
      * Check Api with empty form data
      * validation
@@ -70,7 +71,7 @@ class GetAllTopicsApiTest extends TestCase
         $this->assertEquals(200, $response->status());
         $response = $this->call('POST', $this->apiUrl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => ')_+', 'filter' => 1.7, 'user_email' => '']);
         $this->assertEquals(200, $response->status());
-        $response = $this->call('POST', $this->apiUrl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => "[]%", 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', $this->apiUrl, ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '[]%', 'filter' => 1.7, 'user_email' => '']);
         $this->assertEquals(200, $response->status());
     }
 
@@ -108,16 +109,16 @@ class GetAllTopicsApiTest extends TestCase
             'data' => [
                 'topic' => [
                     '*' => [
-                        "submitter_nick_id",
-                        "namespace_id",
-                        "topic_score",
-                        "topic_full_score",
-                        "topic_id",
-                        "topic_name",
-                        "tree_structure",
-                        "as_of_date",
-                    ]
-                ]
+                        'submitter_nick_id',
+                        'namespace_id',
+                        'topic_score',
+                        'topic_full_score',
+                        'topic_id',
+                        'topic_name',
+                        'tree_structure',
+                        'as_of_date',
+                    ],
+                ],
             ],
         ]);
     }
@@ -132,17 +133,17 @@ class GetAllTopicsApiTest extends TestCase
             'data' => [
                 'topic' => [
                     '*' => [
-                        "submitter_nick_id",
-                        "namespace_id",
-                        "score",
-                        "topic_score",
-                        "topic_full_score",
-                        "topic_id",
-                        "topic_name",
-                        "tree_structure",
-                        "as_of_date",
-                    ]
-                ]
+                        'submitter_nick_id',
+                        'namespace_id',
+                        'score',
+                        'topic_score',
+                        'topic_full_score',
+                        'topic_id',
+                        'topic_name',
+                        'tree_structure',
+                        'as_of_date',
+                    ],
+                ],
             ],
         ]);
     }

@@ -9,8 +9,6 @@ class TopicRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -19,8 +17,6 @@ class TopicRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -31,11 +27,11 @@ class TopicRequest extends FormRequest
             'asofdate' => 'required',
             'algorithm' => 'required|string',
             'asof' => 'required|string',
-            'search' => 'nullable|string'
+            'search' => 'nullable|string',
         ];
     }
 
-     /**
+    /**
      * format the validation response if there is error in validation.
      *
      * @return array
@@ -48,8 +44,8 @@ class TopicRequest extends FormRequest
             'data' => null,
             'errors' => [
                 'message' => 'The given data is invalid',
-                'errors' => $this->validator->errors()->messages()
-            ]
+                'errors' => $this->validator->errors()->messages(),
+            ],
         ], $this->statusCode());
     }
 }

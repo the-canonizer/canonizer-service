@@ -3,21 +3,17 @@
 namespace App\Models\v1;
 
 use Illuminate\Database\Eloquent\Model;
-use DB;
 
-class SharesAlgorithm extends Model {
-
+class SharesAlgorithm extends Model
+{
     protected $table = 'shares_algo_data';
+
     public $timestamps = false;
+
     protected static $tempArray = [];
 
-
-
-    public function usernickname() {
-        return $this->hasOne('App\Model\Nickname', 'id', 'nick_name_id');
+    public function usernickname()
+    {
+        return $this->hasOne(Nickname::class, 'id', 'nick_name_id');
     }
-
-
-
-
 }

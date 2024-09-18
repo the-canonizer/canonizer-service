@@ -2,26 +2,27 @@
 
 namespace App\Services;
 
-use App\Facades\{Helpers\DateTimeHelperFacade, Repositories\TopicRepositoryFacade, Services\CampServiceFacade};
-use App\Models\v1\{Camp, Topic};
+use App\Facades\Helpers\DateTimeHelperFacade;
+use App\Facades\Repositories\TopicRepositoryFacade;
+use App\Facades\Services\CampServiceFacade;
+use App\Models\v1\Camp;
+use App\Models\v1\Topic;
 
 class TopicService
 {
-
     /**
      * get live topic details.
      *
-     * @param  int $topicNumber
-     * @param  int $asOfTime
-     * @param  array $filter
+     * @param  int  $topicNumber
+     * @param  int  $asOfTime
+     * @param  array  $filter
      * @return Illuminate\Support\Collection
      */
-
-    public function getLiveTopic($topicNumber, $asOfTime, $filter = array(), $asOf = 'default', $fetchTopicHistory = 0)
+    public function getLiveTopic($topicNumber, $asOfTime, $filter = [], $asOf = 'default', $fetchTopicHistory = 0)
     {
-        $topic =  Topic::where('topic_num', $topicNumber);
-        if ($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate' && !$fetchTopicHistory) { // bydate filter must be without objection also
-            $topic->where('objector_nick_id', NULL);
+        $topic = Topic::where('topic_num', $topicNumber);
+        if ($asOf == 'default' || $asOf == 'review' || $asOf == 'bydate' && ! $fetchTopicHistory) { // bydate filter must be without objection also
+            $topic->where('objector_nick_id', null);
         }
 
         if ($asOf == 'default') {
@@ -36,18 +37,17 @@ class TopicService
         return $liveTopic;
     }
 
-
     /**
      * get review topic details.
      *
-     * @param  int $topicNumber
+     * @param  int  $topicNumber
      * @return Illuminate\Support\Collection
      */
     public function getReviewTopic($topicNumber)
     {
         $topic = Topic::where('topic_num', $topicNumber)
             ->where('grace_period', 0)
-            ->where('objector_nick_id', NULL)
+            ->where('objector_nick_id', null)
             ->orderBy('go_live_time', 'desc')->first(); // ticket 1219 Muhammad Ahmad
 
         return $topic;
@@ -56,18 +56,15 @@ class TopicService
     /**
      * get topics with score from mongoDb.
      *
-     * @param int $namespaceId
-     * @param int $asofdate
-     * @param string $algorithm
-     * @param int $skip
-     * @param int $pageSize
-     * @param float $filter
-     * @param string $search
-     *
-     *
+     * @param  int  $namespaceId
+     * @param  int  $asofdate
+     * @param  string  $algorithm
+     * @param  int  $skip
+     * @param  int  $pageSize
+     * @param  float  $filter
+     * @param  string  $search
      * @return array Response
      */
-
     public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0, $sort = false)
     {
         // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
@@ -77,44 +74,39 @@ class TopicService
     /**
      * get total topics with given conditions from MongoDb.
      *
-     * @param int $namespaceId
-     * @param int $asofdate
-     * @param string $algorithm
-     * @param float $filter
-     * @param string $search
-     *
-     *
+     * @param  int  $namespaceId
+     * @param  int  $asofdate
+     * @param  string  $algorithm
+     * @param  float  $filter
+     * @param  string  $search
      * @return int $totalTrees
      */
-
     public function getTotalTopics($namespaceId, $asofdate, $algorithm, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0)
     {
         //Only getting the count of total latest topic from the MongoDB. #MongoDBRefactoring
         return TopicRepositoryFacade::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter, $archive);
     }
 
-
     /**
      * Sort the topics based on score.
      *
-     * @param int $namespaceId
-     * @param string $algorithm
-     * @param int $asOfTime
-     *
+     * @param  int  $namespaceId
+     * @param  string  $algorithm
+     * @param  int  $asOfTime
      * @return Illuminate\Database\Eloquent\Collection;
      */
-    public  function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime)
+    public function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime)
     {
 
-        if (sizeof($topics) > 0) {
+        if (count($topics) > 0) {
 
             foreach ($topics as $key => $value) {
                 $campData = Camp::where('topic_num', $value->topic_num)->where('camp_num', $value->camp_num)->first();
                 if ($campData) {
                     $reducedTree = CampServiceFacade::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
-                    $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
-                    $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
-                    $topics[$key]->topic_full_score = !is_string($reducedTree[$value->camp_num]['full_score']) ? $reducedTree[$value->camp_num]['full_score'] : 0;
+                    $topics[$key]->score = ! is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
+                    $topics[$key]->topic_score = ! is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
+                    $topics[$key]->topic_full_score = ! is_string($reducedTree[$value->camp_num]['full_score']) ? $reducedTree[$value->camp_num]['full_score'] : 0;
                     $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                     $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                     $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
@@ -132,6 +124,7 @@ class TopicService
             }
             // $topics = $topics->sortBy('score',SORT_REGULAR, true);
             $topics = collect(collect($topics)->sortByDesc('score'))->values();
+
             return $topics;
         } else {
             return $topics;
@@ -142,10 +135,8 @@ class TopicService
      * Filter the topics collection .
      *
      * @param Illuminate\Database\Eloquent\Collection
-     *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-
     public function filterTopicCollection($topics, $filter)
     {
 
@@ -160,10 +151,8 @@ class TopicService
      * Get the topic created date .
      *
      * @param Illuminate\Database\Eloquent\Collection
-     *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-
     public static function getTopicCreatedDate($topicNumber)
     {
         return Topic::where('topic_num', $topicNumber)
@@ -175,10 +164,8 @@ class TopicService
      * Check topic exists in MySql .
      *
      * @param Illuminate\Database\Eloquent\Collection
-     *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-
     public static function checkTopicInMySql($topicNumber, $asOfTime)
     {
         return Topic::where('topic_num', $topicNumber)->where('submit_time', '<=', $asOfTime)->first();
@@ -188,10 +175,8 @@ class TopicService
      * Check topic created by in MySql .
      *
      * @param Illuminate\Database\Eloquent\Collection
-     *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-
     public static function getTopicAuthor($topicNumber)
     {
         return Topic::where('topic_num', $topicNumber)->pluck('submitter_nick_id')

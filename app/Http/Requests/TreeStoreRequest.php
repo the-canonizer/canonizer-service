@@ -10,8 +10,6 @@ class TreeStoreRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
-     *
-     * @return bool
      */
     public function authorize(): bool
     {
@@ -20,8 +18,6 @@ class TreeStoreRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
-     *
-     * @return array
      */
     public function rules(): array
     {
@@ -41,7 +37,7 @@ class TreeStoreRequest extends FormRequest
             'GET' => [
                 'topic_num' => 'required|integer',
                 'asofdate' => 'required',
-                'algorithm' => 'required|string'
+                'algorithm' => 'required|string',
             ],
         };
     }
@@ -61,7 +57,7 @@ class TreeStoreRequest extends FormRequest
     public function errorResponse(): ?JsonResponse
     {
         $errors = $this->validator->errors()->messages();
-        if (array_key_exists("topic_num", $errors)) {
+        if (array_key_exists('topic_num', $errors)) {
             $messageExists = in_array('The selected topic num is invalid.', $errors['topic_num']);
         }
         // change status code to 404 when record not found...

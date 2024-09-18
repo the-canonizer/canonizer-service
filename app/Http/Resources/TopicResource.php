@@ -2,14 +2,14 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class TopicResource extends ResourceCollection
 {
-
     public $resource;
+
     private $numberOfPages;
+
     /**
      * Create a new resource instance.
      *
@@ -30,7 +30,7 @@ class TopicResource extends ResourceCollection
      */
     public function toArray($request)
     {
-        if (count(array($this->resource)) > 0) {
+        if (count([$this->resource]) > 0) {
             return [
                 'status_code' => 200,
                 'message' => 'Success',
@@ -40,25 +40,25 @@ class TopicResource extends ResourceCollection
                     // 'number_of_pages' => $this->numberOfPages
                 ],
             ];
-        } elseif (count(array($this->resource)) <= 0) {
+        } elseif (count([$this->resource]) <= 0) {
             return [
                 'status_code' => 404,
-                'message' => "No data found",
+                'message' => 'No data found',
                 'data' => null,
                 'errors' => [
                     'message' => 'No data found',
-                    'errors' => []
-                ]
+                    'errors' => [],
+                ],
             ];
         } else {
             return [
                 'status_code' => 400,
-                'message' => "something went wrong",
+                'message' => 'something went wrong',
                 'data' => null,
                 'errors' => [
                     'message' => 'something went wrong',
-                    'errors' => $this->resource
-                ]
+                    'errors' => $this->resource,
+                ],
             ];
         }
     }

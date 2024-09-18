@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
-use App\Services\CampService;
 use App\Services\AlgorithmService;
+use App\Services\CampService;
+use App\Services\TimelineService;
 use App\Services\TopicService;
 use App\Services\TreeService;
-use App\Services\TimelineService;
+use Illuminate\Support\ServiceProvider;
 
 class CustomServicesFacadeProvider extends ServiceProvider
 {
@@ -43,8 +43,8 @@ class CustomServicesFacadeProvider extends ServiceProvider
             return new TreeService();
         });
 
-         /**  Bind TopicService Class */
-         $this->app->bind('TopicService', function () {
+        /**  Bind TopicService Class */
+        $this->app->bind('TopicService', function () {
             return new TopicService();
         });
 

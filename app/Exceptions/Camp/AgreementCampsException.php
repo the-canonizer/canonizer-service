@@ -1,7 +1,5 @@
 <?php
 
-
-
 namespace App\Exceptions\Camp;
 
 use Exception;
