@@ -2,8 +2,10 @@
 
 namespace App\Helpers;
 
-use App\Library\General;
-use App\Model\v1\{Camp, Nickname, Person,TopicView};
+use App\Models\v1\Camp;
+use App\Models\v1\Nickname;
+use App\Models\v1\Person;
+use App\Models\v1\TopicView;
 use Carbon\Carbon;
 
 class Helpers
@@ -16,9 +18,9 @@ class Helpers
     public static function getNickNamesByEmail($email)
     {
         try {
-            $user = (new Person())->where('email', $email)->first();
-            if (!empty($user)) {
-                return (new Nickname())->where('user_id', $user->id)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
+            $user = (new Person)->where('email', $email)->first();
+            if (! empty($user)) {
+                return (new Nickname)->where('user_id', $user->id)->orderBy('nick_name', 'ASC')->pluck('id')->toArray();
             } else {
                 return [];
             }
@@ -36,7 +38,7 @@ class Helpers
             'objector_nick_id' => null,
         ])->orderBy('submit_time', 'desc')->first();
 
-        if (!$camp) {
+        if (! $camp) {
             return [];
         }
 

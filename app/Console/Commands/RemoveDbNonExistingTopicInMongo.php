@@ -2,14 +2,12 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\Camp;
+use App\Models\v1\Camp;
+use App\Models\v1\CommandHistory;
+use App\Models\v1\Tree;
 use Illuminate\Console\Command;
-
-use App\Model\v1\CommandHistory;
-use App\Model\v1\Tree;
-use Carbon\Carbon;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use UtilHelper;
 use Throwable;
 
 class RemoveDbNonExistingTopicInMongo extends Command
@@ -49,13 +47,13 @@ class RemoveDbNonExistingTopicInMongo extends Command
         $start = microtime(true);
 
         // check the argument of asOfTime with command / else use the current time.
-        if (!empty($asOfTime)) {
+        if (! empty($asOfTime)) {
             $asOfTime = intval($asOfTime);
         } else {
             $asOfTime = time();
         }
 
-        $commandHistory = (new CommandHistory())->create([
+        $commandHistory = (new CommandHistory)->create([
             'name' => $this->signature,
             'parameters' => [],
             'started_at' => Carbon::now()->timestamp,
@@ -64,7 +62,7 @@ class RemoveDbNonExistingTopicInMongo extends Command
         try {
             $mongoDocuments = Tree::orderBy('topic_id')->groupBy('topic_id')->pluck('topic_id')->toArray();
 
-            if(count($mongoDocuments)) {
+            if (count($mongoDocuments)) {
                 // Check all above mongo tree's exist in database or not...
                 $checkTopicsInDb = Camp::select('topic_num')->distinct()->pluck('topic_num')->toArray();
 

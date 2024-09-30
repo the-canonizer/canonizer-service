@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class TreeResource extends ResourceCollection
@@ -21,13 +20,13 @@ class TreeResource extends ResourceCollection
         }
 
         if (count($this->collection) > 0) {
-            return ["data" => $this->collection, "code" => 200, "success" => true];
+            return ['data' => $this->collection, 'code' => 200, 'success' => true];
         }
 
-        if (($this->collection->isEmpty()) || !$this->collection) {
-            return ["data" => [], "code" => 404, "success" => false, "error" => "Tree not found"];
+        if (($this->collection->isEmpty()) || ! $this->collection) {
+            return ['data' => [], 'code' => 404, 'success' => false, 'error' => 'Tree not found'];
         }
 
-        return ["data" => [], "code" => 401, "success" => false, "error" => $this->collection];
+        return ['data' => [], 'code' => 401, 'success' => false, 'error' => $this->collection];
     }
 }

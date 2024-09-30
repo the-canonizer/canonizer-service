@@ -2,13 +2,12 @@
 
 namespace App\Repository\Timeline;
 
-use App\Model\v1\Timeline;
-use App\Repository\Timeline\TimelineInterface;
+use App\Models\v1\Timeline;
 
 class TimelineRepository implements TimelineInterface
 {
-
     protected $model;
+
     /**
      * Instantiate a new TimelineRepository instance.
      *
@@ -23,14 +22,14 @@ class TimelineRepository implements TimelineInterface
      * create a new timeline.
      *
      * @param  array timeline
-     * @return boolean Response
+     * @return bool Response
      */
-
     public function createTimeline($timeline)
     {
 
         try {
             $record = Timeline::create($timeline);
+
             return $record->wasRecentlyCreated;
         } catch (\Throwable $th) {
             return false;
@@ -41,11 +40,9 @@ class TimelineRepository implements TimelineInterface
      * create or update a timeline.
      *
      * @param  array timeline
-     * @param  array $conditions | assocative array
-     *
-     * @return boolean Response
+     * @param  array  $conditions  | assocative array
+     * @return bool Response
      */
-
     public function upsertTimeline($timelineArr, $conditions)
     {
         try {
@@ -53,6 +50,7 @@ class TimelineRepository implements TimelineInterface
                 $conditions,
                 $timelineArr
             );
+
             return $record;
         } catch (\Throwable $th) {
             return $th->getMessage();
@@ -62,21 +60,19 @@ class TimelineRepository implements TimelineInterface
     /**
      * find a timeline.
      *
-     * @param  array $conditions | assocative array
-     *
+     * @param  array  $conditions  | assocative array
      * @return array Response
      */
-
     public function findTimeline($conditions)
     {
         try {
 
             $record = Timeline::where($conditions)->get();
+
             return $record;
 
         } catch (\Throwable $th) {
             throw $th;
         }
     }
-
 }

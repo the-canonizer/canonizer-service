@@ -2,37 +2,33 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use App\Helpers\DateTimeHelper;
 use App\Helpers\UtilHelper;
+use Illuminate\Support\ServiceProvider;
 
 class CustomHelpersFacadeProvider extends ServiceProvider
 {
     /**
-     * Bootstrap the application services.
-     *
-     * @return void
+     * Register services.
      */
-    public function boot()
-    {
-        //
-    }
-
-    /**
-     * Register the application services.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
         /**  Bind DateTimeHelper Class */
         $this->app->bind('DateTimeHelper', function () {
-            return new DateTimeHelper();
+            return new DateTimeHelper;
         });
 
-         /**  Bind UtileHelper Class */
-         $this->app->bind('UtilHelper', function () {
+        /** Bind UtileHelper Class */
+        $this->app->bind('UtilHelper', function () {
             return new UtilHelper;
         });
+    }
+
+    /**
+     * Bootstrap services.
+     */
+    public function boot(): void
+    {
+        //
     }
 }

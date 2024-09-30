@@ -3,14 +3,20 @@
 namespace App\Http\Controllers\Api\v2;
 
 use App\Facades\Helpers\UtilHelperFacade;
-use App\Facades\Services\{CampServiceFacade, TopicServiceFacade};
+use App\Facades\Services\AlgorithmServiceFacade;
+use App\Facades\Services\CampServiceFacade;
+use App\Facades\Services\TopicServiceFacade;
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\{RemoveTopicsRequest, TopicRequest};
+use App\Http\Requests\RemoveTopicsRequest;
+use App\Http\Requests\TopicRequest;
 use App\Http\Resources\TopicResource;
-use App\Model\v1\{Tag, Timeline, Tree};
-use App\Model\v2\{Nickname, Statement, TopicView};
-use App\Services\AlgorithmService;
+use App\Models\v1\Tag;
+use App\Models\v1\Timeline;
+use App\Models\v1\Tree;
+use App\Models\v2\Nickname;
+use App\Models\v2\Statement;
+use App\Models\v2\TopicView;
 use Throwable;
 
 class TopicController extends Controller
@@ -21,12 +27,16 @@ class TopicController extends Controller
      *   summary="Get topics with pagination",
      *   description="This api is used to get topics depends on page size pass in request",
      *   operationId="getAllTopics",
+     *
      *   @OA\RequestBody(
      *       required=true,
      *       description="Get topics",
+     *
      *       @OA\MediaType(
      *           mediaType="application/x-www-form-urlencoded",
+     *
      *           @OA\Schema(
+     *
      *                 @OA\Property(
      *                     property="page_number",
      *                     description="current page number",
@@ -83,8 +93,10 @@ class TopicController extends Controller
      *   ),
      *
      *   @OA\Response(response=200,description="successful operation",
+     *
      *                             @OA\JsonContent(
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                         name="data",
      *                                         type="array"
@@ -109,8 +121,10 @@ class TopicController extends Controller
      *                            )
      *
      *   @OA\Response(response=400, description="Exception occurs while fetching topics",
+     *
      *                             @OA\JsonContent(
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                         name="data",
      *                                         type="string"
@@ -129,9 +143,12 @@ class TopicController extends Controller
      *                                    )
      *                                 )
      *                             )
+     *
      *   @OA\Response(response=404, description="Topics not found",
+     *
      *                @OA\JsonContent(
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                         name="data",
      *                                         type="string"
@@ -156,9 +173,10 @@ class TopicController extends Controller
     /**
      * Retrieves all topics based on the provided request parameters.
      *
-     * @param TopicRequest $request The request object containing the input parameters.
-     * @throws Throwable If an error occurs during the execution of the function.
+     * @param  TopicRequest  $request  The request object containing the input parameters.
      * @return TopicResource The resource containing the retrieved topics.
+     *
+     * @throws Throwable If an error occurs during the execution of the function.
      */
     public function getAll(TopicRequest $request)
     {
@@ -167,7 +185,7 @@ class TopicController extends Controller
             $pageNumber = $request->input('page_number');
             $pageSize = $request->input('page_size');
 
-            $namespaceId = $request->input('namespace_id') !== "" ? (int) $request->input('namespace_id') : $request->input('namespace_id');
+            $namespaceId = $request->input('namespace_id') !== '' ? (int) $request->input('namespace_id') : $request->input('namespace_id');
             $asofdateTime = (int) $request->input('asofdate'); // Store actual date time in this variable
 
             $algorithm = $request->input('algorithm');
@@ -184,8 +202,8 @@ class TopicController extends Controller
 
             $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
             $totalCount = 0;
-            $sort = ($request->has('sort')) ?  $request->input('sort') : false;
-            $page = $request->input('page') ?: "home";
+            $sort = ($request->has('sort')) ? $request->input('sort') : false;
+            $page = $request->input('page') ?: 'home';
             $topic_tags = $request->input('topic_tags') ?: [];
 
             /**
@@ -194,16 +212,16 @@ class TopicController extends Controller
              * Then command is in process of creating all topics trees in Mongo database (Mongo is not updated)
              * Fetch topics from MySQL (updated database)
              */
-            $commandStatement = "php artisan tree:all";
-            $commandSignature = "tree:all";
+            $commandStatement = 'php artisan tree:all';
+            $commandSignature = 'tree:all';
 
             $commandStatus = UtilHelperFacade::getCommandRuningStatus($commandStatement, $commandSignature);
-            $algorithms = (array)AlgorithmService::getAlgorithmKeyList("tree");
+            $algorithms = (array) AlgorithmServiceFacade::getAlgorithmKeyList('tree');
 
             // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
             $topicsFoundInMongo = Tree::count();
 
-            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
+            if ($asofdateTime >= $today && $topicsFoundInMongo && ! $commandStatus && in_array($algorithm, $algorithms)) {
                 $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page, $topic_tags);
                 extract($topics);
             } else {
@@ -242,8 +260,7 @@ class TopicController extends Controller
                             $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
-                } elseif (is_array($value))  // MongoDB Case
-                {
+                } elseif (is_array($value)) {  // MongoDB Case
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
 
                     $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value) {
@@ -262,6 +279,7 @@ class TopicController extends Controller
             return new TopicResource($topics, $totalCount);
         } catch (Throwable $th) {
             $errorResponse = UtilHelperFacade::exceptionResponse($th, $request->input('tracing') ?? false);
+
             return response()->json($errorResponse, 500);
         }
     }
@@ -272,12 +290,16 @@ class TopicController extends Controller
      *   summary="Remove topics by ids",
      *   description="This api is used to remove specific topic trees in cache",
      *   operationId="removeCacheSpecificTopics",
+     *
      *   @OA\RequestBody(
      *       required=true,
      *       description="Remove Topics",
+     *
      *       @OA\MediaType(
      *           mediaType="application/x-www-form-urlencoded",
+     *
      *           @OA\Schema(
+     *
      *                 @OA\Property(
      *                     property="topic_numbers",
      *                     required=true,
@@ -287,8 +309,10 @@ class TopicController extends Controller
      *   ),
      *
      *   @OA\Response(response=200,description="successful operation",
+     *
      *                             @OA\JsonContent(
      *                                 type="array",
+     *
      *                                  @OA\Items(
      *                                         name="status_code",
      *                                         type="integer"
@@ -301,8 +325,10 @@ class TopicController extends Controller
      *                            )
      *
      *   @OA\Response(response=500, description="Exception occurs while removing topics",
+     *
      *                             @OA\JsonContent(
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                         name="status_code",
      *                                         type="integer"
@@ -313,9 +339,12 @@ class TopicController extends Controller
      *                                    )
      *                                 )
      *                             )
+     *
      *   @OA\Response(response=404, description="Topics not found",
+     *
      *                @OA\JsonContent(
      *                                 type="array",
+     *
      *                                 @OA\Items(
      *                                         name="status_code",
      *                                         type="integer"
@@ -331,16 +360,14 @@ class TopicController extends Controller
     /**
      * Remove sandbox topics.
      *
-     * @param  RemoveTopicsRequest  $request
      * @return Response
      */
-
     public function removeCacheSpecificTopics(RemoveTopicsRequest $request)
     {
         try {
             $response = [
                 'status_code' => 404,
-                'message' => 'Not found'
+                'message' => 'Not found',
             ];
 
             if ($request->has('topic_numbers')) {

@@ -3,11 +3,10 @@
 namespace App\Listeners;
 
 use App\Events\IncreaseTopicViewCountEvent;
-use App\Model\v1\TopicView;
+use App\Models\v1\TopicView;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Hash;
 
 class IncreaseTopicViewCountListener implements ShouldQueue
 {
@@ -21,7 +20,6 @@ class IncreaseTopicViewCountListener implements ShouldQueue
     /**
      * Handle the event.
      *
-     * @param  IncreaseTopicViewCountEvent  $event
      * @return void
      */
     public function handle(IncreaseTopicViewCountEvent $event)

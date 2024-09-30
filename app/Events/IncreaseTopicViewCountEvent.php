@@ -2,10 +2,21 @@
 
 namespace App\Events;
 
-class IncreaseTopicViewCountEvent extends Event
-{
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
-    public $topic_num, $camp_num, $asOfTime, $view;
+class IncreaseTopicViewCountEvent
+{
+    use Dispatchable, InteractsWithSockets, SerializesModels;
+
+    public $topic_num;
+
+    public $camp_num;
+
+    public $asOfTime;
+
+    public $view;
 
     /**
      * Create a new event instance.

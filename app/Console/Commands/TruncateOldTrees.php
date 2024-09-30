@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\Tree;
+use App\Models\v1\Tree;
 use DateTime;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class TruncateOldTrees extends Command
 {
@@ -44,17 +45,16 @@ class TruncateOldTrees extends Command
          * In Mongo we create cache of all topics (from MySQL database) on daily basis
          * Command should be run after 1 month
          */
-        
         $oldTreesCount = Tree::where('created_at', '<', new DateTime('-30 days'))->count();
-        
-        if($oldTreesCount > 0) {
+
+        if ($oldTreesCount > 0) {
             Tree::where('created_at', '<', new DateTime('-30 days'))->each(function ($tree) {
                 $tree->delete();
             });
-    
-            \Log::channel('scheduler')->info('Truncate old trees: Job executed successfully, deleted ' .$oldTreesCount. ' entries');
+
+            Log::channel('scheduler')->info('Truncate old trees: Job executed successfully, deleted ' .$oldTreesCount. ' entries');
         } else {
-            \Log::channel('scheduler')->info('Truncate old trees: No old topic tree found');
+            Log::channel('scheduler')->info('Truncate old trees: No old topic tree found');
         }
     }
 }

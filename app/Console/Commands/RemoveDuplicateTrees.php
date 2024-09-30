@@ -2,12 +2,13 @@
 
 namespace App\Console\Commands;
 
-use App\Model\v1\CommandHistory;
-use App\Model\v1\Tree;
-use Carbon\Carbon;
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Models\v1\CommandHistory;
+use App\Models\v1\Tree;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
-use UtilHelper;
+use Throwable;
 
 class RemoveDuplicateTrees extends Command
 {
@@ -47,21 +48,21 @@ class RemoveDuplicateTrees extends Command
         Log::info('Remove duplication command started...');
         $start = microtime(true);
 
-        $asOfTime = $this->argument('asOfTime') ?? NULL;
+        $asOfTime = $this->argument('asOfTime') ?? null;
         $doNotDelete = $this->option('do-not-delete') ? true : false;
 
         // check the argument of asOfTime with command / else use the current time.
-        if (!empty($asOfTime)) {
+        if (! empty($asOfTime)) {
             $asOfTime = intval($asOfTime);
         } else {
             $asOfTime = time();
         }
 
-        $commandHistory = (new CommandHistory())->create([
+        $commandHistory = (new CommandHistory)->create([
             'name' => $this->signature,
             'parameters' => [
                 'asOfTime' => $asOfTime,
-                '{--do-not-delete}' => $doNotDelete
+                '{--do-not-delete}' => $doNotDelete,
             ],
             'started_at' => Carbon::now()->timestamp,
         ]);
@@ -69,10 +70,10 @@ class RemoveDuplicateTrees extends Command
         try {
             $startOfTheDay = Carbon::parse($asOfTime)->startOfDay();
             // If tree:remove-duplicate command is already running, don't execute command
-            $commandStatement = "php artisan tree:remove-duplicate";
-            $commandSignature = "tree:remove-duplicate";
+            $commandStatement = 'php artisan tree:remove-duplicate';
+            $commandSignature = 'tree:remove-duplicate';
 
-            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
+            $commandStatus = UtilHelperFacade::getCommandRuningStatus($commandStatement, $commandSignature);
 
             // if (!$commandStatus) {
 
@@ -90,12 +91,12 @@ class RemoveDuplicateTrees extends Command
                 $test = collect($documents)->whereInStrict('topic_id', $counted)->keyBy('topic_id')->pluck('_id', 'topic_id');
                 Log::info($algorithm . '=> ' . json_encode($test->all()));
 
-                if (!$doNotDelete) {
+                if (! $doNotDelete) {
                     $users = Tree::whereIn('_id', $duplicatedDocuments->all())->delete();
                 }
             }
 
-            if (!$doNotDelete) {
+            if (! $doNotDelete) {
                 $this->info('Data Deleted');
             } else {
                 $this->info('Duplicated data logged.');
@@ -116,7 +117,8 @@ class RemoveDuplicateTrees extends Command
     private function getDistinctTreeAlgorithm()
     {
         $algorithmes = Tree::distinct()->select('algorithm_id')->get()->toArray();
-        $algorithmes = array_reduce($algorithmes, 'array_merge', array());
+        $algorithmes = array_reduce($algorithmes, 'array_merge', []);
+
         return $algorithmes;
     }
 }
