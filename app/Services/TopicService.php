@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Facades\Repositories\TopicRepositoryFacade;
+use App\Facades\Services\CampServiceFacade;
 use App\Model\v1\Topic;
-use TopicRepository;
 use Illuminate\Database\Eloquent\Collection;
 use App\Model\v1\Camp;
+use App\Model\v1\Support;
 use CampService;
 use DateTimeHelper;
 
@@ -72,18 +74,10 @@ class TopicService
      * @return array Response
      */
 
-    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0, $sort=false)
+    public function getTopicsWithScore($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof = 'default', $archive = 0, $sort = false, $page = 'home', $topic_tags = [])
     {
-
-        /** if filter param set then only get those topics which have score more than give filter */
-        // $topicsWithScore = (isset($filter) && $filter!=null && $filter!='') ?
-        //          TopicRepository::getTopicsWithPaginationWithFilter($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof):
-        //          TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $search, $asof);
-
         // Only getting all latest topic from the MongoDB. #MongoDBRefactoring
-        $topicsWithScore = TopicRepository::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive, $sort);
-
-        return $topicsWithScore;
+        return TopicRepositoryFacade::getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asof, $search, $filter, true, $archive, $sort, $page, $topic_tags);
     }
 
     /**
@@ -125,7 +119,7 @@ class TopicService
      *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-    public  function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime){
+    public  function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime, $page = 'home'){
 
         if(sizeof($topics) > 0){
 
@@ -139,6 +133,11 @@ class TopicService
                         $topics[$key]->topic_id = $reducedTree[$value->camp_num]['topic_id'];
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
+
+                        if (request()->segment(2) === 'v2' && $page === 'browse') {
+                            $topics[$key]->tree_structure[1]['support_tree'] = CampServiceFacade::getSupportTree($algorithm, $value->topic_num, 1, $asOfTime);
+                        }
+                        
                         $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
                     }else{
                         $topics[$key]->score = 0;

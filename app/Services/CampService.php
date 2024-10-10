@@ -4,7 +4,7 @@ namespace App\Services;
 
 use AlgorithmService;
 use App\Exceptions\Camp\{CampDetailsException, CampSupportCountException, CampTreeCountException, CampTreeException, CampURLException, AgreementCampsException};
-use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription};
+use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription, TopicTag};
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -119,7 +119,8 @@ class CampService
             $tree[$startCamp]['is_archive'] = $isArchive ?? 0;
             $tree[$startCamp]['direct_archive'] = $directArchive ?? 0;
             $tree[$startCamp]['subscribed_users'] = $this->getTopicCampSubscriptions($topicNumber, $startCamp);
-           
+            $tree[$startCamp]['topic_tags'] = TopicTag::getRelatedTagIds($topicNumber);
+
             $tree[$startCamp]['support_tree'] = $this->getSupportTree($algorithm, $topicNumber, $startCamp, $asOfTime, $asOf);
             $tree[$startCamp]['children'] = $this->traverseCampTree($algorithm, $topicNumber, $startCamp, null, $asOfTime, $rootUrl, $asOf, $tree);
             
@@ -870,14 +871,22 @@ class CampService
     }
 
     /**
-     * Get all agreement camps of topics.
-     * @param int $pageSize
-     * @param string $asof
-     * @param int $asofdate
+     * Get all agreement topic camps based on certain criteria.
      *
-     * @return Illuminate\Database\Eloquent\Collection
+     * @param int $pageSize The number of items per page.
+     * @param int $skip The number of items to skip.
+     * @param string $asof The 'as of' value.
+     * @param int $asofdate The 'as of' date.
+     * @param int $namespaceId The namespace ID.
+     * @param array $nickNameIds An array of nickname IDs.
+     * @param string $search A search string.
+     * @param bool $isCount Flag to determine if the count is needed.
+     * @param int $archive The archive flag.
+     * @param bool $sort Flag to indicate sorting.
+     * @throws AgreementCampsException Exception thrown in case of errors.
+     * @return Illuminate\Database\Eloquent\Collection The collection of agreement topic camps.
      */
-    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0, $sort = false)
+    public function getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search = '', $isCount = false, $archive = 0, $sort = false, $topic_tags = [])
     {
 
         $returnTopics = [];
@@ -885,100 +894,54 @@ class CampService
         try {
 
             $returnTopics = DB::table('topic')
-                ->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num = c1.topic_num) as support'), 'c1.topic_num', 'c1.camp_num', 'c1.title', 'c1.go_live_time', 'c1.submitter_nick_id', 't1.namespace_id')
-                ->from('topic as t1')->where(['t1.objector_nick_id' => null, 't1.grace_period' => 0])
-                ->where('t1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
-                    $query->from('topic as t2')->selectRaw('max(t2.go_live_time)')->whereColumn('t2.topic_num', 't1.topic_num')
-                        ->where([
-                            ['t2.objector_nick_id', null],
-                            ['t2.grace_period', 0],
-                        ]);
-                    if ($asof != 'review') {
-                        $query->where('t2.go_live_time', '<=', $asofdate);
-                    }
-                })
-                ->when($namespaceId, fn ($query, $namespaceId) => $query->where('t1.namespace_id', $namespaceId))
-                ->when($search, fn ($query, $search) => $query->where('t1.topic_name', 'like', '%' . $search . '%'))
-                ->join('camp as c1', function ($join) use ($asofdate, $asof, $archive, $nickNameIds) {
-                    $join->on('c1.topic_num', '=', 't1.topic_num')
-                        ->where(['c1.camp_num' => 1, 'c1.objector_nick_id' => null, 'c1.grace_period' => 0, 'c1.is_archive' => $archive, 'c1.direct_archive' => $archive])
-                        ->where('c1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
-                            $query->from('camp as c2')->selectRaw('max(c2.go_live_time)')->whereColumn('c2.topic_num', 't1.topic_num')
-                                ->where([
-                                    ['c2.camp_num', 1],
-                                    ['c2.objector_nick_id', null],
-                                    ['c2.grace_period', 0]
-                                ]);
-                            if ($asof != 'review') {
-                                $query->where('c2.go_live_time', '<=', $asofdate);
-                            }
-                        })
-                        ->when($nickNameIds, function ($query, $nickNameIds) {
-                            $query->whereIn('c1.submitter_nick_id', $nickNameIds);
-                        });
-                });
-
-            /*
-            *  Following query was only getting the first change of Agreement of every topic
-            *  We've replace with the new query above that will get the lastest change of Agreement camp of every topic
-            *  due to camp archive functionality.
-            *
-            *  https://github.com/the-canonizer/Canonizer-Beta--Issue-Tracking/issues/627
-            */
-
-            /* 
-            $returnTopics = DB::table('camp')->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num=camp.topic_num) as support, camp.topic_num, camp.camp_num, camp.title, camp.go_live_time, camp.submitter_nick_id, topic.namespace_id'))
-            ->join('topic', 'topic.topic_num', '=', 'camp.topic_num');
-
-            if ($asof == 'default') {
-                $returnTopics = $returnTopics->where('camp.go_live_time', '<=', $asofdate)
-                    ->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null and topic.go_live_time <=' . $asofdate . ' group by topic.topic_num)');
-            } else {
-                if ($asof == "review") {
-                    $returnTopics = $returnTopics->whereRaw('topic.go_live_time in (select max(topic.go_live_time) from topic where topic.topic_num=topic.topic_num and topic.objector_nick_id is null group by topic.topic_num)');
-                } else if ($asof == "bydate") {
-                    //$asofdate = strtotime(date('Y-m-d H:i:s', strtotime($asofdate)));
-                    $returnTopics = $returnTopics->where('camp.go_live_time', '<=', $asofdate);
+            ->select(DB::raw('(select count(topic_support.id) from topic_support where topic_support.topic_num = c1.topic_num) as support'), 'c1.topic_num', 
+                'c1.camp_num', 'c1.title', 'c1.go_live_time', 'c1.submitter_nick_id', 't1.namespace_id')
+            ->from('topic as t1')
+            ->where(['t1.objector_nick_id' => null, 't1.grace_period' => 0])
+            ->where('t1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
+                $query->from('topic as t2')->selectRaw('max(t2.go_live_time)')->whereColumn('t2.topic_num', 't1.topic_num')
+                ->where([
+                    ['t2.objector_nick_id', null],
+                    ['t2.grace_period', 0],
+                ]);
+                if ($asof != 'review') {
+                    $query->where('t2.go_live_time', '<=', $asofdate);
                 }
-            }
-
-            if (isset($archive) &&  !$archive) {
-                $returnTopics->where('is_archive', '=', 0);
-            }
-
-
-        
-        $returnTopics
-            ->where('camp_name', '=', 'Agreement')
-            ->where('topic.objector_nick_id', '=', null);
-
-            $returnTopics->when($namespaceId !== '', function ($q) use ($namespaceId) {
-                $q->where('namespace_id', $namespaceId);
-            });
-
-            $returnTopics->when(!empty($nickNameIds), function ($q) use ($nickNameIds) {
-                $q->whereIn('camp.submitter_nick_id', $nickNameIds);
-            });
-
-            if (isset($search) && $search != '') {
-
-                $returnTopics->where('topic.topic_name', 'like', '%' . $search . '%');
-
-                if ($asof == "bydate") {
-                    $returnTopics->where('topic.go_live_time', '<=', $asofdate);
-                }
-            }; 
-            */
+            })
+            ->when($namespaceId, fn ($query, $namespaceId) => $query->where('t1.namespace_id', $namespaceId))
+            ->when($search, fn ($query, $search) => $query->where('t1.topic_name', 'like', '%' . $search . '%'))
             
-            $returnTopics
-            ->latest('support');
-            if(isset($sort) &&  $sort){
+            ->when(($topic_tags), function ($query) use ($topic_tags) {
+                $query->join('topics_tags', 't1.topic_num', '=', 'topics_tags.topic_num')
+                      ->whereIn('topics_tags.tag_id', $topic_tags)
+                      ->groupBy('t1.topic_num');
+            })
+ 
+            ->join('camp as c1', function ($join) use ($asofdate, $asof, $archive, $nickNameIds) {
+                $join->on('c1.topic_num', '=', 't1.topic_num')
+                ->where(['c1.camp_num' => 1, 'c1.objector_nick_id' => null, 'c1.grace_period' => 0, 'c1.is_archive' => $archive, 'c1.direct_archive' => $archive])
+                    ->where('c1.go_live_time', '=', function ($query) use ($asofdate, $asof) {
+                        $query->from('camp as c2')->selectRaw('max(c2.go_live_time)')->whereColumn('c2.topic_num', 't1.topic_num')
+                        ->where([
+                            ['c2.camp_num', 1],
+                            ['c2.objector_nick_id', null],
+                            ['c2.grace_period', 0]
+                        ]);
+                        if ($asof != 'review') {
+                            $query->where('c2.go_live_time', '<=', $asofdate);
+                        }
+                    })
+                    ->when($nickNameIds, function ($query, $nickNameIds) {
+                        $query->whereIn('c1.submitter_nick_id', $nickNameIds);
+                    });
+            });
+
+            $returnTopics->latest('support');
+            if (isset($sort) &&  $sort) {
                 $returnTopics->orderBy('t1.id', 'DESC');
-            }
-            else{
+            } else {
                 $returnTopics->orderBy('t1.topic_name', 'DESC');
             }
-
 
             if ($isCount) {
                 return $returnTopics->get()->count();
@@ -987,8 +950,7 @@ class CampService
             return $returnTopics
                 ->skip($skip)
                 ->take($pageSize)
-                ->get();       
-         
+                ->get();
         } catch (\Throwable $th) {
             throw new AgreementCampsException("Exception in GetAgreementCamp:" . $th->getMessage());
         }

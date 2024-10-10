@@ -20,24 +20,28 @@ class TopicRepository implements TopicInterface
     }
 
     /**
-     * get Topics with pagination.
+     * Get Topics with pagination.
      *
-     * @param int $namespaceId
-     * @param int $asofdate
-     * @param string $algorithm
-     * @param int $skip
-     * @param int $pageSize
-     * @param string $search
-     *
-     *
-     * @return array Response
+     * @param int $namespaceId The namespace ID
+     * @param int $asofdate The date
+     * @param string $algorithm The algorithm
+     * @param int $skip The number of records to skip
+     * @param int $pageSize The size of the page
+     * @param array $nickNameIds The nickname IDs
+     * @param mixed $asOf The 'as of' parameter
+     * @param string $search The search string (default: '')
+     * @param string $filter The filter string (default: '')
+     * @param bool $applyPagination Flag to apply pagination (default: true)
+     * @param int $archive The archive value (default: 0)
+     * @param bool $sort The sorting flag (default: false)
+     * @throws \Throwable
+     * @return array The response array
      */
-    // Get latest topics from MongoDB using Raw Aggregate Function by stages. #MongoDBRefactoring
-    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort =false)
+    public function getTopicsWithPagination($namespaceId, $asofdate, $algorithm, $skip, $pageSize, $nickNameIds, $asOf, $search = '', $filter = '', $applyPagination = true, $archive = 0, $sort = false, $page = 'home', $topic_tags = [])
     {
         $search = str_replace('\\', '\\\\', $search);
         $search = $this->escapeSpecialCharacters($search);
-
+        $recordCount = 0;
         try {
             // Track the execution time of the code.
             $start = microtime(true);
@@ -60,6 +64,10 @@ class TopicRepository implements TopicInterface
                 }
             }
 
+            if (is_array($topic_tags) && count($topic_tags) > 0) {
+                $match['tree_structure.1.topic_tags'] = ['$in' => $topic_tags];
+            }
+
             if (!empty($nickNameIds)) {
                 $match['created_by_nick_id'] = ['$in' => $nickNameIds];
             }
@@ -75,7 +83,8 @@ class TopicRepository implements TopicInterface
                     '$options' => 'i'
                 ];
             }
-            if (isset($archive) &&  !$archive) {
+            if (isset($archive) &&  !$archive
+            ) {
                 $match['tree_structure.1.is_archive'] = 0;
             }
 
@@ -92,14 +101,18 @@ class TopicRepository implements TopicInterface
                 'algorithm_id' => 1,
                 'submitter_nick_id' => 1,
                 'created_by_nick_id' => 1,
-                'tree_structure.1.review_title' => 1
+                'tree_structure.1.review_title' => 1,
             ];
 
-            if(isset($sort) && $sort){
-               $sort = [
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
+                $projection['tree_structure.1.support_tree'] = 1;
+            }
+
+            if (isset($sort) && $sort) {
+                $sort = [
                     'topic_id' => -1,
-               ];
-            }else{
+                ];
+            } else {
                 $sort = [
                     'topic_score' => -1,
                     'topic_name' => 1,
@@ -174,6 +187,13 @@ class TopicRepository implements TopicInterface
                 ],
             ];
 
+
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
+                $recordCount = $this->treeModel::raw(function ($collection) use ($aggregate) {
+                    return $collection->aggregate($aggregate);
+                })->count();
+            }
+
             if ($applyPagination) {
                 $aggregate = array_merge($aggregate, [
                     [
@@ -193,8 +213,10 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
+            if (request()->segment(2) === 'v2' && $page === 'browse') {
+                return ['topics' => collect($record)->skip($skip)->all(), 'totalCount' => $recordCount, 'time_elapsed_secs' =>  microtime(true) - $start];
+            }
 
-            $time_elapsed_secs = microtime(true) - $start;
             return collect($record)->skip($skip)->all();
         } catch (\Throwable $th) {
             throw $th;

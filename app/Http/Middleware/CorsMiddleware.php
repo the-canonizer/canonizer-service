@@ -42,6 +42,9 @@ class CorsMiddleware
             if (strpos($request->url(), 'api/v1')) {
                 $response->header($key, $value);
             }
+            if (strpos($request->url(), 'api/v2')) {
+                $response->header($key, $value);
+            }
         }
 
         return $response;

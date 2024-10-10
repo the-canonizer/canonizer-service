@@ -1,22 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Api\v1;
+namespace App\Http\Controllers\Api\v2;
 
+use App\Facades\Helpers\UtilHelperFacade;
+use App\Facades\Services\{CampServiceFacade, TopicServiceFacade};
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\RemoveTopicsRequest;
-use App\Http\Requests\TopicRequest;
+use App\Http\Requests\{RemoveTopicsRequest, TopicRequest};
 use App\Http\Resources\TopicResource;
+use App\Model\v1\{Tag, Timeline, Tree};
+use App\Model\v2\{Nickname, Statement, TopicView};
 use App\Services\AlgorithmService;
-use App\Model\v1\Tree;
-use App\Model\v1\Timeline;
-use App\Model\v1\TopicView;
-use CampService;
-use TopicService;
-use UtilHelper;
 use Throwable;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 
 class TopicController extends Controller
 {
@@ -159,12 +154,12 @@ class TopicController extends Controller
      */
 
     /**
-     * get all topics.
+     * Retrieves all topics based on the provided request parameters.
      *
-     * @param  TopicRequest  $request
-     * @return Response
+     * @param TopicRequest $request The request object containing the input parameters.
+     * @throws Throwable If an error occurs during the execution of the function.
+     * @return TopicResource The resource containing the retrieved topics.
      */
-
     public function getAll(TopicRequest $request)
     {
         try {
@@ -188,8 +183,11 @@ class TopicController extends Controller
             $skip = ($pageNumber - 1) * $pageSize;
 
             $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
+            $totalCount = 0;
+            $sort = ($request->has('sort')) ?  $request->input('sort') : false;
+            $page = $request->input('page') ?: "home";
+            $topic_tags = $request->input('topic_tags') ?: [];
 
-            $sort = ($request->has('sort')) ?  $request->input('sort'): false;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -199,70 +197,71 @@ class TopicController extends Controller
             $commandStatement = "php artisan tree:all";
             $commandSignature = "tree:all";
 
-            $commandStatus = UtilHelper::getCommandRuningStatus($commandStatement, $commandSignature);
-            $algorithms =  AlgorithmService::getAlgorithmKeyList("tree");
-
-            // if (in_array($algorithm, $algorithms) && !$commandStatus) {
+            $commandStatus = UtilHelperFacade::getCommandRuningStatus($commandStatement, $commandSignature);
+            $algorithms = (array)AlgorithmService::getAlgorithmKeyList("tree");
 
             // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
             $topicsFoundInMongo = Tree::count();
-            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
-                // $totalTopics = TopicService::getTotalTopics($namespaceId, $today, $algorithm, $filter, $nickNameIds, $search, $asof, $archive);
-                // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-                $topics = TopicService::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort);
-            } else {
 
+            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
+                $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page, $topic_tags);
+                extract($topics);
+            } else {
                 /*  search & filter functionality */
-                $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, '', $archive, $sort);
-                $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-                // $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
+                $topics = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, false, $archive, $sort, $topic_tags);
+                if ($page === 'browse') {
+                    $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort, $topic_tags);
+                }
+                $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime, $page);
 
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {
-                    $topics = TopicService::filterTopicCollection($topics, $filter);
-                    /* We will count the filtered topic here, because the above totalTopics is without filter */
-                    // $totalTopics = $topics->count();
+                    $topics = TopicServiceFacade::filterTopicCollection($topics, $filter);
                 }
-
-                /** total pages */
-                // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
             }
-            // } else {
-            //     /*  search & filter functionality */
-            //     $topics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search,'', $archive);
-            //     $topics = TopicService::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime);
-            //     // $totalTopics = CampService::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdate, $namespaceId, $nickNameIds, $search, true, $archive);
 
-            //     /** filter the collection if filter parameter */
-            //     if (isset($filter) && $filter != '' && $filter != null) {
-            //         $topics = TopicService::filterTopicCollection($topics, $filter);
-            //         /* We will count the filtered topic here, because the above totalTopics is without filter */
-            //         // $totalTopics = $topics->count();
-            //     }
+            $topicViews = TopicView::getTopicViewCounts(collect($topics)->pluck('topic_id')->all())->mapWithKeys(function ($item) {
+                return [$item['topic_num'] => $item['view_count']];
+            })->all();
 
-            //     /** total pages */
-            //     // $numberOfPages = UtilHelper::getNumberOfPages($totalTopics, $pageSize);
-            // }
-
-            $topicViews = TopicView::select('topic_num', DB::raw('SUM(views) AS view_count'))
-                ->whereIn('topic_num', collect($topics)->pluck('topic_id')->all())
-                ->groupBy('topic_num')
-                ->get()
-                ->mapWithKeys(function ($item, int $key) {
-                    return [$item['topic_num'] => $item['view_count']];
-                })->all();
+            if (is_array($topics)) {
+                $topics = array_values($topics);
+            }
 
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
-                } elseif (is_array($value)) {
+
+                    $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
+                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
+                    })->where('is_active', 1)->get();
+
+                    if ($page === 'browse') {
+                        $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
+                        foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
+                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                        }
+                    }
+                } elseif (is_array($value))  // MongoDB Case
+                {
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+
+                    $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value) {
+                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value['topic_id'])->get();
+                    })->where('is_active', 1)->get();
+
+                    if ($page === 'browse') {
+                        $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
+                        foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                        }
+                    }
                 }
             }
 
-            return new TopicResource($topics);
+            return new TopicResource($topics, $totalCount);
         } catch (Throwable $th) {
-            $errorResponse = UtilHelper::exceptionResponse($th, $request->input('tracing') ?? false);
+            $errorResponse = UtilHelperFacade::exceptionResponse($th, $request->input('tracing') ?? false);
             return response()->json($errorResponse, 500);
         }
     }
