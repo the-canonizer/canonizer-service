@@ -7,40 +7,43 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class TopicResource extends ResourceCollection
 {
-    public $resource;
-    private $totalCount;
 
+    public $resource;
+    private $numberOfPages;
     /**
-     * Constructs a new instance of the class.
+     * Create a new resource instance.
      *
-     * @param mixed $resource The resource to be assigned to the instance.
-     * @param int $totalCount The total count of resources, defaults to 0.
+     * @param  mixed  $resource
+     * @return void
      */
-    public function __construct($resource, $totalCount = 0)
+    public function __construct($resource)
     {
         $this->resource = $resource;
-        $this->totalCount = $totalCount;
+        // $this->numberOfPages = $numberOfPages;
     }
 
     /**
-     * Converts the resource into an array representation.
+     * Transform the resource into an array.
      *
-     * @param mixed $request The request object.
-     * @return array The array representation of the resource.
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
      */
     public function toArray($request)
     {
+
         if (count(array($this->resource)) > 0) {
+
             return [
                 'status_code' => 200,
                 'message' => 'Success',
                 'error' => null,
                 'data' => [
                     'topic' => $this->resource,
-                    'total_count' => $this->totalCount
+                    // 'number_of_pages' => $this->numberOfPages
                 ],
             ];
-        } elseif (count(array($this->resource)) <= 0) {
+        } else if (count(array($this->resource)) <= 0) {
+
             return [
                 'status_code' => 404,
                 'message' => "No data found",

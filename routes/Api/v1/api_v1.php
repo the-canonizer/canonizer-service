@@ -10,7 +10,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
         $router->post('/get', ['uses' => 'TreeController@find']);
         $router->get('/all', function () {
             ini_set('max_execution_time', 3000);
-            $time_start = microtime(true);
+            $time_start = microtime(true); 
             Artisan::call('tree:all');
             $time_end = microtime(true);
             $execution_time = ($time_end - $time_start);
@@ -29,7 +29,7 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
         $router->post('/get', ['uses' => 'TimelineController@find']);
         $router->get('/all', function () {
             ini_set('max_execution_time', 3000);
-            $time_start = microtime(true);
+            $time_start = microtime(true); 
             Artisan::call('timeline:all');
             $time_end = microtime(true);
             $execution_time = ($time_end - $time_start);
@@ -37,14 +37,13 @@ $router->group(['prefix' => 'v1', 'namespace' => 'Api\v1'], function () use ($ro
         });
         $router->get('/adding-specific-topic/{topic_num}/{algorithm_id}', function (string $topic_num = null, string $algorithm_id = null) {
             ini_set('max_execution_time', 3000);
-            $time_start = microtime(true);
+            $time_start = microtime(true); 
             Artisan::call('timeline:all '. $topic_num . '  '. $algorithm_id);
             $time_end = microtime(true);
-            $execution_time = ($time_end - $time_start);
+            $execution_time = ($time_end - $time_start);           
             dd(' Specific topic timelines generated successfully. Execution Time is:  '.($execution_time).' seconds');
         });
-
+        
     });
-
+    
 });
-

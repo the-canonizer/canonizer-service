@@ -18,5 +18,4 @@
 $router->group(['prefix' => 'api'], function () use ($router) {
 
     require __DIR__ . '/Api/v1/api_v1.php';
-    require __DIR__ . '/Api/v2/api.php';
 });
