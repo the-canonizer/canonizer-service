@@ -3,7 +3,7 @@
 namespace App\Helpers;
 
 use App\Library\General;
-use App\Model\v1\{Camp, Nickname, Person,TopicView};
+use App\Model\v1\{Camp, Nickname, Person, Topic};
 use Carbon\Carbon;
 
 class Helpers
@@ -45,23 +45,5 @@ class Helpers
         }
 
         return array_merge([$camp->camp_num], self::renderParentsCampTree($topic_num, $camp->parent_camp_num));
-    }
-
-    public static function getCampViewsByDate(int $topic_num, int $camp_num = 1, ?Carbon $startDate = null, ?Carbon $endDate = null)
-    {
-        return TopicView::where('topic_num', $topic_num)
-            ->when($camp_num > 1, fn ($query) => $query->where('camp_num', $camp_num))
-            ->when(
-                $startDate && $endDate,
-                fn ($query) => $query->whereBetween('created_at', [$startDate->startOfDay()->timestamp, $endDate->endOfDay()->timestamp]),
-                fn ($query) => $query->when(
-                    $endDate,
-                    fn ($query) => $query->where('created_at', '<=', $endDate->endOfDay()->timestamp),
-                    fn ($query) => $query->when(
-                        $startDate,
-                        fn ($query) => $query->where('created_at', '>=', $startDate->startOfDay()->timestamp),
-                    )
-                )
-            )->sum('views');
     }
 }
