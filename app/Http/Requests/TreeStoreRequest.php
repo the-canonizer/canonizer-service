@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Anik\Form\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -87,6 +88,15 @@ class TreeStoreRequest extends FormRequest
 
     protected function validationFailed(): void
     {
-        throw new ValidationException($this->validator, $this->errorResponse());
+        $response = response()->json([
+            'code' => $this->statusCode(),
+            'message' => $this->errorMessage(),
+            'errors' => $this->validator->errors()->messages(),
+            'data' => null,
+            'success' => false,
+        ], $this->statusCode());
+    
+        throw new HttpResponseException($response);
+        // throw new ValidationException($this->validator, $this->errorResponse());
     }
 }
