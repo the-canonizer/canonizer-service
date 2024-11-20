@@ -88,15 +88,23 @@ class TreeStoreRequest extends FormRequest
 
     protected function validationFailed(): void
     {
+        $errors = $this->validator->errors()->messages();
+        
+        if(array_key_exists("topic_num", $errors)) {
+            $notFoundMessageExists = in_array('Topic not found.', $errors['topic_num']);            
+        }
+
+        // change status code to 404 when record not found...
+        $statusCode = (isset($notFoundMessageExists) && $notFoundMessageExists) ? 404 : $this->statusCode();
+
         $response = response()->json([
-            'code' => $this->statusCode(),
+            'code' => $statusCode,
             'message' => $this->errorMessage(),
             'errors' => $this->validator->errors()->messages(),
             'data' => null,
             'success' => false,
-        ], $this->statusCode());
+        ], $statusCode);
     
         throw new HttpResponseException($response);
-        // throw new ValidationException($this->validator, $this->errorResponse());
     }
 }

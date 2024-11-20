@@ -65,4 +65,71 @@ class TreeGetApiTest extends TestCase
             ],
         ]);
     }
+
+    /**
+     * Test invalid topic_num value type
+     */
+    public function testInvalidTopicNumValueType()
+    {
+        $response = $this->call('POST', '/api/v1/tree/get', [
+            'topic_num' => 'invalid',
+            'asofdate' => time(),
+            'algorithm' => 'blind_popularity',
+        ]);
+        $this->assertEquals(422, $response->status());
+    }
+
+    /**
+     * Test missing required fields
+     */
+    public function testMissingRequiredFields()
+    {
+        $response = $this->call('POST', '/api/v1/tree/get', [
+            'asofdate' => time(),
+            'algorithm' => 'blind_popularity',
+        ]);
+        $this->assertEquals(422, $response->status());
+    }
+
+    /**
+     * Test invalid model_type value
+     */
+    public function testInvalidModelTypeValue()
+    {
+        $response = $this->call('POST', '/api/v1/tree/get', [
+            'topic_num' => 238,
+            'asofdate' => time(),
+            'algorithm' => 'blind_popularity',
+            'model_type' => 'invalid_type',
+        ]);
+        $this->assertEquals(422, $response->status());
+    }
+
+        /**
+     * Test update_all with invalid value
+     */
+    public function testInvalidUpdateAllValue()
+    {
+        $response = $this->call('POST', '/api/v1/tree/get', [
+            'topic_num' => 238,
+            'asofdate' => time(),
+            'algorithm' => 'blind_popularity',
+            'update_all' => 5,
+        ]);
+        $this->assertEquals(422, $response->status());
+    }
+
+    /**
+     * Test non-existing topic_num
+     */
+    public function testNonExistingTopicNum()
+    {
+        $response = $this->call('POST', '/api/v1/tree/get', [
+            'topic_num' => 99999999999999,
+            'asofdate' => time(),
+            'algorithm' => 'blind_popularity',
+        ]);
+        $this->assertEquals(404, $response->status());
+    }
+    
 }
