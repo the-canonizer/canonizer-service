@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Anik\Form\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
@@ -87,6 +88,23 @@ class TreeStoreRequest extends FormRequest
 
     protected function validationFailed(): void
     {
-        throw new ValidationException($this->validator, $this->errorResponse());
+        $errors = $this->validator->errors()->messages();
+        
+        if(array_key_exists("topic_num", $errors)) {
+            $notFoundMessageExists = in_array('Topic not found.', $errors['topic_num']);            
+        }
+
+        // change status code to 404 when record not found...
+        $statusCode = (isset($notFoundMessageExists) && $notFoundMessageExists) ? 404 : $this->statusCode();
+
+        $response = response()->json([
+            'code' => $statusCode,
+            'message' => $this->errorMessage(),
+            'errors' => $this->validator->errors()->messages(),
+            'data' => null,
+            'success' => false,
+        ], $statusCode);
+    
+        throw new HttpResponseException($response);
     }
 }
