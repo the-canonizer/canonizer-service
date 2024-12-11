@@ -344,7 +344,20 @@ class TopicSupport extends Model {
  
          return $traversedTreeArray;
  
-     }
+    }
+
+    public static function checkIfAnySupportExists($topicNum, $currentUserNickIds) {
+    
+        $support = Support::where('topic_num', '=', $topicNum)
+                    ->where('end', '=', '0')
+                    ->where(function ($query) use ($currentUserNickIds) {
+                        $query->whereIn('nick_name_id', $currentUserNickIds)
+                              ->orWhereIn('delegate_nick_name_id', $currentUserNickIds);
+                    })
+                    ->count();
+
+        return $support;
+    }
 
 
 }

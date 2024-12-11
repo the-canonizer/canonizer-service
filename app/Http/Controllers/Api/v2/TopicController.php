@@ -8,7 +8,7 @@ use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\{RemoveTopicsRequest, TopicRequest};
 use App\Http\Resources\TopicResource;
-use App\Model\v1\{Tag, Timeline, Tree};
+use App\Model\v1\{Support, Tag, Timeline, Topic, TopicSupport, Tree};
 use App\Model\v2\{Nickname, Statement, TopicView};
 use App\Services\AlgorithmService;
 use Throwable;
@@ -177,6 +177,7 @@ class TopicController extends Controller
             $filter = (float) $request->input('filter') ?? null;
 
             $nickNameIds = $request->input('user_email') ? Helpers::getNickNamesByEmail($request->input('user_email')) : [];
+            $currentUserNickIds = $request->input('current_user') ? Helpers::getNickNamesByEmail($request->input('current_user')) : [];
 
             $today = Helpers::getStartOfTheDay(time()); // Store start of today in this variable
 
@@ -242,6 +243,20 @@ class TopicController extends Controller
                             $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
+
+                    // Check if topic have enabled the is_rank_hidden as true in current live record ...
+                    $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
+
+                    if($liveTopic->is_rank_hidden) {
+                        // check if the current user is having direct/delegate support in this topic or not...
+                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value->topic_id,$currentUserNickIds);
+
+                        if(!$userHaveAnySupport) {                   
+                            unset($topics[$key]->topic_score);
+                            unset($topics[$key]->topic_full_score);
+                        }
+                    }
+
                 } elseif (is_array($value))  // MongoDB Case
                 {
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
@@ -254,6 +269,20 @@ class TopicController extends Controller
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
                         foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
                             $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                        }
+                    }
+
+                    // Exclude the "topic_score" key if it exists in the array
+                    // Check if topic have enabled the is_rank_hidden as true in current live record ...
+                    $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
+
+                    if($liveTopic->is_rank_hidden) {
+                        // check if the current user is having direct/delegate support in this topic or not...
+                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value['topic_id'],$currentUserNickIds);
+
+                        if(!$userHaveAnySupport) {                   
+                            unset($topics[$key]["topic_score"]);
+                            unset($topics[$key]["topic_full_score"]);
                         }
                     }
                 }
