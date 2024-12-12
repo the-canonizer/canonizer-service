@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\v1;
 
 use App\Events\IncreaseTopicViewCountEvent;
+use App\Facades\Services\TopicServiceFacade;
 use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
@@ -16,6 +17,7 @@ use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
 use App\Model\v1\Statement;
+use App\Model\v1\TopicSupport;
 use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
@@ -429,7 +431,7 @@ class TreeController extends Controller
             $asOfDate = Helpers::getStartOfTheDay($asOfTime);
             $campNumber = (int) $request->input('camp_num', 1);
             $topicId = $topicNumber . '_' . $campNumber;
-
+            $currentUserNickIds = $request->input('current_user') ? Helpers::getNickNamesByEmail($request->input('current_user')) : [];
             // get the tree from mongoDb
             $start = microtime(true);
 
@@ -537,11 +539,43 @@ class TreeController extends Controller
             }
 
             $responseArray['data'][0][1]['camp_views'] = intval(Helpers::getCampViewsByDate($topicNumber, $campNumber));
-            $response = $responseArray;
-            return $response;
+            
+
+            // Check if topic have enabled the is_rank_hidden as true in current live record ...
+            $liveTopic = TopicServiceFacade::getLiveTopic($topicNumber, time());
+            
+            if($liveTopic->is_rank_hidden) {
+                // check if the current user is having direct/delegate support in this topic or not...
+                $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($topicNumber,$currentUserNickIds);
+                
+                if(!$userHaveAnySupport) {                   
+                    $responseArray['data'][0][1]['rank_hidden'] = true;
+                    $updatedTreeClone = $responseArray['data'][0][1];
+                    $this->removeSupportTree($updatedTreeClone);
+
+                    // Replace the original array with the updated one
+                    $responseArray['data'][0][1] = $updatedTreeClone;
+                }
+            }
+
+            return $responseArray;
+
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
+        }
+    }
+
+    function removeSupportTree(&$node) {
+        
+        if (isset($node['support_tree'])) {
+            unset($node['support_tree']);
+        }
+    
+        if (isset($node['children'])) {
+            foreach ($node['children'] as &$child) {
+                $this->removeSupportTree($child);
+            }
         }
     }
 }
