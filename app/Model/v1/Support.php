@@ -130,7 +130,7 @@ class Support extends Model {
             $camp = Camp::where('camp_num','=',$camp)->where('topic_num','=',$topic)->get();
             $allChildren = Camp::getAllChildCamps($camp[0]);
             $supportCount = 0;
-            $nickNamesData = \App\Model\Nickname::personNicknameArray();
+            
             if(sizeof($support) > 0 || count($support) >0){
                 foreach($support as $sp){
                     array_push( $nickNametoExclude, $sp->nick_name_id);
