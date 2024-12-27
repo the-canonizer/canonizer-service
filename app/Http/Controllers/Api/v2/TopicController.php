@@ -232,6 +232,7 @@ class TopicController extends Controller
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+                    $topics[$key]->total_supporters_count = count($value->tree_structure[1]['support_tree']) > 5 ? Support::getAllSupporters($value->topic_id, 1, 0) - 5 : 0;
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
@@ -260,6 +261,7 @@ class TopicController extends Controller
                 } elseif (is_array($value))  // MongoDB Case
                 {
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                    $topics[$key]['total_supporters_count'] = count($value['tree_structure'][1]['support_tree']) > 5 ? Support::getAllSupporters($value['topic_id'], 1, 0) - 5 : 0;
 
                     $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value['topic_id'])->get();
