@@ -2,6 +2,7 @@
 
 namespace App\Model\v1;
 
+use App\Facades\Services\TopicServiceFacade;
 use Illuminate\Database\Eloquent\Model;
 
 class TopicTag extends Model
@@ -16,7 +17,7 @@ class TopicTag extends Model
      *
      * @var array
      */
-    protected $fillable = ['topic_num','tag_id','created_at', 'updated_at'];
+    protected $fillable = ['topic_num', 'tag_id', 'created_at', 'updated_at'];
 
     /**
      * Returns an array of tag IDs associated with the given topic number.
@@ -24,8 +25,16 @@ class TopicTag extends Model
      * @param int $topicNum The topic number to retrieve tags for.
      * @return array An array of tag IDs.
      */
-    public static function getRelatedTagIds($topicNum) {
-        $tags = self::where('topic_num', $topicNum)->pluck('tag_id')->toArray();
-        return $tags ?? [];
+    public static function getRelatedTagIds($topicNum)
+    {
+        $tags = [];
+
+        $liveTopic = TopicServiceFacade::getLiveTopic($topicNum, time());
+        
+        if ($liveTopic) {
+            $tags = self::where('topic_id', $liveTopic->id)->pluck('tag_id')->toArray();
+        }
+
+        return $tags;
     }
 }
