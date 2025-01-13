@@ -232,6 +232,7 @@ class TopicController extends Controller
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+                    $topics[$key]->total_supporters_count = count($value->tree_structure[1]['support_tree']) > 5 ? Support::getAllSupporters($value->topic_id, 1, 0) - 5 : 0;
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
@@ -247,23 +248,20 @@ class TopicController extends Controller
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
                     $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
 
-                    if($liveTopic->is_rank_hidden) {
+                    if ($liveTopic->is_rank_hidden) {
                         // check if the current user is having direct/delegate support in this topic or not...
-                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value->topic_id,$currentUserNickIds);
+                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value->topic_id, $currentUserNickIds);
 
-                        if(!$userHaveAnySupport) {                   
+                        if (!$userHaveAnySupport) {
                             unset($topics[$key]->topic_score);
                             unset($topics[$key]->topic_full_score);
                         }
                     }
-
-                } elseif (is_array($value))  // MongoDB Case
-                {
+                } elseif (is_array($value)) { // MongoDB Case
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                    $topics[$key]['total_supporters_count'] = count($value['tree_structure'][1]['support_tree']) > 5 ? Support::getAllSupporters($value['topic_id'], 1, 0) - 5 : 0;
 
-                    $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value) {
-                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value['topic_id'])->get();
-                    })->where('is_active', 1)->get();
+                    $topics[$key]['tags'] = [];
 
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
@@ -276,13 +274,20 @@ class TopicController extends Controller
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
                     $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
 
-                    if($liveTopic->is_rank_hidden) {
-                        // check if the current user is having direct/delegate support in this topic or not...
-                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value['topic_id'],$currentUserNickIds);
+                    if ($liveTopic) {
 
-                        if(!$userHaveAnySupport) {                   
-                            unset($topics[$key]["topic_score"]);
-                            unset($topics[$key]["topic_full_score"]);
+                        $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value, $liveTopic) {
+                            $query->from('topics_tags')->select('tag_id')->where('topic_id', $liveTopic->id)->get();
+                        })->where('is_active', 1)->get();
+
+                        if ($liveTopic->is_rank_hidden) {
+                            // check if the current user is having direct/delegate support in this topic or not...
+                            $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value['topic_id'], $currentUserNickIds);
+
+                            if (!$userHaveAnySupport) {
+                                unset($topics[$key]["topic_score"]);
+                                unset($topics[$key]["topic_full_score"]);
+                            }
                         }
                     }
                 }
