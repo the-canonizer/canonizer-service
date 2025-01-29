@@ -144,7 +144,7 @@ class Statement extends Model
         ]);
 
         if ($statement) {
-            $statement = preg_replace('/[^a-zA-Z0-9_ %\.\?%&-]/s', '', self::stripTagsExcept($statement->parsed_value ?? null, ['figure', 'table']));
+            $statement = self::stripTagsExcept($statement->parsed_value ?? null);
             return Str::of($statement)->trim();
         }
         return null;
@@ -157,23 +157,44 @@ class Statement extends Model
      * @param array $excludeTags An array of HTML tags to exclude from removal.
      * @return string The processed HTML string with excluded tags removed.
      */
-    public static function stripTagsExcept(?string $html, array $excludeTags = []): string
+    public static function stripTagsExcept(?string $html, array $excludeTags = ['a', 'img', 'figure', 'table','iframe','video','picture']): string
     {
         if (is_null($html)) {
-            return $html;
+            return '';
         }
+
+        // Handle anchor tags separately
+        $html = preg_replace_callback(
+            '/<a\b[^>]*href=["\'](.*?)["\'][^>]*>(.*?)<\/a>/is',
+            function ($matches) {
+                $href = trim($matches[1]);
+                $innerText = trim($matches[2]);
+                
+                // If inner text and href are the same, remove the tag completely
+                if ($href === $innerText) {
+                    return '';
+                }
+
+                // Otherwise, retain only the inner text
+                return $innerText;
+            },
+            $html
+        );
+    
+        // Pattern to match the tags and their content for removal
         $excludeTagsPattern = implode('|', array_map(function ($tag) {
             return preg_quote($tag, '/');
         }, $excludeTags));
-
-        // Remove the content and tags of the excluded tags
-        $pattern = '/<(' . $excludeTagsPattern . ')\b[^>]*>(.*?)<\/\1>/is';
-        $html = preg_replace($pattern, '', $html);
-
+    
+        if (!empty($excludeTagsPattern)) {
+            $pattern = '/<(' . $excludeTagsPattern . ')\b[^>]*>.*?<\/\1>/is';
+            $html = preg_replace($pattern, '', $html);
+        }
+    
         // Strip all remaining tags
-        return strip_tags($html);
-
-        // Decode HTML entities to get the proper text
-        // $cleanedText = html_entity_decode($cleanedText, ENT_QUOTES, 'UTF-8');
+        $html = strip_tags($html);
+    
+        // Decode HTML entities for readable text
+        return html_entity_decode($html, ENT_QUOTES, 'UTF-8');
     }
 }
