@@ -241,7 +241,7 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
                         foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,email,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
 
@@ -266,7 +266,7 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
                         foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,email,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
 
