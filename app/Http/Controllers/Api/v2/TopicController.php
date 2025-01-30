@@ -241,12 +241,12 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
                         foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
 
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
-                    $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
+                    $liveTopic = TopicServiceFacade::getLiveTopic($value->topic_id, time());
 
                     if ($liveTopic->is_rank_hidden) {
                         // check if the current user is having direct/delegate support in this topic or not...
@@ -266,7 +266,7 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
                         foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,first_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,profile_picture_path')->find($support['nick_name_id'])->user;
                         }
                     }
 
