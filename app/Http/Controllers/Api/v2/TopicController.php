@@ -241,7 +241,13 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
                         foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $user = Nickname::with('user:id,first_name,middle_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+
+                            $user->first_name = $user->first_name[0] ?? '';
+                            $user->middle_name = $user->middle_name[0] ?? '';
+                            $user->last_name = $user->last_name[0] ?? '';
+
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = $user;
                         }
                     }
 
@@ -266,7 +272,13 @@ class TopicController extends Controller
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
                         foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
-                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = Nickname::with('user:id,email,profile_picture_path')->find($support['nick_name_id'])->user;
+                            $user = Nickname::with('user:id,first_name,middle_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
+
+                            $user->first_name = $user->first_name[0] ?? '';
+                            $user->middle_name = $user->middle_name[0] ?? '';
+                            $user->last_name = $user->last_name[0] ?? '';
+
+                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = $user;
                         }
                     }
 
