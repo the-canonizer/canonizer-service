@@ -236,7 +236,7 @@ class TopicController extends Controller
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
-                    })->where('is_active', 1)->get();
+                    })->get();
 
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
@@ -247,7 +247,7 @@ class TopicController extends Controller
                             $user->middle_name = $user->middle_name[0] ?? '';
                             $user->last_name = $user->last_name[0] ?? '';
 
-                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = $user;
+                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = $user;
                         }
                     }
 
@@ -290,7 +290,7 @@ class TopicController extends Controller
 
                         $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value, $liveTopic) {
                             $query->from('topics_tags')->select('tag_id')->where('topic_id', $liveTopic->id)->get();
-                        })->where('is_active', 1)->get();
+                        })->get();
 
                         if ($liveTopic->is_rank_hidden) {
                             // check if the current user is having direct/delegate support in this topic or not...
