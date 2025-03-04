@@ -7,3 +7,4 @@ Homestead.yaml
 .phpunit.result.cache
 composer.lock
 .vscode
+public/canonizer_service.json

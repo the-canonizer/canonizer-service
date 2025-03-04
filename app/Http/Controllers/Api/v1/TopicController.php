@@ -21,150 +21,84 @@ use Illuminate\Support\Facades\DB;
 class TopicController extends Controller
 {
     /**
-     * @OA\Post(path="/topic/getAll",
-     *   tags={"topics","trees"},
-     *   summary="Get topics with pagination",
-     *   description="This api is used to get topics depends on page size pass in request",
-     *   operationId="getAllTopics",
+     * @OA\Post(
+     *   path="/v1/topic/getAll",
+     *   tags={"V1"},
+     *   summary="Get all latest trees",
+     *   description="This API retrieves all latest trees from MongoDB and Database using various query parameters.",
+     *   operationId="GetAllLatestTreesV1",
+     * 
      *   @OA\RequestBody(
      *       required=true,
-     *       description="Get topics",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="page_number",
-     *                     description="current page number",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="page_size",
-     *                     description="how many records required in api",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                @OA\Property(
-     *                     property="namespace_id",
-     *                     description="namespace id",
-     *                     required=false,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="algorithm",
-     *                     description="current selected algorithm",
-     *                     required=true,
-     *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="asofdate",
-     *                     description="current timestamp or only datetime string",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                @OA\Property(
-     *                     property="search",
-     *                     description="search type",
-     *                     required=true,
-     *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="filter",
-     *                     description="select filter",
-     *                     required=false,
-     *                     type="float"
-     *                 ),
-     *                @OA\Property(
-     *                     property="user_email",
-     *                     description="user email for returning only user topics",
-     *                     required=false,
-     *                     type="string"
-     *                 )
-     *         )
+     *       @OA\JsonContent(
+     *           type="object",
+     *           @OA\Property(property="algorithm", type="string", example="blind_popularity", description="Algorithm to be used"),
+     *           @OA\Property(property="asofdate", type="integer", example=1724311750, description="Timestamp representing the 'as of' date"),
+     *           @OA\Property(property="namespace_id", type="string", example="1", description="Namespace identifier"),
+     *           @OA\Property(property="page_number", type="integer", example=1, description="Page number for pagination"),
+     *           @OA\Property(property="page_size", type="integer", example=15, description="Number of items per page"),
+     *           @OA\Property(property="search", type="string", example="", description="Search term"),
+     *           @OA\Property(property="filter", type="integer", example=0, description="Filter flag"),
+     *           @OA\Property(property="asof", type="string", example="default", description="Asof parameter"),
+     *           @OA\Property(property="user_email", type="string", example="", description="User email"),
+     *           @OA\Property(property="is_archive", type="integer", example=0, description="Archive flag (0 for active, 1 for archived)"),
+     *           @OA\Property(property="sort", type="boolean", example=false, description="Sort flag")
+     *       )
      *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="number_of_pages",
-     *                                         type="integer"
-     *                                    ),
-     *                                   @OA\Items(
-     *                                         name="error",
-     *                                         type="string"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=400, description="Exception occurs while fetching topics",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="string"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="errors",
-     *                                         type="array"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404, description="Topics not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="string"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="errors",
-     *                                         type="array"
-     *                                    )
-     *                          )
-     *                  )
+     * 
+     *   @OA\Response(
+     *       response=200,
+     *       description="Successful operation",
+     *       @OA\JsonContent(
+     *           type="object",
+     *           @OA\Property(property="status_code", type="integer", example=200),
+     *           @OA\Property(property="message", type="string", example="Success"),
+     *           @OA\Property(property="error", type="string", nullable=true, example=null),
+     *           @OA\Property(
+     *               property="data",
+     *               type="object",
+     *               @OA\Property(
+     *                   property="topic",
+     *                   type="array",
+     *                   minItems=2,
+     *                   @OA\Items(
+     *                       type="object",
+     *                       @OA\Property(property="id", type="string"),
+     *                       @OA\Property(property="as_of_date", type="integer"),
+     *                       @OA\Property(property="topic_score", type="number", format="float"),
+     *                       @OA\Property(property="topic_full_score", type="integer"),
+     *                       @OA\Property(property="topic_name", type="string"),
+     *                       @OA\Property(property="topic_id", type="integer"),
+     *                       @OA\Property(property="namespace_id", type="integer"),
+     *                       @OA\Property(property="algorithm_id", type="string"),
+     *                       @OA\Property(property="tree_structure", type="array",
+     *                           @OA\Items(
+     *                               type="object",
+     *                               @OA\Property(property="review_title", type="string"),
+     *                           )
+     *                       ),
+     *                       @OA\Property(property="submitter_nick_id", type="integer"),
+     *                       @OA\Property(property="created_by_nick_id", type="integer"),
+     *                       @OA\Property(property="camp_views", type="integer"),
+     *                   )
+     *               )
+     *           )
+     *       )
+     *   ),
+     * 
+     *   @OA\Response(
+     *       response=400,
+     *       description="Exception occurs",
+     *       @OA\JsonContent(
+     *           type="object",
+     *           @OA\Property(property="status_code", type="integer", example=400),
+     *           @OA\Property(property="message", type="string", example="error"),
+     *           @OA\Property(property="error", type="string", nullable=true, example="message"),
+     *           @OA\Property(property="data", property="data", type="object", nullable=true)
+     *       )
+     *   )
      * )
      */
-
-    /**
-     * get all topics.
-     *
-     * @param  TopicRequest  $request
-     * @return Response
-     */
-
     public function getAll(TopicRequest $request)
     {
         try {
@@ -267,68 +201,6 @@ class TopicController extends Controller
         }
     }
 
-    /**
-     * @OA\Post(path="/tree/remove-sandbox-tree",
-     *   tags={"trees"},
-     *   summary="Remove topics by ids",
-     *   description="This api is used to remove specific topic trees in cache",
-     *   operationId="removeCacheSpecificTopics",
-     *   @OA\RequestBody(
-     *       required=true,
-     *       description="Remove Topics",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="topic_numbers",
-     *                     required=true,
-     *                     type="integer|array",
-     *                 )
-     *         )
-     *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                  @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                       @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=500, description="Exception occurs while removing topics",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                       @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404, description="Topics not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="status_code",
-     *                                         type="integer"
-     *                                    ),
-     *                                       @OA\Items(
-     *                                         name="message",
-     *                                         type="string"
-     *                                    )
-     *                          )
-     *                  )
-     * )
-     */
     /**
      * Remove sandbox topics.
      *
