@@ -8,9 +8,7 @@ use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TreeStoreRequest;
 use App\Http\Resources\TreeResource;
-use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use TreeRepository;
 use TreeService;
 use UtilHelper;
@@ -27,118 +25,55 @@ use Exception;
 class TreeController extends Controller
 {
     /**
-     * @OA\Post(path="/tree/store",
-     *   tags={"tree"},
-     *   summary="Create or Update tree",
-     *   description="This api used to create Or update the tree. If tree exist then tree will be updated otherwise new tree will be created.",
-     *   operationId="createUpdateTree",
+     * @OA\Post(
+     *   path="/v1/tree/store",
+     *   tags={"Tree"},
+     *   summary="Store a new tree in the MongoDB database",
+     *   description="This API stores a new tree in the MongoDB database.",
+     *   operationId="TreeStoreV1",
+     * 
      *   @OA\RequestBody(
-     *       required=true,
-     *       description="Create Update Tree",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="topic_num",
-     *                     description="The topic number of topic",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="asofdate",
-     *                     description="Updated status of the pet",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="algorithm",
-     *                     description="current selected algorithm",
-     *                     required=true,
-     *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="update_all",
-     *                     description="if update_all is 0 then tree will be created using algortihm which sends in api otherwise tree will be created for all the algorithms",
-     *                     required=false,
-     *                     type="integer",
-     *                     format="int32"
-     *                 )
-     *       )
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string"),
+     *       @OA\Property(property="asofdate", type="integer"),
+     *       @OA\Property(property="camp_num", type="integer"),
+     *       @OA\Property(property="event_type", type="string"),
+     *       @OA\Property(property="job_type", type="string"),
+     *       @OA\Property(property="model_id", type="integer"),
+     *       @OA\Property(property="model_type", type="string"),
+     *       @OA\Property(property="pre_LiveId", type="string"),
+     *       @OA\Property(property="topic_num", type="integer"),
+     *       @OA\Property(property="update_all", type="integer"),
+     *     )
      *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=401, description="Exception occurs during tree calculation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="array"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404,
-     *                description="Tree not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="string"
-     *                                    )
-     *                          )
-     *                  )
+     * 
+     *   @OA\Response(
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=200),
+     *       @OA\Property(property="message", type="string", example="Success"),
+     *       @OA\Property(property="error", type="string", nullable=true, example=null),
+     *       @OA\Property(property="data", type="object")
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=400),
+     *       @OA\Property(property="message", type="string", example="error"),
+     *       @OA\Property(property="error", type="string", nullable=true, example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
+     *   )
      * )
      */
-
-    /**
-     * Store a new tree.
-     *
-     * @param  TreeStoreRequest  $request
-     * @return Response
-     */
-
     public function store(TreeStoreRequest $request)
     {
         /* get input params from request */
@@ -172,7 +107,7 @@ class TreeController extends Controller
                     // $topic->grace_period = 0;
                     // $topic->update();
 
-                    if(!self::commitTheChange($topic->id, 'topic')) {
+                    if (!self::commitTheChange($topic->id, 'topic')) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
@@ -195,7 +130,7 @@ class TreeController extends Controller
                     // $camp->grace_period = 0;
                     // $camp->update();
 
-                    if(!self::commitTheChange($camp->id, 'camp', $camp->old_parent_camp_num, $camp->parent_camp_num)) {
+                    if (!self::commitTheChange($camp->id, 'camp', $camp->old_parent_camp_num, $camp->parent_camp_num)) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
@@ -217,7 +152,7 @@ class TreeController extends Controller
                     // $statement->grace_period = 0;
                     // $statement->update();
 
-                    if(!self::commitTheChange($statement->id, 'statement')) {
+                    if (!self::commitTheChange($statement->id, 'statement')) {
                         throw new Exception('Authentication Issue!', 401);
                     }
                 }
@@ -228,11 +163,11 @@ class TreeController extends Controller
 
         $end = microtime(true);
         $time = $end - $start;
-        
+
         /// Check the job is for 24 hour
         /// check all id and hit the changeToAgree api
-        if($job_type == "live-time-job") {
-            if(!empty($model_id) && !empty($model_type)) {
+        if ($job_type == "live-time-job") {
+            if (!empty($model_id) && !empty($model_type)) {
                 $this->agreeToChange($model_id, $topicNumber, $camp_num, $event_type, $pre_LiveId, $model_type);
             }
         }
@@ -242,7 +177,8 @@ class TreeController extends Controller
         return new TreeResource(array($tree));
     }
 
-    private function agreeToChange($changeId, $topic_num, $camp_num, $event_type, $pre_LiveId, $change_for = "") {
+    private function agreeToChange($changeId, $topic_num, $camp_num, $event_type, $pre_LiveId, $change_for = "")
+    {
         $requestBody = [
             'record_id'             => $changeId,
             'topic_num'             => $topic_num,
@@ -261,10 +197,10 @@ class TreeController extends Controller
 
         $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
 
-        if(isset($response)) {
+        if (isset($response)) {
             $checkRes = json_decode($response, true);
             Log::info('AgreeTheChange => ' . json_encode($checkRes));
-            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+            if (array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
                 Log::error("agreeTheChange => Unauthorized action.");
                 throw new Exception('Authentication Issue!', 401);
                 return false;
@@ -273,7 +209,8 @@ class TreeController extends Controller
         return true;
     }
 
-    private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null) {
+    private function commitTheChange($id, $type, $oldParentCampNum = null, $parentCampNum = null)
+    {
         $requestBody = [
             "id" => $id,
             "type" => $type,
@@ -290,10 +227,10 @@ class TreeController extends Controller
         $headers[] = 'Authorization:Bearer: ' . env('API_TOKEN') . '';
 
         $response = UtilHelper::curlExecute('POST', $endpoint, $headers, $requestBody);
-        if(isset($response)) {
+        if (isset($response)) {
             $checkRes = json_decode($response, true);
             Log::info('CommitTheChange => ' . json_encode($checkRes));
-            if(array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
+            if (array_key_exists("status_code", $checkRes) && $checkRes["status_code"] == 401) {
                 Log::error("commitTheChange => Unauthorized action.");
                 throw new Exception('Authentication Issue!', 401);
                 return false;
@@ -303,118 +240,52 @@ class TreeController extends Controller
     }
 
     /**
-     * @OA\Post(path="/tree/get",
-     *   tags={"tree"},
-     *   summary="fetch or create a tree",
-     *   description="This api used to get Or create the tree. If tree exist then tree will be fetched otherwise new tree will be created.",
-     *   operationId="createUpdateTree",
+     * @OA\Post(
+     *   path="/v1/tree/get",
+     *   tags={"Tree"},
+     *   summary="Fetch or create a tree",
+     *   description="This api used to get or create the tree. If tree exist then tree will be fetched otherwise new tree will be created.",
+     *   operationId="GetTreeV1",
+     * 
      *   @OA\RequestBody(
-     *       required=true,
-     *       description="fetch and create a Tree",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="topic_num",
-     *                     description="The topic number of topic",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="asofdate",
-     *                     description="Updated status of the pet",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="algorithm",
-     *                     description="current selected algorithm",
-     *                     required=true,
-     *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="update_all",
-     *                     description="if update_all is 0 then tree will be created using algortihm which sends in api otherwise tree will be created for all the algorithms",
-     *                     required=false,
-     *                     type="integer",
-     *                     format="int32"
-     *                 )
-     *       )
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string"),
+     *       @OA\Property(property="asof", type="string"),
+     *       @OA\Property(property="asofdate", type="integer"),
+     *       @OA\Property(property="camp_num", type="integer"),
+     *       @OA\Property(property="current_user", type="string", nullable=true),
+     *       @OA\Property(property="fetch_topic_history", type="boolean", nullable=true),
+     *       @OA\Property(property="topic_num", type="integer"),
+     *       @OA\Property(property="update_all", type="integer"),
+     *     )
      *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=401, description="Exception occurs during tree calculation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="array"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404,
-     *                description="Tree not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="string"
-     *                                    )
-     *                          )
-     *                  )
+     * 
+     *   @OA\Response(
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=200),
+     *       @OA\Property(property="message", type="string", example="Success"),
+     *       @OA\Property(property="data", type="object")
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="error_code", type="integer", example=400),
+     *       @OA\Property(property="message", type="string", example="error"),
+     *       @OA\Property(property="error", type="string", nullable=true, example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
+     *   )
      * )
      */
-
-    /**
-     * get a tree.
-     *
-     * @param  TreeStoreRequest  $request
-     * @return Response
-     */
-
     public function find(TreeStoreRequest $request)
     {
         try {
@@ -422,9 +293,9 @@ class TreeController extends Controller
             $topicNumber = (int) $request->input('topic_num');
             $algorithm = $request->input('algorithm');
 
-            
+
             $asOf = $request->input('asOf');
-            $asOfTime = ($asOf=="default" || $asOf=="review") ? time() : ceil($request->input('asofdate'));
+            $asOfTime = ($asOf == "default" || $asOf == "review") ? time() : ceil($request->input('asofdate'));
             $updateAll = (int) $request->input('update_all', 0);
             $fetchTopicHistory =  $request->input('fetch_topic_history');
 
@@ -539,16 +410,16 @@ class TreeController extends Controller
             }
 
             $responseArray['data'][0][1]['camp_views'] = intval(Helpers::getCampViewsByDate($topicNumber, $campNumber));
-            
+
 
             // Check if topic have enabled the is_rank_hidden as true in current live record ...
             $liveTopic = TopicServiceFacade::getLiveTopic($topicNumber, time());
-            
-            if($liveTopic->is_rank_hidden) {
+
+            if ($liveTopic->is_rank_hidden) {
                 // check if the current user is having direct/delegate support in this topic or not...
-                $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($topicNumber,$currentUserNickIds);
-                
-                if(!$userHaveAnySupport) {                   
+                $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($topicNumber, $currentUserNickIds);
+
+                if (!$userHaveAnySupport) {
                     $responseArray['data'][0][1]['rank_hidden'] = true;
                     $updatedTreeClone = $responseArray['data'][0][1];
                     $this->removeSupportTree($updatedTreeClone);
@@ -559,19 +430,19 @@ class TreeController extends Controller
             }
 
             return $responseArray;
-
         } catch (Throwable $e) {
             $errResponse = UtilHelper::exceptionResponse($e, $request->input('tracing') ?? false);
             return response()->json($errResponse, 500);
         }
     }
 
-    function removeSupportTree(&$node) {
-        
+    function removeSupportTree(&$node)
+    {
+
         if (isset($node['support_tree'])) {
             unset($node['support_tree']);
         }
-    
+
         if (isset($node['children'])) {
             foreach ($node['children'] as &$child) {
                 $this->removeSupportTree($child);
