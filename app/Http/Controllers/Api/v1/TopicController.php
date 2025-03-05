@@ -29,73 +29,72 @@ class TopicController extends Controller
      *   operationId="GetAllLatestTreesV1",
      * 
      *   @OA\RequestBody(
-     *       required=true,
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="algorithm", type="string", example="blind_popularity", description="Algorithm to be used"),
-     *           @OA\Property(property="asofdate", type="integer", example=1724311750, description="Timestamp representing the 'as of' date"),
-     *           @OA\Property(property="namespace_id", type="string", example="1", description="Namespace identifier"),
-     *           @OA\Property(property="page_number", type="integer", example=1, description="Page number for pagination"),
-     *           @OA\Property(property="page_size", type="integer", example=15, description="Number of items per page"),
-     *           @OA\Property(property="search", type="string", example="", description="Search term"),
-     *           @OA\Property(property="filter", type="integer", example=0, description="Filter flag"),
-     *           @OA\Property(property="asof", type="string", example="default", description="Asof parameter"),
-     *           @OA\Property(property="user_email", type="string", example="", description="User email"),
-     *           @OA\Property(property="is_archive", type="integer", example=0, description="Archive flag (0 for active, 1 for archived)"),
-     *           @OA\Property(property="sort", type="boolean", example=false, description="Sort flag")
-     *       )
+     *     required=true,
+     *     @OA\JsonContent(type="object",
+     *       @OA\Property(property="algorithm", type="string", example="blind_popularity", description="Algorithm to be used"),
+     *       @OA\Property(property="asofdate", type="integer", example=1724311750, description="Timestamp representing the 'as of' date"),
+     *       @OA\Property(property="namespace_id", type="string", example="1", description="Namespace identifier"),
+     *       @OA\Property(property="page_number", type="integer", example=1, description="Page number for pagination"),
+     *       @OA\Property(property="page_size", type="integer", example=15, description="Number of items per page"),
+     *       @OA\Property(property="search", type="string", example="", description="Search term"),
+     *       @OA\Property(property="filter", type="integer", example=0, description="Filter flag"),
+     *       @OA\Property(property="asof", type="string", example="default", description="Asof parameter"),
+     *       @OA\Property(property="user_email", type="string", example="", description="User email"),
+     *       @OA\Property(property="is_archive", type="integer", example=0, description="Archive flag (0 for active, 1 for archived)"),
+     *       @OA\Property(property="sort", type="boolean", example=false, description="Sort flag")
+     *     )
      *   ),
      * 
      *   @OA\Response(
-     *       response=200,
-     *       description="Successful operation",
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="status_code", type="integer", example=200),
-     *           @OA\Property(property="message", type="string", example="Success"),
-     *           @OA\Property(property="error", type="string", nullable=true, example=null),
-     *           @OA\Property(
-     *               property="data",
-     *               type="object",
-     *               @OA\Property(
-     *                   property="topic",
-     *                   type="array",
-     *                   minItems=2,
-     *                   @OA\Items(
-     *                       type="object",
-     *                       @OA\Property(property="id", type="string"),
-     *                       @OA\Property(property="as_of_date", type="integer"),
-     *                       @OA\Property(property="topic_score", type="number", format="float"),
-     *                       @OA\Property(property="topic_full_score", type="integer"),
-     *                       @OA\Property(property="topic_name", type="string"),
-     *                       @OA\Property(property="topic_id", type="integer"),
-     *                       @OA\Property(property="namespace_id", type="integer"),
-     *                       @OA\Property(property="algorithm_id", type="string"),
-     *                       @OA\Property(property="tree_structure", type="array",
-     *                           @OA\Items(
-     *                               type="object",
-     *                               @OA\Property(property="review_title", type="string"),
-     *                           )
-     *                       ),
-     *                       @OA\Property(property="submitter_nick_id", type="integer"),
-     *                       @OA\Property(property="created_by_nick_id", type="integer"),
-     *                       @OA\Property(property="camp_views", type="integer"),
-     *                   )
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=200),
+     *       @OA\Property(property="message", type="string", example="Success"),
+     *       @OA\Property(property="error", type="string", nullable=true, example=null),
+     *       @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         @OA\Property(
+     *           property="topic",
+     *           type="array",
+     *           minItems=2,
+     *           @OA\Items(
+     *             type="object",
+     *             @OA\Property(property="id", type="string"),
+     *             @OA\Property(property="as_of_date", type="integer"),
+     *             @OA\Property(property="topic_score", type="number", format="float"),
+     *             @OA\Property(property="topic_full_score", type="integer"),
+     *             @OA\Property(property="topic_name", type="string"),
+     *             @OA\Property(property="topic_id", type="integer"),
+     *             @OA\Property(property="namespace_id", type="integer"),
+     *             @OA\Property(property="algorithm_id", type="string"),
+     *             @OA\Property(property="tree_structure", type="array",
+     *               @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="review_title", type="string"),
      *               )
+     *             ),
+     *             @OA\Property(property="submitter_nick_id", type="integer"),
+     *             @OA\Property(property="created_by_nick_id", type="integer"),
+     *             @OA\Property(property="camp_views", type="integer"),
      *           )
+     *         )
      *       )
+     *     )
      *   ),
      * 
      *   @OA\Response(
-     *       response=400,
-     *       description="Exception occurs",
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="status_code", type="integer", example=400),
-     *           @OA\Property(property="message", type="string", example="error"),
-     *           @OA\Property(property="error", type="string", nullable=true, example="message"),
-     *           @OA\Property(property="data", property="data", type="object", nullable=true)
-     *       )
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=400),
+     *       @OA\Property(property="message", type="string", example="error"),
+     *       @OA\Property(property="error", type="string", nullable=true, example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
      *   )
      * )
      */
@@ -123,7 +122,7 @@ class TopicController extends Controller
 
             $archive = ($request->has('is_archive')) ? $request->input('is_archive') : 0;
 
-            $sort = ($request->has('sort')) ?  $request->input('sort'): false;
+            $sort = ($request->has('sort')) ?  $request->input('sort') : false;
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -202,12 +201,47 @@ class TopicController extends Controller
     }
 
     /**
-     * Remove sandbox topics.
-     *
-     * @param  RemoveTopicsRequest  $request
-     * @return Response
+     * @OA\Post(
+     *   path="/v1/tree/remove-sandbox-tree",
+     *   tags={"V1"},
+     *   summary="Remove sandbox tree",
+     *   description="This API removes the sandbox tree.",
+     *   operationId="RemoveSandboxTreeV1",
+     * 
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string"),
+     *       @OA\Property(property="topic_numbers", oneOf={
+     *           @OA\Schema(type="array", @OA\Items(type="integer")),
+     *           @OA\Schema(type="string")
+     *         }
+     *       )
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=200),
+     *       @OA\Property(property="message", type="string", example="Success")
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=400),
+     *       @OA\Property(property="message", type="string", example="error")
+     *     )
+     *   )
+     * )
      */
-
     public function removeCacheSpecificTopics(RemoveTopicsRequest $request)
     {
         try {

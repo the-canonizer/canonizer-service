@@ -18,7 +18,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Server(
  *         description="Canonizer Service API",
  *         url="https://service.canonizer.com/api/v1/"
- *     )
+ *     ),
  *     @OA\Components(
  *         @OA\SecurityScheme(
  *             securityScheme="bearerAuth",
@@ -29,7 +29,4 @@ use OpenApi\Annotations as OA;
  *     )
  * )
  */
-class OpenApiSpec
-{
-}
-
+class OpenApiSpec {}

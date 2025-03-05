@@ -8,7 +8,7 @@ use App\Helpers\Helpers;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\{RemoveTopicsRequest, TopicRequest};
 use App\Http\Resources\TopicResource;
-use App\Model\v1\{Support, Tag, Timeline, Topic, TopicSupport, Tree};
+use App\Model\v1\{Support, Tag, Timeline, TopicSupport, Tree};
 use App\Model\v2\{Nickname, Statement, TopicView};
 use App\Services\AlgorithmService;
 use Throwable;
@@ -22,95 +22,95 @@ class TopicController extends Controller
      *   summary="Get all latest trees",
      *   description="This API retrieves all latest trees from MongoDB and Database using various query parameters.",
      *   operationId="GetAllLatestTreesV2",
-     * 
+     *   
      *   @OA\RequestBody(
-     *       required=true,
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="algorithm", type="string", example="blind_popularity", description="Algorithm to be used"),
-     *           @OA\Property(property="asofdate", type="integer", example=1724311750, description="Timestamp representing the 'as of' date"),
-     *           @OA\Property(property="namespace_id", type="string", example="1", description="Namespace identifier"),
-     *           @OA\Property(property="page_number", type="integer", example=1, description="Page number for pagination"),
-     *           @OA\Property(property="page_size", type="integer", example=15, description="Number of items per page"),
-     *           @OA\Property(property="search", type="string", example="", description="Search term"),
-     *           @OA\Property(property="filter", type="integer", example=0, description="Filter flag"),
-     *           @OA\Property(property="asof", type="string", example="default", description="Asof parameter"),
-     *           @OA\Property(property="user_email", type="string", example="", description="User email"),
-     *           @OA\Property(property="is_archive", type="integer", example=0, description="Archive flag (0 for active, 1 for archived)"),
-     *           @OA\Property(property="sort", type="boolean", example=false, description="Sort flag"),
-     *           @OA\Property(property="page", type="string", example="browse", description="Page parameter"),
-     *           @OA\Property(
-     *               property="topic_tags",
-     *               type="array",
-     *               description="List of topic tags",
-     *               @OA\Items(type="string")
-     *           ),
-     *           @OA\Property(property="current_user", type="string", example="", description="Current user identifier")
-     *       )
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string", example="blind_popularity", description="Algorithm to be used"),
+     *       @OA\Property(property="asofdate", type="integer", example=1724311750, description="Timestamp representing the 'as of' date"),
+     *       @OA\Property(property="namespace_id", type="string", example="1", description="Namespace identifier"),
+     *       @OA\Property(property="page_number", type="integer", example=1, description="Page number for pagination"),
+     *       @OA\Property(property="page_size", type="integer", example=15, description="Number of items per page"),
+     *       @OA\Property(property="search", type="string", example="", description="Search term"),
+     *       @OA\Property(property="filter", type="integer", example=0, description="Filter flag"),
+     *       @OA\Property(property="asof", type="string", example="default", description="Asof parameter"),
+     *       @OA\Property(property="user_email", type="string", example="", description="User email"),
+     *       @OA\Property(property="is_archive", type="integer", example=0, description="Archive flag (0 for active, 1 for archived)"),
+     *       @OA\Property(property="sort", type="boolean", example=false, description="Sort flag"),
+     *       @OA\Property(property="page", type="string", example="browse", description="Page parameter"),
+     *       @OA\Property(
+     *         property="topic_tags",
+     *         type="array",
+     *         description="List of topic tags",
+     *         @OA\Items(type="string")
+     *       ),
+     *       @OA\Property(property="current_user", type="string", example="", description="Current user identifier")
+     *     )
      *   ),
      * 
      *   @OA\Response(
-     *       response=200,
-     *       description="Successful operation",
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="status_code", type="integer", example=200),
-     *           @OA\Property(property="message", type="string", example="Success"),
-     *           @OA\Property(property="error", type="string", nullable=true, example=null),
-     *           @OA\Property(
-     *               property="data",
-     *               type="object",
-     *               @OA\Property(
-     *                   property="topic",
-     *                   type="array",
-     *                   minItems=2,
-     *                   @OA\Items(
-     *                       type="object",
-     *                       @OA\Property(property="id", type="string"),
-     *                       @OA\Property(property="as_of_date", type="integer"),
-     *                       @OA\Property(property="topic_score", type="number", format="float"),
-     *                       @OA\Property(property="topic_full_score", type="integer"),
-     *                       @OA\Property(property="topic_name", type="string"),
-     *                       @OA\Property(property="topic_id", type="integer"),
-     *                       @OA\Property(property="namespace_id", type="integer"),
-     *                       @OA\Property(property="algorithm_id", type="string"),
-     *                       @OA\Property(property="tree_structure", type="array",
-     *                           @OA\Items(
-     *                               type="object",
-     *                               @OA\Property(property="review_title", type="string"),
-     *                               @OA\Property(property="support_tree", type="object", nullable=true),
-     *                           )
-     *                       ),
-     *                       @OA\Property(property="submitter_nick_id", type="integer"),
-     *                       @OA\Property(property="created_by_nick_id", type="integer"),
-     *                       @OA\Property(property="camp_views", type="integer"),
-     *                       @OA\Property(property="total_supporters_count", type="integer"),
-     *                       @OA\Property(property="tags", type="array", nullable=true,
-     *                           @OA\Items(
-     *                               type="object",
-     *                               @OA\Property(property="id", type="integer"),
-     *                               @OA\Property(property="parent_id", type="integer", nullable=true),
-     *                               @OA\Property(property="title", type="string"),
-     *                               @OA\Property(property="is_active", type="integer")
-     *                           )
-     *                       ),
-     *                       @OA\Property(property="statement", type="string")
-     *                   )
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=200),
+     *       @OA\Property(property="message", type="string", example="Success"),
+     *       @OA\Property(property="error", type="string", nullable=true, example=null),
+     *       @OA\Property(
+     *         property="data",
+     *         type="object",
+     *         @OA\Property(
+     *           property="topic",
+     *           type="array",
+     *           minItems=2,
+     *           @OA\Items(
+     *             type="object",
+     *             @OA\Property(property="id", type="string"),
+     *             @OA\Property(property="as_of_date", type="integer"),
+     *             @OA\Property(property="topic_score", type="number", format="float"),
+     *             @OA\Property(property="topic_full_score", type="integer"),
+     *             @OA\Property(property="topic_name", type="string"),
+     *             @OA\Property(property="topic_id", type="integer"),
+     *             @OA\Property(property="namespace_id", type="integer"),
+     *             @OA\Property(property="algorithm_id", type="string"),
+     *             @OA\Property(property="tree_structure", type="array",
+     *               @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="review_title", type="string"),
+     *                 @OA\Property(property="support_tree", type="object", nullable=true),
      *               )
+     *             ),
+     *             @OA\Property(property="submitter_nick_id", type="integer"),
+     *             @OA\Property(property="created_by_nick_id", type="integer"),
+     *             @OA\Property(property="camp_views", type="integer"),
+     *             @OA\Property(property="total_supporters_count", type="integer"),
+     *             @OA\Property(property="tags", type="array", nullable=true,
+     *               @OA\Items(
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer"),
+     *                 @OA\Property(property="parent_id", type="integer", nullable=true),
+     *                 @OA\Property(property="title", type="string"),
+     *                 @OA\Property(property="is_active", type="integer")
+     *               )
+     *             ),
+     *             @OA\Property(property="statement", type="string")
      *           )
+     *         )
      *       )
+     *     )
      *   ),
      * 
      *   @OA\Response(
-     *       response=400,
-     *       description="Exception occurs",
-     *       @OA\JsonContent(
-     *           type="object",
-     *           @OA\Property(property="status_code", type="integer", example=400),
-     *           @OA\Property(property="message", type="string", example="error"),
-     *           @OA\Property(property="error", type="string", nullable=true, example="message"),
-     *           @OA\Property(property="data", property="data", type="object", nullable=true)
-     *       )
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="status_code", type="integer", example=400),
+     *       @OA\Property(property="message", type="string", example="error"),
+     *       @OA\Property(property="error", type="string", nullable=true, example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
      *   )
      * )
      */
