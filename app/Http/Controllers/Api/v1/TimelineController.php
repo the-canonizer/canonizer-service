@@ -21,7 +21,7 @@ class TimelineController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/timeline/store",
-     *   tags={"V1"},
+     *   tags={"Timeline"},
      *   summary="Store a new timeline in the MongoDB database",
      *   description="This API stores a new timeline in the MongoDB database.",
      *   operationId="TimelineStoreV1",
@@ -147,7 +147,7 @@ class TimelineController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/timeline/get",
-     *   tags={"V1"},
+     *   tags={"Timeline"},
      *   summary="Get a timeline from the MongoDB database",
      *   description="This API gets a timeline of specific topic from the MongoDB database.",
      *   operationId="TimelineGetV1",

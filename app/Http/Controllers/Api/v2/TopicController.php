@@ -18,7 +18,7 @@ class TopicController extends Controller
     /**
      * @OA\Post(
      *   path="/v2/topic/getAll",
-     *   tags={"V2"},
+     *   tags={"Topic"},
      *   summary="Get all latest trees",
      *   description="This API retrieves all latest trees from MongoDB and Database using various query parameters.",
      *   operationId="GetAllLatestTreesV2",
@@ -43,7 +43,7 @@ class TopicController extends Controller
      *         property="topic_tags",
      *         type="array",
      *         description="List of topic tags",
-     *         @OA\Items(type="string")
+     *         @OA\Items(type="integer")
      *       ),
      *       @OA\Property(property="current_user", type="string", example="", description="Current user identifier")
      *     )

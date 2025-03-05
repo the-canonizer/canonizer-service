@@ -15,7 +15,6 @@ use CampService;
 use TopicService;
 use UtilHelper;
 use Throwable;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 
 class TopicController extends Controller
@@ -23,7 +22,7 @@ class TopicController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/topic/getAll",
-     *   tags={"V1"},
+     *   tags={"Topic"},
      *   summary="Get all latest trees",
      *   description="This API retrieves all latest trees from MongoDB and Database using various query parameters.",
      *   operationId="GetAllLatestTreesV1",
@@ -203,7 +202,7 @@ class TopicController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/tree/remove-sandbox-tree",
-     *   tags={"V1"},
+     *   tags={"Tree"},
      *   summary="Remove sandbox tree",
      *   description="This API removes the sandbox tree.",
      *   operationId="RemoveSandboxTreeV1",

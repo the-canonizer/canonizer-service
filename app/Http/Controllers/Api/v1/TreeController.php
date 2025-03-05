@@ -27,7 +27,7 @@ class TreeController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/tree/store",
-     *   tags={"V1"},
+     *   tags={"Tree"},
      *   summary="Store a new tree in the MongoDB database",
      *   description="This API stores a new tree in the MongoDB database.",
      *   operationId="TreeStoreV1",
@@ -242,7 +242,7 @@ class TreeController extends Controller
     /**
      * @OA\Post(
      *   path="/v1/tree/get",
-     *   tags={"V1"},
+     *   tags={"Tree"},
      *   summary="Fetch or create a tree",
      *   description="This api used to get or create the tree. If tree exist then tree will be fetched otherwise new tree will be created.",
      *   operationId="GetTreeV1",
