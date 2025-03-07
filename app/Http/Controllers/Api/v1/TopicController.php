@@ -207,6 +207,14 @@ class TopicController extends Controller
      *   description="This API removes the sandbox tree.",
      *   operationId="RemoveSandboxTreeV1",
      * 
+     *   @OA\Parameter(
+     *     name="X-Api-Token",
+     *     in="header",
+     *     required=true,
+     *     description="API token for authentication",
+     *     @OA\Schema(type="string")
+     *   ),
+     * 
      *   @OA\RequestBody(
      *     required=true,
      *     @OA\JsonContent(
