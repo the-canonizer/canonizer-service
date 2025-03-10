@@ -181,7 +181,7 @@ class TopicController extends Controller
                     $topics = TopicServiceFacade::filterTopicCollection($topics, $filter);
                 }
             }
-            
+
             $topicViews = TopicView::getTopicViewCounts(collect($topics)->pluck('topic_id')->all())->mapWithKeys(function ($item) {
                 return [$item['topic_num'] => $item['view_count']];
             })->all();
@@ -193,7 +193,15 @@ class TopicController extends Controller
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
                     $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
-                    $topics[$key]->total_supporters_count = count($value->tree_structure[1]['support_tree']) > 5 ? Support::getAllSupporters($value->topic_id, 1, 0) - 5 : 0;
+
+                    $supporterData = Support::getAllSupporterNicknames($value->topic_id, null, 5)->each(function ($supporter) {
+                        $supporter->first_name = $supporter->first_name[0] ?? '';
+                        $supporter->middle_name = $supporter->middle_name[0] ?? '';
+                        $supporter->last_name = $supporter->last_name[0] ?? '';
+                    });
+
+                    $topics[$key]->tree_structure[1]['support_tree'] = $supporterData;
+                    $topics[$key]->total_supporters_count = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
@@ -201,15 +209,6 @@ class TopicController extends Controller
 
                     if ($page === 'browse') {
                         $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
-                        foreach ($topics[$key]->tree_structure[1]['support_tree'] as $supportKey => $support) {
-                            $user = Nickname::with('user:id,first_name,middle_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
-
-                            $user->first_name = $user->first_name[0] ?? '';
-                            $user->middle_name = $user->middle_name[0] ?? '';
-                            $user->last_name = $user->last_name[0] ?? '';
-
-                            $topics[$key]->tree_structure[1]['support_tree'][$supportKey]['user'] = $user;
-                        }
                     }
 
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
@@ -226,21 +225,21 @@ class TopicController extends Controller
                     }
                 } elseif (is_array($value)) { // MongoDB Case
                     $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
-                    $topics[$key]['total_supporters_count'] = count($value['tree_structure'][1]['support_tree']) > 5 ? Support::getAllSupporters($value['topic_id'], 1, 0) - 5 : 0;
+
+                    $supporterData = Support::getAllSupporterNicknames($value['topic_id'], null, 5)->each(function ($supporter) {
+                        $supporter->first_name = $supporter->first_name[0] ?? '';
+                        $supporter->middle_name = $supporter->middle_name[0] ?? '';
+                        $supporter->last_name = $supporter->last_name[0] ?? '';
+                    });
+
+                    $topics[$key]['tree_structure'][1]['support_tree'] = $supporterData;
+                    $topics[$key]['total_supporters_count'] = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
+
 
                     $topics[$key]['tags'] = [];
 
                     if ($page === 'browse') {
                         $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
-                        foreach ($topics[$key]['tree_structure'][1]['support_tree'] as $supportKey => $support) {
-                            $user = Nickname::with('user:id,first_name,middle_name,last_name,email,profile_picture_path')->find($support['nick_name_id'])->user;
-
-                            $user->first_name = $user->first_name[0] ?? '';
-                            $user->middle_name = $user->middle_name[0] ?? '';
-                            $user->last_name = $user->last_name[0] ?? '';
-
-                            $topics[$key]['tree_structure'][1]['support_tree'][$supportKey]['user'] = $user;
-                        }
                     }
 
                     // Exclude the "topic_score" key if it exists in the array
