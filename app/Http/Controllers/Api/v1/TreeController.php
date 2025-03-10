@@ -32,6 +32,14 @@ class TreeController extends Controller
      *   description="This API stores a new tree in the MongoDB database.",
      *   operationId="TreeStoreV1",
      * 
+     *   @OA\Parameter(
+     *     name="X-Api-Token",
+     *     in="header",
+     *     required=true,
+     *     description="API token for authentication",
+     *     @OA\Schema(type="string")
+     *   ),
+     * 
      *   @OA\RequestBody(
      *     required=true,
      *     @OA\JsonContent(

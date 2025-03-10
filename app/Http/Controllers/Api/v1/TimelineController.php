@@ -25,6 +25,14 @@ class TimelineController extends Controller
      *   summary="Store a new timeline in the MongoDB database",
      *   description="This API stores a new timeline in the MongoDB database.",
      *   operationId="TimelineStoreV1",
+     *   
+     *   @OA\Parameter(
+     *     name="X-Api-Token",
+     *     in="header",
+     *     required=true,
+     *     description="API token for authentication",
+     *     @OA\Schema(type="string")
+     *   ),
      * 
      *   @OA\RequestBody(
      *     required=true,
