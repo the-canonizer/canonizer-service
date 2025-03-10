@@ -201,7 +201,7 @@ class TopicController extends Controller
                     });
 
                     $topics[$key]->supporterData = $supporterData;
-                    $topics[$key]->total_supporters_count = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
+                    $topics[$key]->total_supporters_count = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($value->topic_id)) - 5;
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
                         $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
@@ -233,7 +233,7 @@ class TopicController extends Controller
                     });
 
                     $topics[$key]['supporterData'] = $supporterData;
-                    $topics[$key]['total_supporters_count'] = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
+                    $topics[$key]['total_supporters_count'] = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($value['topic_id'])) - 5;
 
 
                     $topics[$key]['tags'] = [];
