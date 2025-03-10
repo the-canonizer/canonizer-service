@@ -200,7 +200,7 @@ class TopicController extends Controller
                         $supporter->last_name = $supporter->last_name[0] ?? '';
                     });
 
-                    $topics[$key]->tree_structure[1]['support_tree'] = $supporterData;
+                    $topics[$key]->supporterData = $supporterData;
                     $topics[$key]->total_supporters_count = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
 
                     $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
@@ -232,7 +232,7 @@ class TopicController extends Controller
                         $supporter->last_name = $supporter->last_name[0] ?? '';
                     });
 
-                    $topics[$key]['tree_structure'][1]['support_tree'] = $supporterData;
+                    $topics[$key]['supporterData'] = $supporterData;
                     $topics[$key]['total_supporters_count'] = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($liveTopic->topic_num)) - 5;
 
 
