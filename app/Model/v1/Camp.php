@@ -4,13 +4,11 @@ namespace App\Model\v1;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Model\v1\Nickname;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Model\v1\Algorithm;
 use App\Model\v1\TopicSupport;
 use Illuminate\v1\Support\Facades\Route;
 use Illuminate\v1\Support\Facades\Session;
-use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\Client\Request;
 
 class Camp extends Model
 {
@@ -141,8 +139,7 @@ class Camp extends Model
 
     public function scopeStatement($query, $topicnum, $campnum)
     {
-
-        $statement = Statement::getLiveStatement($topicnum, $campnum);
+        $statement = Statement::getLiveStatement(['topicNum' => $topicnum, 'campNum' => $campnum, 'asOf' => 'default', 'asOfDate' => time()]);
 
         return $statement;
     }

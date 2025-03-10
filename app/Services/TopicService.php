@@ -2,14 +2,11 @@
 
 namespace App\Services;
 
-use App\Facades\Repositories\TopicRepositoryFacade;
 use App\Facades\Services\CampServiceFacade;
-use App\Model\v1\Topic;
-use Illuminate\Database\Eloquent\Collection;
+use App\Facades\Helpers\DateTimeHelperFacade;
+use App\Facades\Repositories\TopicRepositoryFacade;
 use App\Model\v1\Camp;
-use App\Model\v1\Support;
-use CampService;
-use DateTimeHelper;
+use App\Model\v1\Topic;
 
 class TopicService
 {
@@ -104,7 +101,7 @@ class TopicService
         // $totalTopics = !is_string($totalTopics) ? count($totalTopics) : 0;
 
         //Only getting the count of total latest topic from the MongoDB. #MongoDBRefactoring
-        $totalTopics = TopicRepository::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter, $archive);
+        $totalTopics = TopicRepositoryFacade::getTotalTopics($namespaceId, $asofdate, $algorithm, $nickNameIds, $asof, $search, $filter, $archive);
 
         return $totalTopics;
     }
@@ -126,7 +123,7 @@ class TopicService
                  foreach ($topics as $key => $value) {
                     $campData = Camp::where('topic_num',$value->topic_num)->where('camp_num',$value->camp_num)->first();
                     if( $campData){
-                        $reducedTree = CampService::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
+                        $reducedTree = CampServiceFacade::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
                         $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_full_score = !is_string($reducedTree[$value->camp_num]['full_score']) ? $reducedTree[$value->camp_num]['full_score'] : 0;
@@ -134,11 +131,11 @@ class TopicService
                         $topics[$key]->topic_name = $reducedTree[$value->camp_num]['title'];
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
 
-                        if (request()->segment(2) === 'v2' && $page === 'browse') {
+                        if ($page === 'browse') {
                             $topics[$key]->tree_structure[1]['support_tree'] = CampServiceFacade::getSupportTree($algorithm, $value->topic_num, 1, $asOfTime);
                         }
                         
-                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
+                        $topics[$key]->as_of_date = DateTimeHelperFacade::getAsOfDate($value->go_live_time);
                     }else{
                         $topics[$key]->score = 0;
                         $topics[$key]->topic_score = 0;
@@ -146,7 +143,7 @@ class TopicService
                         $topics[$key]->topic_id = $value->topic_num;
                         $topics[$key]->topic_name = $value->title;
                         $topics[$key]->tree_structure[1]['review_title'] = $value->title;
-                        $topics[$key]->as_of_date = DateTimeHelper::getAsOfDate($value->go_live_time);
+                        $topics[$key]->as_of_date = DateTimeHelperFacade::getAsOfDate($value->go_live_time);
                     }
                     unset($topics[$key]->topic_num, $topics[$key]->camp_num, $topics[$key]->title, $topics[$key]->go_live_time, $topics[$key]->support);
                 }
