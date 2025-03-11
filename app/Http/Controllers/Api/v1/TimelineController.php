@@ -5,137 +5,68 @@ namespace App\Http\Controllers\Api\v1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TimelineStoreRequest;
 use App\Http\Resources\TimelineResource;
-use DateTimeHelper;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
 use TimelineRepository;
-use TreeService;
 use TimelineService;
 use UtilHelper;
 use App\Model\v1\Topic;
 use App\Model\v1\Camp;
 use App\Model\v1\Statement;
-use App\Services\CampService;
 use App\Services\TopicService;
 use Throwable;
-use App\Model\v1\Nickname;
 use Illuminate\Support\Facades\Artisan;
 
 class TimelineController extends Controller
 {
     /**
-     * @OA\Post(path="/timeline/store",
-     *   tags={"timeline"},
-     *   summary="Create or Update timeline",
-     *   description="This api used to create Or update the timeline. If timeline exist then timeline will be updated otherwise new timeline will be created.",
-     *   operationId="createUpdateTimeline",
-     *   @OA\RequestBody(
-     *       required=true,
-     *       description="Create Update Timeline",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="topic_num",
-     *                     description="The topic number of topic",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="asofdate",
-     *                     description="Updated status of the pet",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="algorithm",
-     *                     description="current selected algorithm",
-     *                     required=true,
-     *                     type="string"
-     *                 ),
-     *                @OA\Property(
-     *                     property="update_all",
-     *                     description="if update_all is 0 then timeline will be created using algortihm which sends in api otherwise timeline will be created for all the algorithms",
-     *                     required=false,
-     *                     type="integer",
-     *                     format="int32"
-     *                 )
-     *       )
+     * @OA\Post(
+     *   path="/v1/timeline/store",
+     *   tags={"Timeline"},
+     *   summary="Store a new timeline in the MongoDB database",
+     *   description="This API stores a new timeline in the MongoDB database.",
+     *   operationId="TimelineStoreV1",
+     *   
+     *   @OA\Parameter(
+     *     name="X-Api-Token",
+     *     in="header",
+     *     required=true,
+     *     description="API token for authentication",
+     *     @OA\Schema(type="string")
      *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=401, description="Exception occurs during timeline calculation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="array"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404,
-     *                description="Timeline not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="string"
-     *                                    )
-     *                          )
-     *                  )
+     * 
+     *   @OA\RequestBody(
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string"),
+     *       @OA\Property(property="topic_num", type="integer"),
+     *       @OA\Property(property="update_all", type="integer"),
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="code", type="integer", example=200),
+     *       @OA\Property(property="success", type="string"),
+     *       @OA\Property(property="data", type="object")
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="code", type="integer", example=400),
+     *       @OA\Property(property="error", type="string", example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
+     *   )
      * )
      */
-
-    /**
-     * Store a new timeline.
-     *
-     * @param  TimelineStoreRequest  $request
-     * @return Response
-     */
-
     public function store(TimelineStoreRequest $request)
     {
         try{
@@ -222,104 +153,46 @@ class TimelineController extends Controller
     }
 
     /**
-     * @OA\Post(path="/timeline/get",
-     *   tags={"timeline"},
-     *   summary="fetch or create a timeline",
-     *   description="This api used to get Or create the timeline. If timeline exist then timeline will be fetched otherwise new timeline will be created.",
-     *   operationId="createUpdateTree",
+     * @OA\Post(
+     *   path="/v1/timeline/get",
+     *   tags={"Timeline"},
+     *   summary="Get a timeline from the MongoDB database",
+     *   description="This API gets a timeline of specific topic from the MongoDB database.",
+     *   operationId="TimelineGetV1",
+     * 
      *   @OA\RequestBody(
-     *       required=true,
-     *       description="fetch and create a Timeline",
-     *       @OA\MediaType(
-     *           mediaType="application/x-www-form-urlencoded",
-     *           @OA\Schema(
-     *                 @OA\Property(
-     *                     property="topic_num",
-     *                     description="The topic number of topic",
-     *                     required=true,
-     *                     type="integer",
-     *                     format="int32"
-     *                 ),
-     *                 @OA\Property(
-     *                     property="algorithm",
-     *                     description="current selected algorithm",
-     *                     required=true,
-     *                     type="string"
-     *                 )
-     *       )
+     *     required=true,
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="algorithm", type="string"),
+     *       @OA\Property(property="topic_num", type="integer"),
+     *       @OA\Property(property="update_all", type="integer"),
+     *     )
      *   ),
-     *
-     *   @OA\Response(response=200,description="successful operation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    )
-     *                                 )
-     *                            )
-     *
-     *   @OA\Response(response=401, description="Exception occurs during timeline calculation",
-     *                             @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="array"
-     *                                    )
-     *                                 )
-     *                             )
-     *   @OA\Response(response=404,
-     *                description="Timeline Tree not found",
-     *                @OA\JsonContent(
-     *                                 type="array",
-     *                                 @OA\Items(
-     *                                         name="data",
-     *                                         type="array"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="code",
-     *                                         type="integer"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="success",
-     *                                         type="boolean"
-     *                                    ),
-     *                                    @OA\Items(
-     *                                         name="error",
-     *                                         type="string"
-     *                                    )
-     *                          )
-     *                  )
+     * 
+     *   @OA\Response(
+     *     response=200,
+     *     description="Successful operation",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="code", type="integer", example=200),
+     *       @OA\Property(property="success", type="string"),
+     *       @OA\Property(property="data", type="object")
+     *     )
+     *   ),
+     * 
+     *   @OA\Response(
+     *     response=400,
+     *     description="Exception occurs",
+     *     @OA\JsonContent(
+     *       type="object",
+     *       @OA\Property(property="code", type="integer", example=400),
+     *       @OA\Property(property="error", type="string", example="message"),
+     *       @OA\Property(property="data", type="object", nullable=true)
+     *     )
+     *   )
      * )
      */
-
-    /**
-     * get a timeline tree.
-     *
-     * @param  TimelineStoreRequest  $request
-     * @return Response
-    */
-
     public function find(TimelineStoreRequest $request)
     {
         try{

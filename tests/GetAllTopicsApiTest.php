@@ -20,7 +20,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testGetAllTopicsApiWithEmptyValues()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number' => '', 'page_size' => '', 'algorithm' => '', 'namespace_id' => '', 'asofdate' => '', 'search' => '', 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number' => '', 'page_size' => '', 'algorithm' => '', 'namespace_id' => '', 'asofdate' => '', 'search' => '', 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(422, $response->status());
     }
 
@@ -29,7 +29,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testWithCorrectValuesWithoutFilter()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(422, $response->status());
     }
 
@@ -49,7 +49,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testWithCorrectValuesWithFilterSearch()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => 'Hard', 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => 'Hard', 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
     }
 
@@ -58,15 +58,15 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testWithCorrectValuesWithSpecialCharactersInFilterSearch()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '!@#', 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '!@#', 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '$%^', 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '$%^', 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '&*(', 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => '&*(', 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => ')_+', 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => ')_+', 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => "[]%", 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => "[]%", 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
     }
 
@@ -75,7 +75,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testSearchWithNumericValue()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => 4645, 'filter' => 1.7, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'search' => 4645, 'filter' => 1.7, 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals("The search must be a string.", $response["errors"]["errors"]["search"][0]);
     }
 
@@ -84,7 +84,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testWithCorrectValuesWithoutFilterSearch()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '', 'page' => 'browse']);
         $this->assertEquals(200, $response->status());
     }
 
@@ -93,7 +93,7 @@ class GetAllTopicsApiTest extends TestCase
      */
     public function testWithCorrectValuesForValidResponseStructure()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => time(), 'user_email' => '', 'page' => 'browse']);
         $response->assertJsonStructure([
             'status_code',
             'message',
@@ -118,7 +118,7 @@ class GetAllTopicsApiTest extends TestCase
 
     public function testWithCorrectValuesForValidResponseStructureInDatabase()
     {
-        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => Carbon::now()->subDays(2)->timestamp, 'user_email' => '']);
+        $response = $this->call('POST', '/api/v1/topic/getAll', ['asof' => 'default', 'page_number' => 1, 'page_size' => 20, 'algorithm' => 'blind_popularity', 'namespace_id' => 1, 'asofdate' => Carbon::now()->subDays(2)->timestamp, 'user_email' => '', 'page' => 'browse']);
         $response->assertJsonStructure([
             'status_code',
             'message',
