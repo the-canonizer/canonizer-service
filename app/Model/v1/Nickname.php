@@ -3,16 +3,13 @@
 namespace App\Model\v1;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Library\General;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use DB;
+use Illuminate\Support\Facades\DB;
 use App\Model\v1\Camp;
 use App\Model\v1\Support;
 use App\Model\v1\Topic;
 use App\Model\v1\Statement;
 use App\Model\v1\User;
-use Illuminate\Database\Eloquent\Collection;
 
 class Nickname extends Model {
 
@@ -21,6 +18,10 @@ class Nickname extends Model {
 
     public function camps() {
         return $this->hasMany('App\Model\Camp', 'nick_name_id', 'nick_name_id');
+    }
+
+    public function user() {
+        return $this->belongsTo(User::class);
     }
 
     public function supports() {
@@ -252,9 +253,19 @@ class Nickname extends Model {
         return User::find($nickname->user_id);
     }
 
-    public static function getNickName($nick_id) {
+    public static function getUsersByNickNameIds(array $nick_name_ids, array $columns = ['*'])
+    {
+        $userNickIds = self::whereIn('id', $nick_name_ids)->get();
+        return User::select($columns)->whereIn('id', $userNickIds->pluck('user_id')->toArray())->get()->transform(function ($item) use ($userNickIds) {
+            $item = $item->toArray();
+            $item['nick_name_id'] = $userNickIds->where('user_id', $item['id'])->first()->id;
+            return $item;
+        })->values()->keyBy('nick_name_id')->all();
+    }
 
-        return $nickname = self::find($nick_id);
+    public static function getNickName($nick_id) 
+    {
+        return self::find($nick_id);
     }
 
      public static function topicCampNicknameUsed($topic_num,$camp_num,$encode=null) {

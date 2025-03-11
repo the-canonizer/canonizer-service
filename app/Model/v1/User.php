@@ -15,7 +15,16 @@ class User extends Model
      * @var array
      */
     protected $fillable = [
-        'first_name','last_name','middle_name', 'email', 'password','language','status','otp','provider','provider_id'
+        'first_name',
+        'last_name',
+        'middle_name',
+        'email',
+        'password',
+        'language',
+        'status',
+        'otp',
+        'provider',
+        'provider_id'
     ];
 
     /**
@@ -24,17 +33,25 @@ class User extends Model
      * @var array
      */
     protected $hidden = [
-        'password', 'remember_token',
+        'password',
+        'remember_token',
     ];
-    
-    
-    public static function getByEmail($email){        
-        $user = User::where('email', $email)->first();
-       return !empty($user) ? $user : false;
+
+    // Define the accessor for the profile_picture_path attribute
+    public function getProfilePicturePathAttribute($value)
+    {
+        return !is_null($value) ? urldecode(env('AWS_PUBLIC_URL') . '/' . $value) : null;
     }
 
-    public function getNameAttribute(){
-       return ucwords ($this->first_name.' '.$this->last_name);
+    public static function getByEmail($email)
+    {
+        $user = User::where('email', $email)->first();
+        return !empty($user) ? $user : false;
+    }
+
+    public function getNameAttribute()
+    {
+        return ucwords($this->first_name . ' ' . $this->last_name);
     }
 
     /**
@@ -42,7 +59,8 @@ class User extends Model
      * @param interger $id
      * @return User 
      */
-    public static function getById($id) {
+    public static function getById($id)
+    {
         return User::where('id', $id)->first();
     }
 }

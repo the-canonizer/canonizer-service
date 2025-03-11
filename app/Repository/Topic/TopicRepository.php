@@ -104,7 +104,7 @@ class TopicRepository implements TopicInterface
                 'tree_structure.1.review_title' => 1,
             ];
 
-            if (request()->segment(2) === 'v2' && $page === 'browse') {
+            if ($page === 'browse') {
                 $projection['tree_structure.1.support_tree'] = 1;
             }
 
@@ -188,7 +188,7 @@ class TopicRepository implements TopicInterface
             ];
 
 
-            if (request()->segment(2) === 'v2' && $page === 'browse') {
+            if ($page === 'browse') {
                 $recordCount = $this->treeModel::raw(function ($collection) use ($aggregate) {
                     return $collection->aggregate($aggregate);
                 })->count();
@@ -213,7 +213,7 @@ class TopicRepository implements TopicInterface
                 return $collection->aggregate($aggregate);
             })->toArray();
 
-            if (request()->segment(2) === 'v2' && $page === 'browse') {
+            if ($page === 'browse') {
                 return ['topics' => collect($record)->skip($skip)->all(), 'totalCount' => $recordCount, 'time_elapsed_secs' =>  microtime(true) - $start];
             }
 
