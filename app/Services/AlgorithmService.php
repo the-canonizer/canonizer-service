@@ -27,9 +27,9 @@ class AlgorithmService
         if($default=="timeline"){
             if($algo!="")
               return array($algo);
-              
-            return array('blind_popularity', 'mind_experts','computer_science_experts','PhD','christian','secular','mormon','uu','atheist','transhumanist','united_utah','republican','forward_party','democrat','ether','shares','shares_sqrt','sandy_city','sandy_city_council');
-        
+
+            return array('blind_popularity', 'mind_experts','computer_science_experts','PhD','christian','secular','mormon','uu','atheist','transhumanist','united_utah','republican','forward_party','democrat','ether','shares','shares_sqrt','sandy_city','sandy_city_council', 'utah_forward_party');
+
         }
         else{
             return array('blind_popularity', 'mind_experts','computer_science_experts');
@@ -435,15 +435,15 @@ class AlgorithmService
                  // get the last month shares added for user as current share #1055
                 $latestRecord = SharesAlgorithm::where('nick_name_id',$nickNameId)->orderBy('as_of_date','desc')->first();
                 if(isset($latestRecord) && isset($latestRecord->as_of_date)){
-                    $as_of_time = strtotime($latestRecord->as_of_date); 
+                    $as_of_time = strtotime($latestRecord->as_of_date);
                     $year = date('Y', $as_of_time);
                     $month = date('m', $as_of_time);
-        
+
                     $shares = SharesAlgorithm::whereYear('as_of_date', '=', $year)
                         ->whereMonth('as_of_date', '<=', $month)
                         ->where('nick_name_id', $nickNameId)
                         ->orderBy('as_of_date', 'ASC')
-                        ->get(); 
+                        ->get();
                     if (count($shares)) {
                         foreach ($shares as $s) {
                             $sumOfShares = $s->share_value; //$sumOfShares + $s->share_value;
@@ -511,6 +511,21 @@ class AlgorithmService
         }
         return $score;
 
+    }
+
+    /**
+     * Utah Forward party Algorithm using related topic and camp
+     *
+     * @param int $nickNameId
+     * @param int $topicNumber
+     * @param int $campNumber
+     * @param int $asOfTime
+     *
+     * @return int $score
+     */
+    public static function utah_forward_party($nickNameId,$topicNumber = 0, $campNumber = 0, $asOfTime = null){
+        $condition = '(topic_num = 231 and camp_num = 7)';
+        return CampService::campCount($nickNameId,$condition,true,231,7,$asOfTime,$topicNumber);
     }
 
     /**
