@@ -26,7 +26,7 @@ $app = new Laravel\Lumen\Application(
 );
 
 /* MongoDB */
-$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+// $app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
 
 /* Lumen commands generator */
 if ($app->environment() !== 'production') {
@@ -44,6 +44,8 @@ $app->register(App\Providers\CustomRepositoryFacadeProvider::class);
 
 /* Custom Helper facades provider */
 $app->register(App\Providers\CustomHelpersFacadeProvider::class);
+
+
 
 $app->withFacades(true, [
     'App\Facades\Services\CampServiceFacade' => "CampService",
