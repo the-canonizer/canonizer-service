@@ -49,12 +49,21 @@ return [
             'engine' => null,
         ],
 
-        'mongodb' => [
-            'driver' => 'mongodb',
-            'dsn' => env('MONGODB_DSN'),
-            'database' => env('MONGODB_DB', 'Canonizer'),
-        ],
+        // 'mongodb' => [
+        //     'driver' => 'mongodb',
+        //     'dsn' => env('MONGODB_DSN'),
+        //     'database' => env('MONGODB_DB', 'Canonizer'),
+        // ],
 
+        'mongodb' => [
+            'driver'   => 'mongodb',
+            'dsn'      => env('MONGODB_DSN', ''), // optional full DSN string
+            'host'     => env('DB_HOST', '127.0.0.1'),
+            'port'     => env('DB_PORT', 27017),
+            'database' => env('MONGODB_DB', 'Canonizer'),
+            'username' => env('DB_USERNAME', ''),
+            'password' => env('DB_PASSWORD', '')
+        ],
     ],
 
     /*
