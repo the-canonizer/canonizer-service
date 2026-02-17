@@ -190,33 +190,50 @@ class TopicController extends Controller
                 $topics = array_values($topics);
             }
 
+            // Bulk Fetch Start
+            $topicIds = collect($topics)->pluck(is_object($topics[0] ?? null) ? 'topic_id' : 'topic_id')->unique()->toArray();
+            
+            // Bulk fetch supporters
+            $supportersByTopic = Support::getSupportersByTopicIds($topicIds);
+            
+            // Bulk fetch supporter counts
+            $supporterCountsByTopic = Support::getSupporterCountsByTopicIds($topicIds);
+
+            // Bulk fetch tags
+            $tagsByTopic = Tag::getTagsByTopicNums($topicIds);
+
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
-                    $topics[$key]->camp_views = intval($topicViews[$value->topic_id] ?? 0);
+                    $topicId = $value->topic_id;
+                    $topics[$key]->camp_views = intval($topicViews[$topicId] ?? 0);
 
-                    $supporterData = Support::getAllSupporterNicknames($value->topic_id, null, 5)->each(function ($supporter) {
+                    // Use bulk fetched supporters
+                    $supporterData = isset($supportersByTopic[$topicId]) ? $supportersByTopic[$topicId]->take(5) : collect([]);
+                    
+                    $supporterData->each(function ($supporter) {
                         $supporter->first_name = $supporter->first_name[0] ?? '';
                         $supporter->middle_name = $supporter->middle_name[0] ?? '';
                         $supporter->last_name = $supporter->last_name[0] ?? '';
                     });
 
                     $topics[$key]->supporterData = $supporterData;
-                    $topics[$key]->total_supporters_count = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($value->topic_id)) - 5;
+                    
+                    // Use bulk fetched counts
+                    $totalSupporters = $supporterCountsByTopic[$topicId] ?? 0;
+                    $topics[$key]->total_supporters_count = $totalSupporters < 5 ? 0 : $totalSupporters - 5;
 
-                    $topics[$key]->tags = Tag::whereIn('id', function ($query) use ($value) {
-                        $query->from('topics_tags')->select('tag_id')->where('topic_num', $value->topic_id)->get();
-                    })->get();
+                    $topics[$key]->tags = $tagsByTopic[$topicId] ?? collect([]);
 
                     if ($page === 'browse') {
-                        $topics[$key]->statement = Statement::getLiveStatementText($value->topic_id, 1);
+                        $topics[$key]->statement = Statement::getLiveStatementText($topicId, 1);
                     }
 
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
-                    $liveTopic = TopicServiceFacade::getLiveTopic($value->topic_id, time());
+                    $liveTopic = TopicServiceFacade::getLiveTopic($topicId, time());
 
                     if ($liveTopic->is_rank_hidden) {
                         // check if the current user is having direct/delegate support in this topic or not...
-                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value->topic_id, $currentUserNickIds);
+                        $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($topicId, $currentUserNickIds);
 
                         if (!$userHaveAnySupport) {
                             unset($topics[$key]->topic_score);
@@ -224,37 +241,42 @@ class TopicController extends Controller
                         }
                     }
                 } elseif (is_array($value)) { // MongoDB Case
-                    $topics[$key]['camp_views'] = intval($topicViews[$value['topic_id']] ?? 0);
+                    $topicId = $value['topic_id'];
+                    $topics[$key]['camp_views'] = intval($topicViews[$topicId] ?? 0);
 
-                    $supporterData = Support::getAllSupporterNicknames($value['topic_id'], null, 5)->each(function ($supporter) {
+                    // Use bulk fetched supporters
+                    $supporterData = isset($supportersByTopic[$topicId]) ? $supportersByTopic[$topicId]->take(5) : collect([]);
+
+                    $supporterData->each(function ($supporter) {
                         $supporter->first_name = $supporter->first_name[0] ?? '';
                         $supporter->middle_name = $supporter->middle_name[0] ?? '';
                         $supporter->last_name = $supporter->last_name[0] ?? '';
                     });
 
                     $topics[$key]['supporterData'] = $supporterData;
-                    $topics[$key]['total_supporters_count'] = count($supporterData) < 5 ? 0 : count(Support::getAllSupporterOfTopic($value['topic_id'])) - 5;
+                    
+                    // Use bulk fetched counts
+                    $totalSupporters = $supporterCountsByTopic[$topicId] ?? 0;
+                    $topics[$key]['total_supporters_count'] = $totalSupporters < 5 ? 0 : $totalSupporters - 5;
 
 
-                    $topics[$key]['tags'] = [];
+                    $topics[$key]['tags'] = $tagsByTopic[$topicId] ?? [];
 
                     if ($page === 'browse') {
-                        $topics[$key]['statement'] = Statement::getLiveStatementText($value['topic_id'], 1);
+                        $topics[$key]['statement'] = Statement::getLiveStatementText($topicId, 1);
                     }
 
                     // Exclude the "topic_score" key if it exists in the array
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
-                    $liveTopic = TopicServiceFacade::getLiveTopic($value['topic_id'], time());
+                    $liveTopic = TopicServiceFacade::getLiveTopic($topicId, time());
 
                     if ($liveTopic) {
 
-                        $topics[$key]['tags'] = Tag::whereIn('id', function ($query) use ($value, $liveTopic) {
-                            $query->from('topics_tags')->select('tag_id')->where('topic_id', $liveTopic->id)->get();
-                        })->get();
+                        // Tags already assigned via bulk fetch above
 
                         if ($liveTopic->is_rank_hidden) {
                             // check if the current user is having direct/delegate support in this topic or not...
-                            $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($value['topic_id'], $currentUserNickIds);
+                            $userHaveAnySupport = TopicSupport::checkIfAnySupportExists($topicId, $currentUserNickIds);
 
                             if (!$userHaveAnySupport) {
                                 unset($topics[$key]["topic_score"]);
