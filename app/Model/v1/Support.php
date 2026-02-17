@@ -178,4 +178,25 @@ class Support extends Model {
         ->orderBy('support_order', 'ASC')
         ->groupBy('nick_name_id')->get();
     }
+
+    public static function getSupportersByTopicIds($topicNums)
+    {
+        return self::select('support.topic_num', 'nick_name.id as nick_name_id', 'nick_name.nick_name', 'person.id as user_id', 'person.first_name', 'person.middle_name', 'person.last_name', 'person.email', 'person.profile_picture_path')
+            ->join('nick_name', 'support.nick_name_id', '=', 'nick_name.id')
+            ->join('person', 'nick_name.user_id', '=', 'person.id')
+            ->whereIn('support.topic_num', $topicNums)
+            ->where('support.end', '0')
+            ->orderBy('support.support_order', 'ASC')
+            ->get()
+            ->groupBy('topic_num');
+    }
+
+    public static function getSupporterCountsByTopicIds($topicNums)
+    {
+        return self::select('topic_num', DB::raw('count(distinct nick_name_id) as count'))
+            ->whereIn('topic_num', $topicNums)
+            ->where('end', '0')
+            ->groupBy('topic_num')
+            ->pluck('count', 'topic_num');
+    }
 }
