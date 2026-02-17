@@ -46,4 +46,13 @@ class Tag extends Model {
             throw new Exception($th->getMessage());
         }
     }
+
+    public static function getTagsByTopicNums($topicNums)
+    {
+        return self::select('tags.*', 'topics_tags.topic_num')
+            ->join('topics_tags', 'tags.id', '=', 'topics_tags.tag_id')
+            ->whereIn('topics_tags.topic_num', $topicNums)
+            ->get()
+            ->groupBy('topic_num');
+    }
 }
