@@ -2,6 +2,7 @@
 
 namespace App\Model\v1;
 
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
