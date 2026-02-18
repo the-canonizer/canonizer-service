@@ -3,7 +3,7 @@
 namespace App\Model\v1;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class Statement extends Model
 {
@@ -13,6 +13,38 @@ class Statement extends Model
     protected static $tempArray = [];
 
     const AGREEMENT_CAMP = "Agreement";
+
+    // ... (rest of the file)
+
+    /**
+     * Retrieve live statements for multiple topics.
+     *
+     * @param array $topicIds
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getLiveStatementsByTopics($topicIds)
+    {
+        $latestStatements = self::select('topic_num', DB::raw('MAX(submit_time) as max_submit_time'))
+            ->whereIn('topic_num', $topicIds)
+            ->where('camp_num', 1)
+            ->whereNull('objector_nick_id')
+            ->where('go_live_time', '<=', time())
+            ->groupBy('topic_num');
+
+        // Join with the main table to get the full statement text
+        $statements = self::joinSub($latestStatements, 'latest', function ($join) {
+                $join->on('statement.topic_num', '=', 'latest.topic_num')
+                     ->on('statement.submit_time', '=', 'latest.max_submit_time');
+            })
+            ->where('camp_num', 1)
+            ->get(['statement.topic_num', 'statement.parsed_value', 'statement.value']);
+
+        return $statements->mapWithKeys(function ($item) {
+            $text = self::stripTagsExcept($item->parsed_value ?? $item->value ?? null);
+            return [$item->topic_num => Str::of($text)->trim()];
+        });
+    }
+
 
     // public static function boot() { // currently this boot is un-used, and occuring issue for creating instance.
 
