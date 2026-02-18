@@ -25,6 +25,11 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
+/* MongoDB Backward Compatibility for Model */
+if (!class_exists('MongoDB\Laravel\Eloquent\Model') && class_exists('Jenssegers\Mongodb\Eloquent\Model')) {
+    class_alias('Jenssegers\Mongodb\Eloquent\Model', 'MongoDB\Laravel\Eloquent\Model');
+}
+
 /* MongoDB */
 /* MongoDB */
 if (class_exists('MongoDB\Laravel\MongoDBServiceProvider')) {
