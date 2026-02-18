@@ -1,6 +1,6 @@
 <?php
 namespace App\Model\v1;
-use Jenssegers\Mongodb\Eloquent\Model;
+use MongoDB\Laravel\Eloquent\Model;
 
 class Timeline extends Model
 {

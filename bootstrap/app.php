@@ -26,7 +26,7 @@ $app = new Laravel\Lumen\Application(
 );
 
 /* MongoDB */
-$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+$app->register(MongoDB\Laravel\MongoDBServiceProvider::class);
 
 /* Lumen commands generator */
 if ($app->environment() !== 'production') {

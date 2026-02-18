@@ -944,7 +944,7 @@ class CampService
             }
 
             if ($isCount) {
-                return $returnTopics->get()->count();
+                return $returnTopics->count();
             }
 
             return $returnTopics
