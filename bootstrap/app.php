@@ -26,7 +26,12 @@ $app = new Laravel\Lumen\Application(
 );
 
 /* MongoDB */
-$app->register(MongoDB\Laravel\MongoDBServiceProvider::class);
+/* MongoDB */
+if (class_exists('MongoDB\Laravel\MongoDBServiceProvider')) {
+    $app->register(MongoDB\Laravel\MongoDBServiceProvider::class);
+} else {
+    $app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+}
 
 /* Lumen commands generator */
 if ($app->environment() !== 'production') {
