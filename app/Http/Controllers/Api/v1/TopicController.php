@@ -191,6 +191,7 @@ class TopicController extends Controller
             }
 
             // Bulk Fetch Start
+            // Bulk Fetch Start
             $topicIds = collect($topics)->pluck(is_object($topics[0] ?? null) ? 'topic_id' : 'topic_id')->unique()->toArray();
             
             // Bulk fetch supporters
@@ -201,6 +202,12 @@ class TopicController extends Controller
 
             // Bulk fetch tags
             $tagsByTopic = Tag::getTagsByTopicNums($topicIds);
+
+            // Bulk fetch statements if browsing
+            $statementsByTopic = [];
+            if ($page === 'browse') {
+                $statementsByTopic = Statement::getLiveStatementsByTopics($topicIds);
+            }
 
             foreach ($topics as $key => $value) {
                 if (is_object($value)) {
@@ -225,7 +232,7 @@ class TopicController extends Controller
                     $topics[$key]->tags = $tagsByTopic[$topicId] ?? collect([]);
 
                     if ($page === 'browse') {
-                        $topics[$key]->statement = Statement::getLiveStatementText($topicId, 1);
+                        $topics[$key]->statement = $statementsByTopic[$topicId] ?? '';
                     }
 
                     // Check if topic have enabled the is_rank_hidden as true in current live record ...
@@ -263,7 +270,7 @@ class TopicController extends Controller
                     $topics[$key]['tags'] = $tagsByTopic[$topicId] ?? [];
 
                     if ($page === 'browse') {
-                        $topics[$key]['statement'] = Statement::getLiveStatementText($topicId, 1);
+                        $topics[$key]['statement'] = $statementsByTopic[$topicId] ?? '';
                     }
 
                     // Exclude the "topic_score" key if it exists in the array
