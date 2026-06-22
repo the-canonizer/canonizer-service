@@ -28,13 +28,24 @@ class TreeService
      * @return array $mongoArr
      */
 
-    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null)
+    public function prepareMongoArr($tree, $topic = null, $reviewTopic = null, $asOfDate = null, $algorithm = null, $topicCreatedByNickId = null, $excludeBots = 0)
     {
+
+        $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
+        $topicFullScore = isset($tree[1]['full_score']) && !is_string($tree[1]['full_score']) ? $tree[1]['full_score'] : 0;
+
+        // Human-only (bot-excluded) variant is stored in parallel "_excl_bots" fields on the
+        // SAME tree document, so the default fields, doc key and cleanup commands are untouched.
+        if ($excludeBots) {
+            return [
+                "tree_structure_excl_bots" => $tree,
+                "topic_score_excl_bots" => $topicScore,
+                "topic_full_score_excl_bots" => $topicFullScore,
+            ];
+        }
 
         $namespaceId = isset($topic->namespace_id) ? $topic->namespace_id : '';
         $reviewNamespaceId = isset($reviewTopic->namespace_id) ? $reviewTopic->namespace_id : '';
-        $topicScore = isset($tree[1]['score']) && !is_string($tree[1]['score']) ? $tree[1]['score'] : 0;
-        $topicFullScore = isset($tree[1]['full_score']) && !is_string($tree[1]['full_score']) ? $tree[1]['full_score'] : 0;
         $topicTitle = isset($tree[1]['title']) ? $tree[1]['title'] :  '';
         $topicNumber = isset($tree[1]['topic_id']) ? $tree[1]['topic_id'] :  '';
         $submitter_nick_id = isset($tree[1]['submitter_nick_id']) ? $tree[1]['submitter_nick_id'] :  '';
@@ -88,7 +99,7 @@ class TreeService
      * @return array $array
      */
 
-    public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [])
+    public function upsertTree($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $excludeBots = false)
     {
 
         $algorithms =  AlgorithmService::getCacheAlgorithms($updateAll, $algorithm,"tree");
@@ -99,12 +110,12 @@ class TreeService
         $rtnTree = '';
         foreach ($algorithms as $algo) {
             try {
-                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl, null, $asOf);
+                $tree = CampService::prepareCampTree($algo, $topicNumber, $asOfTime, $startCamp, $rootUrl, null, $asOf, 0, $excludeBots);
                 $topic = TopicService::getLiveTopic($topicNumber, $asOfTime, ['nofilter' => false]);
                 $topicInReview = TopicService::getReviewTopic($topicNumber);
                 //get date string from timestamp
                 $asOfDate = DateTimeHelper::getAsOfDate($asOfTime);
-                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId);
+                $mongoArr = $this->prepareMongoArr($tree, $topic, $topicInReview, $asOfDate, $algo, $topicCreatedByNickId, $excludeBots);
                 $conditions = $this->getConditions($topicNumber, $algo, $asOfDate);
 
             } catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
@@ -132,13 +143,13 @@ class TreeService
      *
      * @return array $array
      */
-    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $fetchTopicHistory = 0){
+    public function getTopicTreeFromMysql($topicNumber, $algorithm, $asOfTime, $updateAll = 0, $request = [], $fetchTopicHistory = 0, $excludeBots = false){
 
         $rootUrl =  $this->getRootUrl($request);
         $asOf = $request->asOf ?? 'default';
         $startCamp = 1;
         try {
-           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory);
+           $tree = CampService::prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp, $rootUrl, $nickNameId = null, $asOf, $fetchTopicHistory, $excludeBots);
         }
         catch (CampTreeException | CampDetailsException | CampTreeCountException | CampSupportCountException | CampURLException | \Exception $th) {
             return ["data" => [], "code" => 401, "success" => false, "error" => $th->getMessage()];

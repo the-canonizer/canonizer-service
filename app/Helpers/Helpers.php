@@ -27,6 +27,29 @@ class Helpers
         }
     }
 
+    /**
+     * Get the nick_name ids that belong to bot (AI agent) users (person.type = 'bot').
+     * Memoized for the duration of the request to avoid repeated lookups during scoring.
+     *
+     * @return array
+     */
+    public static function getBotNickNameIds()
+    {
+        static $botNickIds = null;
+
+        if ($botNickIds !== null) {
+            return $botNickIds;
+        }
+
+        $botUserIds = (new Person())->where('type', 'bot')->pluck('id')->toArray();
+
+        if (empty($botUserIds)) {
+            return $botNickIds = [];
+        }
+
+        return $botNickIds = (new Nickname())->whereIn('user_id', $botUserIds)->pluck('id')->toArray();
+    }
+
     public static function renderParentsCampTree($topic_num, $camp_num)
     {
         $camp = Camp::where([

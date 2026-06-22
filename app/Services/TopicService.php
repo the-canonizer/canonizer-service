@@ -116,14 +116,14 @@ class TopicService
      *
      * @return Illuminate\Database\Eloquent\Collection;
      */
-    public  function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime, $page = 'home'){
+    public  function sortTopicsBasedOnScore($topics, $algorithm, $asOfTime, $page = 'home', $excludeBots = false){
 
         if(sizeof($topics) > 0){
 
                  foreach ($topics as $key => $value) {
                     $campData = Camp::where('topic_num',$value->topic_num)->where('camp_num',$value->camp_num)->first();
                     if( $campData){
-                        $reducedTree = CampServiceFacade::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num);
+                        $reducedTree = CampServiceFacade::prepareCampTree($algorithm, $value->topic_num, $asOfTime, $value->camp_num, '', null, 'default', 0, $excludeBots);
                         $topics[$key]->score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_score = !is_string($reducedTree[$value->camp_num]['score']) ? $reducedTree[$value->camp_num]['score'] : 0;
                         $topics[$key]->topic_full_score = !is_string($reducedTree[$value->camp_num]['full_score']) ? $reducedTree[$value->camp_num]['full_score'] : 0;
@@ -132,7 +132,7 @@ class TopicService
                         $topics[$key]->tree_structure[1]['review_title'] = $reducedTree[$value->camp_num]['review_title'];
 
                         if ($page === 'browse') {
-                            $topics[$key]->tree_structure[1]['support_tree'] = CampServiceFacade::getSupportTree($algorithm, $value->topic_num, 1, $asOfTime);
+                            $topics[$key]->tree_structure[1]['support_tree'] = CampServiceFacade::getSupportTree($algorithm, $value->topic_num, 1, $asOfTime, 'default', $excludeBots);
                         }
                         
                         $topics[$key]->as_of_date = DateTimeHelperFacade::getAsOfDate($value->go_live_time);

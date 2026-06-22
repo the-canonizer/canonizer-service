@@ -150,6 +150,8 @@ class TopicController extends Controller
             $sort = ($request->has('sort')) ?  $request->input('sort') : false;
             $page = $request->input('page') ?: "home";
             $topic_tags = $request->input('topic_tags') ?: [];
+            // When true, scores are recomputed excluding bot (AI agent) users' support.
+            $excludeBots = (bool) $request->input('exclude_bots', 0);
             /**
              * If asofdate is greater then cron run date then get topics from Mongo else fetch from MySQL or
              * Check if tree:all command is running in background
@@ -165,7 +167,9 @@ class TopicController extends Controller
             // Only get data from MongoDB if asOfDate >= $today's start date #MongoDBRefactoring
             $topicsFoundInMongo = Tree::count();
 
-            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms)) {
+            // The cached Mongo path holds bot-inclusive scores. When bot exclusion is requested,
+            // fall through to the MySQL recompute path so the visible page is scored human-only.
+            if ($asofdateTime >= $today && $topicsFoundInMongo && !$commandStatus && in_array($algorithm, $algorithms) && !$excludeBots) {
                 $topics = TopicServiceFacade::getTopicsWithScore($namespaceId, $today, $algorithm, $skip, $pageSize, $filter, $nickNameIds, $search, $asof, $archive, $sort, $page, $topic_tags);
                 extract($topics);
             } else {
@@ -174,7 +178,7 @@ class TopicController extends Controller
                 if ($page === 'browse') {
                     $totalCount = CampServiceFacade::getAllAgreementTopicCamps($pageSize, $skip, $asof, $asofdateTime, $namespaceId, $nickNameIds, $search, true, $archive, $sort, $topic_tags);
                 }
-                $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime, $page);
+                $topics = TopicServiceFacade::sortTopicsBasedOnScore($topics, $algorithm, $asofdateTime, $page, $excludeBots);
 
                 /** filter the collection if filter parameter */
                 if (isset($filter) && $filter != '' && $filter != null) {
