@@ -40,6 +40,7 @@ class TopicRequest extends FormRequest
                         'page' => 'nullable|string',
                         'topic_tags' => 'array', // Ensure it is an array
                         'topic_tags.*' => 'integer', // Ensure each element in the array is an integer
+                        'exclude_bots' => 'nullable|in:0,1',
                     ];
                     break;
                 }

@@ -40,6 +40,7 @@ class TreeStoreRequest extends FormRequest
                         'event_type' => 'nullable|string',
                         'pre_LiveId' => 'nullable|string',
                         'camp_num' => 'integer|gte:1|max:' . PHP_INT_MAX,
+                        'exclude_bots' => 'nullable|in:0,1',
                     ];
                     break;
                 }

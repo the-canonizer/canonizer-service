@@ -25,8 +25,18 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
+/* MongoDB Backward Compatibility for Model */
+if (!class_exists('MongoDB\Laravel\Eloquent\Model') && class_exists('Jenssegers\Mongodb\Eloquent\Model')) {
+    class_alias('Jenssegers\Mongodb\Eloquent\Model', 'MongoDB\Laravel\Eloquent\Model');
+}
+
 /* MongoDB */
-$app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+/* MongoDB */
+if (class_exists('MongoDB\Laravel\MongoDBServiceProvider')) {
+    $app->register(MongoDB\Laravel\MongoDBServiceProvider::class);
+} else {
+    $app->register(Jenssegers\Mongodb\MongodbServiceProvider::class);
+}
 
 /* Lumen commands generator */
 if ($app->environment() !== 'production') {

@@ -5,6 +5,7 @@ namespace App\Services;
 use AlgorithmService;
 use App\Exceptions\Camp\{CampDetailsException, CampSupportCountException, CampTreeCountException, CampTreeException, CampURLException, AgreementCampsException};
 use App\Model\v1\{Camp, Support, Topic, Nickname, TopicSupport, CampSubscription, TopicTag};
+use App\Helpers\Helpers;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
@@ -22,7 +23,33 @@ class CampService
     private $traversetempArray = [];
     private $sessionTempArray = [];
 
+    /**
+     * When true, support belonging to bot (AI agent) users is excluded from scoring.
+     * Set once at the prepareCampTree entry point and read by the support-loading queries.
+     *
+     * @var bool
+     */
+    private $excludeBots = false;
+
     const AGREEMENT_CAMP = "Agreement";
+
+    /**
+     * Zero out a supporter's score contribution when bot (AI agent) exclusion is on and the
+     * supporter is a bot. Support rows are KEPT (so delegate-tree traversal never references a
+     * missing nick_name_id and crashes) — only the bot's own contribution is removed from scoring.
+     *
+     * @param  int $nickNameId
+     * @param  int|float $supportPoint
+     * @return int|float
+     */
+    private function adjustSupportPointForBots($nickNameId, $supportPoint)
+    {
+        if ($this->excludeBots && in_array($nickNameId, Helpers::getBotNickNameIds())) {
+            return 0;
+        }
+
+        return $supportPoint;
+    }
 
     /**
      * prepare Camp tree based on algorithm.
@@ -35,10 +62,11 @@ class CampService
      * @return array $tree
      */
 
-    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null, $asOf = 'default', $fetchTopicHistory = 0)
+    public function prepareCampTree($algorithm, $topicNumber, $asOfTime, $startCamp = 1, $rootUrl = '', $nickNameId = null, $asOf = 'default', $fetchTopicHistory = 0, $excludeBots = false)
     {
         try {
-            
+
+            $this->excludeBots = $excludeBots;
             $this->traversetempArray = [];
 
             if (!Arr::exists($this->sessionTempArray, "topic-support-nickname-{$topicNumber}")) {
@@ -357,17 +385,19 @@ class CampService
             return self::sortTraversedSupportCountTreeArray($array);
     }
 
-    public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime, $asOf = 'default'){
+    public function getSupportTree($algorithm, $topicNum, $campNum, $asOfTime, $asOf = 'default', $excludeBots = false){
         try{
+
+            $this->excludeBots = $excludeBots;
 
             if(!Arr::exists($this->sessionTempArray, "score_tree_{$topicNum}_{$algorithm}"))
             {
                 $score_tree = $this->getCampAndNickNameWiseSupportTree($algorithm, $topicNum, $asOfTime);
-                $this->sessionTempArray["score_tree_{$topicNum}_{$algorithm}"] = $score_tree;        
+                $this->sessionTempArray["score_tree_{$topicNum}_{$algorithm}"] = $score_tree;
             }else{
                 $score_tree = $this->sessionTempArray["score_tree_{$topicNum}_{$algorithm}"];
             }
-        
+
         $supports = Support::where('topic_num', '=', $topicNum)
                     ->join("nick_name","nick_name.id", "=", "support.nick_name_id")
                     ->where('delegate_nick_name_id', 0)
@@ -682,6 +712,7 @@ class CampService
                 $support->camp_num,
                 $asOfTime
             );
+            $supportPoint = $this->adjustSupportPointForBots($support->nick_name_id, $supportPoint);
             //Check for campnum
             if ($campNumber == $support['camp_num']) {
                 if ($multiSupport) {
@@ -944,7 +975,7 @@ class CampService
             }
 
             if ($isCount) {
-                return $returnTopics->get()->count();
+                return $returnTopics->count();
             }
 
             return $returnTopics
@@ -1215,6 +1246,7 @@ class CampService
         foreach($nick_name_wise_support as $nickNameId=>$support_camp){
             foreach($support_camp as $support){ 
                 $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
+                $supportPoint = $this->adjustSupportPointForBots($support->nick_name_id, $supportPoint);
                 $support_total = 0; 
                 $full_support_total = 0; 
                      if($multiSupport){
@@ -1309,6 +1341,7 @@ class CampService
                     $nick_name_support_tree[$support->nick_name_id][$support->support_order][$support->camp_num]['full_score'] = 0;
                         $camp_wise_score[$support->camp_num][$support->support_order][$support->nick_name_id]['full_score'] = 0;
                     $supportPoint = AlgorithmService::{$algorithm}($support->nick_name_id,$support->topic_num,$support->camp_num,$asOfTime);
+                $supportPoint = $this->adjustSupportPointForBots($support->nick_name_id, $supportPoint);
                     if($multiSupport){
                             $support_total = $support_total + round($supportPoint * 1 / (2 ** ($support->support_order)), 3);
                         }else{
